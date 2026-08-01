@@ -20,7 +20,9 @@
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\" \"tests/**/*.ts\"",
     "migrate:dev": "wrangler d1 execute timeandtimepro-full --env dev --file=migrations/000_initial.sql",
     "migrate:prod": "wrangler d1 execute timeandtimepro-full --file=migrations/000_initial.sql",
-    "smoke": "bash scripts/test-endpoints.sh"
+    "smoke": "bash scripts/test-endpoints.sh",
+    "sync:readme": "bash scripts/sync-readme.sh",
+    "sync:readme:check": "bash scripts/sync-readme.sh --check"
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.16.0",
@@ -34,6 +36,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.3.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0",
     "wrangler": "^3.91.0"

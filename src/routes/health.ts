@@ -1,8 +1,8 @@
 /**
  * Health check endpoints.
- *   GET /                      — API root, version, endpoint manifest
- *   GET /api/v1/health         — DB stats, latency, version
- *   HEAD /api/v1/health        — for probe-on-boot checks
+ *   GET  /                      — API root, version, endpoint manifest
+ *   GET  /api/v1/health         — DB stats, latency, version
+ *   HEAD /api/v1/health         — for probe-on-boot checks
  */
 import { Hono } from "hono";
 import { success } from "@/lib/response";
@@ -11,9 +11,7 @@ import type { Env, Variables } from "@/types/env";
 
 const health = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// ============================================================================
-// GET / — API root
-// ============================================================================
+/** API root — returns version, name, and full endpoint manifest */
 health.get("/", async (c) => {
   return success({
     name: c.env.API_NAME,
@@ -49,9 +47,7 @@ health.get("/", async (c) => {
   });
 });
 
-// ============================================================================
-// GET /api/v1/health — DB stats + latency
-// ============================================================================
+/** Health check — returns DB row counts and query latency */
 health.get("/api/v1/health", async (c) => {
   const start = Date.now();
   const [cities, countries, tzs, otd, aliases] = await Promise.all([
@@ -79,7 +75,7 @@ health.get("/api/v1/health", async (c) => {
   });
 });
 
-// HEAD probe for feature detection
+/** Health check probe — returns 200 if API is up (no body) */
 health.on("HEAD", "/api/v1/health", () => new Response(null, { status: 200 }));
 
 export default health;

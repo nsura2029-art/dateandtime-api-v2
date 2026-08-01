@@ -30,3 +30,6 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: README sync check
+        run: npm run sync:readme:check
