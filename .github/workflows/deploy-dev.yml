@@ -190,6 +190,35 @@ jobs:
         # All new columns are NULL until M3-M5 populate them.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/126_schema_enrichment.sql
 
+      - name: Apply migration 127 (cities enrichment part 1)
+        # dr5hn cities.json: 38,243 cities × 7 fields (state_code, native, type, level, parent_id, wiki_data_id, flag)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127_parts/127_cities_enrichment_pt1.sql
+
+      - name: Apply migration 127 (cities enrichment part 2)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127_parts/127_cities_enrichment_pt2.sql
+
+      - name: Apply migration 127 (cities enrichment part 3)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127_parts/127_cities_enrichment_pt3.sql
+
+      - name: Apply migration 127 (cities enrichment part 4)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127_parts/127_cities_enrichment_pt4.sql
+
+      - name: Apply migration 127b (wiki_data_id part 1)
+        # camelCase wikiDataId → snake_case wiki_data_id
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127b_parts/127b_wiki_data_id_pt1.sql
+
+      - name: Apply migration 127b (wiki_data_id part 2)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127b_parts/127b_wiki_data_id_pt2.sql
+
+      - name: Apply migration 127b (wiki_data_id part 3)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127b_parts/127b_wiki_data_id_pt3.sql
+
+      - name: Apply migration 127b (wiki_data_id part 4)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127b_parts/127b_wiki_data_id_pt4.sql
+
+      - name: Apply migration 127c (set flag default)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127c_set_flag_default.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
