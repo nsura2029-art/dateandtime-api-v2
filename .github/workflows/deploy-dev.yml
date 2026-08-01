@@ -77,6 +77,13 @@ jobs:
       - name: Apply migration 106 (seed time zones)
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/106_seed_time_zones.sql
 
+      - name: Apply migration 107 (add 71 missing timezones for dr5hn city FK)
+        # 71 IANA timezone IDs referenced by dr5hn cities that aren't in the
+        # canonical IANA tzdb-2026c list (likely historical aliases + capital
+        # IDs). Without this, 92 country files silently FK-fail.
+        # Idempotent: uses INSERT OR IGNORE.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/107_seed_missing_time_zones.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
