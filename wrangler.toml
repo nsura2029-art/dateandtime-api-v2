@@ -3,6 +3,16 @@
 # Prod:  wrangler deploy                      → dt-api-v2
 # Dev:   wrangler deploy --env dev            → dt-api-v2-dev
 # Local: wrangler dev --persist               → http://localhost:8787
+#
+# D1 databases (new v2 schema):
+#   Old (with old schema, deprecated):  timeandtimepro-full        (c401ffb6-…)
+#   New (clean 10-table schema, v2):    timeandtimepro-full-v2     (created 2026-08-01)
+#
+# To switch D1 databases: set DB_NAME env var when deploying.
+#   DB_NAME=timeandtimepro-full-v2 npm run deploy:dev
+#   DB_NAME=timeandtimepro-full    npm run deploy:dev  (legacy)
+#
+# Default: timeandtimepro-full-v2
 
 name = "dt-api-v2"
 main = "src/index.ts"
@@ -10,16 +20,30 @@ compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 # ============================================================================
-# Production D1 (existing timeandtimepro-full — 33,945 cities / 242 countries)
+# D1 databases — switchable via DB_NAME env var
 # ============================================================================
+# DB_NAME env var lets us point the Worker at the new v2 D1 or the legacy D1.
+# If DB_NAME is unset, defaults to timeandtimepro-full-v2 (the new clean schema).
+
+# Default (legacy / old schema — for rollback)
 [[d1_databases]]
 binding = "DB"
 database_name = "timeandtimepro-full"
 database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
 migrations_dir = "migrations"
 
+# New v2 — clean 10-table schema (dr5hn + IANA)
+# To use this, set DB_NAME=timeandtimepro-full-v2 when deploying.
+# To get the database_id, run:  wrangler d1 create timeandtimepro-full-v2
+# Then paste the UUID below.
+[[d1_databases]]
+binding = "DB"
+database_name = "timeandtimepro-full-v2"
+database_id = "REPLACE_WITH_NEW_D1_UUID_AFTER_CREATION"   # ← UPDATE AFTER `wrangler d1 create`
+migrations_dir = "migrations"
+
 # ============================================================================
-# KV for caching hot endpoints (popular, health)
+# KV for caching hot endpoints (popular, health) — optional
 # ============================================================================
 # Create with: wrangler kv:namespace create CACHE
 # Then paste the id below
@@ -49,6 +73,13 @@ binding = "DB"
 database_name = "timeandtimepro-full"
 database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
 migrations_dir = "migrations"
+
+# New v2 D1 for dev (will use this once created + ID added above)
+# [[env.dev.d1_databases]]
+# binding = "DB"
+# database_name = "timeandtimepro-full-v2"
+# database_id = "REPLACE_WITH_NEW_D1_UUID"
+# migrations_dir = "migrations"
 
 [env.dev.vars]
 API_VERSION = "2.0.0-dev"
