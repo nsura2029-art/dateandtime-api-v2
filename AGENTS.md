@@ -137,6 +137,41 @@ Use `SCREAMING_SNAKE_CASE` codes. Be specific. Examples:
 - Never break a deployed version. New fields are additive. Removed fields require a new version.
 - Document breaking changes in the PR description and the changelog.
 
+### OpenAPI Documentation (binding)
+
+**Every new route MUST be defined via `@hono/zod-openapi`'s `createRoute()` and registered with `.openapi()`.** This auto-generates the OpenAPI 3.1 spec served at `/openapi.json` and the Swagger UI at `/docs`.
+
+```ts
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { z } from "zod";
+
+const route = createRoute({
+  method: "get",
+  path: "/api/v1/cities/:id",
+  summary: "Get city by ID",  // one-line
+  description: "Returns a single city with full details",
+  tags: ["Cities"],
+  request: { params: CityParams },
+  responses: {
+    200: { content: { "application/json": { schema: SingleResponse(City) } }, description: "OK" },
+    404: { content: { "application/json": { schema: ErrorResponse } }, description: "Not found" },
+  },
+});
+
+app.openapi(route, async (c) => {
+  // ... handler
+});
+```
+
+**Why:** the spec is the contract. It's served to UI developers at `/docs`, consumed by code generators (openapi-generator, orval, etc.), and used by the smoke test to validate response shapes.
+
+Rules:
+- All request/response types come from Zod schemas in `src/lib/schemas.ts` (never raw TS types).
+- Use the `singleResponse(name, schema)` and `listResponse(schema)` helpers for consistent envelope.
+- Always include `tags` so Swagger UI groups endpoints.
+- Always provide a 4xx response schema (typically `ErrorResponse`).
+- New endpoints are added to the README's endpoint table by `npm run sync:readme` — the JSDoc on `createRoute()` is the source of truth.
+
 ### Caching
 
 - `Cache-Control` headers on every GET response.

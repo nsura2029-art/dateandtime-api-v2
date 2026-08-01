@@ -12,6 +12,7 @@ Reusable, framework-agnostic helpers. Everything in `lib/` is pure TypeScript â€
 | `response.ts` | `success()`, `fail()`, `paginate()`, `Errors`, Zod error helper |
 | `validation.ts` | `parseIntSafe`, `parseFloatSafe`, `parseCsv`, common Zod schemas |
 | `types.ts` | D1 row types (City, Country, Timezone, Holiday, etc.) |
+| `schemas.ts` | Zod schemas for OpenAPI request/response types (single source of truth for API contract) |
 
 ## Local Contracts
 

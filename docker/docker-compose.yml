@@ -1,13 +1,22 @@
 # dateandtime-api-v2 — docker compose for local dev
 #
-# Usage:
+# Usage (local SQLite D1, no Cloudflare auth needed):
 #   docker compose -f docker/docker-compose.yml up
-#   → API at http://localhost:8787
-#   → D1 SQLite persisted in .wrangler/state/v3/d1/ (mounted volume)
+#
+# Usage (remote D1, talks to deployed Worker — needs CLOUDFLARE_API_TOKEN env):
+#   export CLOUDFLARE_API_TOKEN=...
+#   docker compose -f docker/docker-compose.yml --profile remote up
+#
+#   OR via npm:
+#   npm run dev:docker          # local SQLite
+#   npm run dev:docker:remote   # remote D1
 #
 # Edit code on host → wrangler detects changes → hot reload.
+# D1 SQLite is persisted in the `dt-d1-state` named volume.
+# For remote D1, mount your Cloudflare API token via env var.
 
 services:
+  # Local D1 mode (default) — uses wrangler's local SQLite emulator
   api:
     build:
       context: ..
@@ -16,23 +25,51 @@ services:
     ports:
       - "8787:8787"
     volumes:
-      # Source code (hot reload)
       - ../src:/app/src:ro
       - ../wrangler.toml:/app/wrangler.toml:ro
       - ../tsconfig.json:/app/tsconfig.json:ro
       - ../package.json:/app/package.json:ro
-      # D1 local state (persisted between restarts)
       - dt-d1-state:/app/.wrangler/state
-      # Dev vars (CORS, log level, etc.)
       - ../.dev.vars:/app/.dev.vars:ro
     environment:
       - NODE_ENV=development
+    command: ["npm", "run", "dev"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    profiles: ["local"]
+
+  # Remote D1 mode — talks to the deployed Worker via Cloudflare API
+  api-remote:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: dt-api-v2-dev-remote
+    ports:
+      - "8787:8787"
+    volumes:
+      - ../src:/app/src:ro
+      - ../wrangler.toml:/app/wrangler.toml:ro
+      - ../tsconfig.json:/app/tsconfig.json:ro
+      - ../package.json:/app/package.json:ro
+      - ../.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=development
+      # CLOUDFLARE_API_TOKEN must be set on the host:
+      #   export CLOUDFLARE_API_TOKEN=...
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+    command: ["npm", "run", "dev:remote"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    profiles: ["remote"]
 
 volumes:
   dt-d1-state:
