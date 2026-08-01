@@ -96,6 +96,7 @@ export interface City {
   is_capital: number;                // legacy
   is_state_capital: number;
   is_country_capital: number;
+  tier: string | null;               // 'tier1' | 'tier2' | 'tier3' (Phase 2)
   disputed: number;                  // 1 if boundary/label disputed
   claimed_by: string | null;         // comma-separated country codes
   source_id: string | null;          // e.g. "dr5hn:1326573" or "geonames:5128581"
