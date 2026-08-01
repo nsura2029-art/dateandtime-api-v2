@@ -26,7 +26,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "timeandtimepro-full-v2"
-database_id = "REPLACE_WITH_NEW_D1_UUID_AFTER_CREATION"   # ← UPDATE AFTER `wrangler d1 create`
+database_id = "c82b7abb-5c40-4cdd-8f67-1dadf88b88e1"   # ← UPDATE AFTER `wrangler d1 create`
 migrations_dir = "migrations"
 
 # ============================================================================
@@ -58,7 +58,7 @@ name = "dt-api-v2-dev"
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "timeandtimepro-full-v2"
-database_id = "REPLACE_WITH_NEW_D1_UUID_AFTER_CREATION"   # ← UPDATE AFTER `wrangler d1 create`
+database_id = "c82b7abb-5c40-4cdd-8f67-1dadf88b88e1"   # ← UPDATE AFTER `wrangler d1 create`
 migrations_dir = "migrations"
 
 [env.dev.vars]
