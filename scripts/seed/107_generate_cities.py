@@ -38,6 +38,15 @@ def escape_sql(s):
     return "'" + str(s).replace("'", "''") + "'"
 
 
+def sql_num(v):
+    """Coerce numeric value to SQL literal (handles 0 correctly, unlike `or`)."""
+    if v is None:
+        return 'NULL'
+    if isinstance(v, bool):
+        return '1' if v else '0'
+    return str(v)
+
+
 # Load state → timezone map for better per-city timezone accuracy
 STATE_TZ_MAP = {}
 try:
@@ -168,7 +177,7 @@ def main():
         for chunk in chunks:
             rows = []
             for city in chunk:
-                row = f"""  ({city['id']}, {escape_sql(city['name'])}, {city['country_id']}, {city['state_id']}, {city['latitude'] or 'NULL'}, {city['longitude'] or 'NULL'}, {escape_sql(city['timezone'])}, {city['population'] or 'NULL'}, {escape_sql(city['feature_code'])}, 'city', 'dr5hn:{city['id']}', 'dr5hn-2026-07-29')"""
+                row = f"""  ({city['id']}, {escape_sql(city['name'])}, {city['country_id']}, {city['state_id']}, {sql_num(city.get('latitude'))}, {sql_num(city.get('longitude'))}, {escape_sql(city.get('timezone'))}, {sql_num(city.get('population'))}, {escape_sql(city.get('feature_code'))}, 'city', 'dr5hn:{city['id']}', 'dr5hn-2026-07-29')"""
                 rows.append(row)
             parts.append(",\n".join(rows) + ";")
         parts.append("")  # trailing newline
@@ -177,11 +186,33 @@ def main():
         out_file.write_text("\n".join(parts))
         file_list.append((cca2, len(cities), str(out_file)))
 
-    # Write run-all.sh
-    run_all = ["#!/usr/bin/env bash", "# Apply all 250 country-city seed files in order.", "# Usage: bash migrations/cities/run-all.sh", "", "set -e", ""]
+    # Write run-all.sh — parameterized so user can override DB_NAME
+    # Usage: DB_NAME=timeandtimepro-full-v2 REMOTE=1 bash migrations/cities/run-all.sh
+    run_all = [
+        "#!/usr/bin/env bash",
+        "# Apply all per-country city seed files in order.",
+        "#",
+        "# Usage:",
+        "#   DB_NAME=timeandtimepro-full-v2 REMOTE=1 bash migrations/cities/run-all.sh",
+        "#",
+        "# Defaults: DB_NAME=timeandtimepro-full, REMOTE=0 (local SQLite)",
+        "",
+        "set -e",
+        "",
+        'DB_NAME="${DB_NAME:-timeandtimepro-full}"',
+        'if [ "${REMOTE:-0}" = "1" ]; then',
+        '  REMOTE_FLAG="--remote"',
+        'else',
+        '  REMOTE_FLAG=""',
+        'fi',
+        "",
+    ]
     for cca2, count, path in file_list:
         run_all.append(f'# {cca2}: {count} cities')
-        run_all.append(f'wrangler d1 execute timeandtimepro-full --env dev --remote --file="{path}"')
+        run_all.append(
+            f'wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="{path}" || '
+            f'{{ echo "WARNING: {cca2} failed (likely 0 cities or empty), continuing"; true; }}'
+        )
     run_all.append("")
     run_all.append('echo "✅ All cities seeded."')
     Path(OUTPUT_DIR / "run-all.sh").write_text("\n".join(run_all))

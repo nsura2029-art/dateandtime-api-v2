@@ -1,520 +1,465 @@
 #!/usr/bin/env bash
-# Apply all 250 country-city seed files in order.
+# Apply all per-country city seed files in order.
 #
 # Usage:
-#   bash migrations/cities/run-all.sh
-#   bash migrations/cities/run-all.sh timeandtimepro-full-v2    # use a different DB name
-#   bash migrations/cities/run-all.sh timeandtimepro-full       # default
+#   DB_NAME=timeandtimepro-full-v2 REMOTE=1 bash migrations/cities/run-all.sh
 #
-# Set DB env var instead of arg to use a remote DB:
-#   DB_NAME=timeandtimepro-full-v2 bash migrations/cities/run-all.sh
-#
-# Default: applies to the local D1. Use --remote flag (in wrangler cmd) to apply to remote.
+# Defaults: DB_NAME=timeandtimepro-full, REMOTE=0 (local SQLite)
 
 set -e
 
-DB_NAME="${1:-${DB_NAME:-timeandtimepro-full}}"
-REMOTE_FLAG=""
+DB_NAME="${DB_NAME:-timeandtimepro-full}"
 if [ "${REMOTE:-0}" = "1" ]; then
   REMOTE_FLAG="--remote"
+else
+  REMOTE_FLAG=""
 fi
 
-echo "🌍 Applying all cities to D1: $DB_NAME (remote=${REMOTE:-local})"
-echo ""
-
-AD: 10 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AD.sql"
-AE: 30 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AE.sql"
-AF: 100 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AF.sql"
-AG: 9 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AG.sql"
-AL: 143 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AL.sql"
-AM: 308 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AM.sql"
-AO: 72 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AO.sql"
-AR: 1136 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AR.sql"
-AS: 14 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AS.sql"
-AT: 2360 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AT.sql"
-AU: 2264 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AU.sql"
-AW: 6 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AW.sql"
-AX: 18 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AX.sql"
-AZ: 281 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/AZ.sql"
-BA: 409 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BA.sql"
-BB: 24 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BB.sql"
-BD: 1444 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BD.sql"
-BE: 2610 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BE.sql"
-BF: 215 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BF.sql"
-BG: 530 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BG.sql"
-BH: 30 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BH.sql"
-BI: 8 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BI.sql"
-BJ: 86 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BJ.sql"
-BL: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BL.sql" || true
-BM: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BM.sql"
-BN: 38 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BN.sql"
-BO: 498 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BO.sql"
-BQ: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BQ.sql" || true
-BR: 8603 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BR.sql"
-BS: 37 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BS.sql"
-BT: 50 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BT.sql"
-BV: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BV.sql" || true
-BW: 79 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BW.sql"
-BY: 240 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BY.sql"
-BZ: 47 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/BZ.sql"
-CA: 1080 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CA.sql"
-CC: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CC.sql"
-CD: 478 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CD.sql"
-CF: 28 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CF.sql"
-CG: 60 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CG.sql"
-CH: 4885 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CH.sql"
-CI: 70 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CI.sql"
-CK: 5 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CK.sql"
-CL: 435 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CL.sql"
-CM: 312 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CM.sql"
-CN: 6972 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CN.sql"
-CO: 1259 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CO.sql"
-CR: 284 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CR.sql"
-CU: 501 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CU.sql"
-CV: 24 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CV.sql"
-CW: 6 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CW.sql"
-CX: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CX.sql"
-CY: 143 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CY.sql"
-CZ: 2688 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/CZ.sql"
-DE: 7104 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DE.sql"
-DJ: 10 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DJ.sql"
-DK: 1040 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DK.sql"
-DM: 14 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DM.sql"
-DO: 156 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DO.sql"
-DZ: 588 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/DZ.sql"
-EC: 397 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/EC.sql"
-EE: 138 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/EE.sql"
-EG: 379 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/EG.sql"
-EH: 10 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/EH.sql"
-ER: 25 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ER.sql"
-ES: 8394 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ES.sql"
-ET: 187 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ET.sql"
-FI: 2271 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FI.sql"
-FJ: 22 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FJ.sql"
-FK: 3 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FK.sql"
-FM: 13 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FM.sql"
-FO: 25 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FO.sql"
-FR: 21349 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/FR.sql"
-GA: 36 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GA.sql"
-GB: 16045 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GB.sql"
-GD: 9 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GD.sql"
-GE: 89 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GE.sql"
-GF: 28 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GF.sql"
-GG: 13 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GG.sql"
-GH: 252 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GH.sql"
-GI: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GI.sql"
-GL: 49 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GL.sql"
-GM: 22 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GM.sql"
-GN: 73 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GN.sql"
-GP: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GP.sql" || true
-GQ: 8 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GQ.sql"
-GR: 1094 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GR.sql"
-GS: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GS.sql" || true
-GT: 470 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GT.sql"
-GU: 20 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GU.sql"
-GW: 27 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GW.sql"
-GY: 58 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/GY.sql"
-HK: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HK.sql" || true
-HM: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HM.sql" || true
-HN: 481 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HN.sql"
-HR: 1131 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HR.sql"
-HT: 134 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HT.sql"
-HU: 1390 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/HU.sql"
-ID: 6449 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ID.sql"
-IE: 1013 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IE.sql"
-IL: 469 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IL.sql"
-IM: 19 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IM.sql"
-IN: 6991 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IN.sql"
-IO: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IO.sql"
-IQ: 192 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IQ.sql"
-IR: 2428 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IR.sql"
-IS: 51 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IS.sql"
-IT: 13676 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/IT.sql"
-JE: 22 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/JE.sql"
-JM: 47 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/JM.sql"
-JO: 81 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/JO.sql"
-JP: 1317 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/JP.sql"
-KE: 583 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KE.sql"
-KG: 132 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KG.sql"
-KH: 132 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KH.sql"
-KI: 9 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KI.sql"
-KM: 12 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KM.sql"
-KN: 14 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KN.sql"
-KP: 137 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KP.sql"
-KR: 651 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KR.sql"
-KW: 19 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KW.sql"
-KY: 12 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KY.sql"
-KZ: 248 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/KZ.sql"
-LA: 89 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LA.sql"
-LB: 240 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LB.sql"
-LC: 7 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LC.sql"
-LI: 13 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LI.sql"
-LK: 362 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LK.sql"
-LR: 54 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LR.sql"
-LS: 17 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LS.sql"
-LT: 423 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LT.sql"
-LU: 83 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LU.sql"
-LV: 351 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LV.sql"
-LY: 72 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/LY.sql"
-MA: 360 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MA.sql"
-MC: 10 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MC.sql"
-MD: 240 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MD.sql"
-ME: 129 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ME.sql"
-MF: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MF.sql" || true
-MG: 311 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MG.sql"
-MH: 22 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MH.sql"
-MK: 261 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MK.sql"
-ML: 87 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ML.sql"
-MM: 1040 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MM.sql"
-MN: 27 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MN.sql"
-MO: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MO.sql" || true
-MP: 16 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MP.sql"
-MQ: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MQ.sql"
-MR: 30 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MR.sql"
-MS: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MS.sql"
-MT: 68 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MT.sql"
-MU: 29 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MU.sql"
-MV: 21 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MV.sql"
-MW: 66 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MW.sql"
-MX: 2902 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MX.sql"
-MY: 1604 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MY.sql"
-MZ: 56 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/MZ.sql"
-NA: 71 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NA.sql"
-NC: 21 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NC.sql"
-NE: 65 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NE.sql"
-NF: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NF.sql"
-NG: 1092 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NG.sql"
-NI: 152 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NI.sql"
-NL: 2062 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NL.sql"
-NO: 1296 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NO.sql"
-NP: 377 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NP.sql"
-NR: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NR.sql"
-NU: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NU.sql"
-NZ: 332 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/NZ.sql"
-OM: 113 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/OM.sql"
-PA: 297 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PA.sql"
-PE: 1203 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PE.sql"
-PF: 22 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PF.sql"
-PG: 37 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PG.sql"
-PH: 1643 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PH.sql"
-PK: 2291 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PK.sql"
-PL: 2934 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PL.sql"
-PM: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PM.sql"
-PN: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PN.sql"
-PR: 253 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PR.sql"
-PS: 109 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PS.sql"
-PT: 4051 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PT.sql"
-PW: 8 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PW.sql"
-PY: 612 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/PY.sql"
-QA: 27 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/QA.sql"
-RE: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/RE.sql"
-RO: 2056 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/RO.sql"
-RS: 509 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/RS.sql"
-RU: 5792 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/RU.sql"
-RW: 32 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/RW.sql"
-SA: 209 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SA.sql"
-SB: 14 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SB.sql"
-SC: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SC.sql"
-SD: 76 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SD.sql"
-SE: 4061 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SE.sql"
-SG: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SG.sql"
-SH: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SH.sql" || true
-SI: 269 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SI.sql"
-SJ: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SJ.sql" || true
-SK: 580 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SK.sql"
-SL: 30 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SL.sql"
-SM: 10 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SM.sql"
-SN: 71 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SN.sql"
-SO: 41 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SO.sql"
-SR: 27 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SR.sql"
-SS: 13 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SS.sql"
-ST: 4 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ST.sql"
-SV: 192 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SV.sql"
-SX: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SX.sql"
-SY: 124 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SY.sql"
-SZ: 21 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/SZ.sql"
-TC: 5 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TC.sql"
-TD: 25 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TD.sql"
-TF: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TF.sql" || true
-TG: 21 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TG.sql"
-TH: 1100 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TH.sql"
-TJ: 56 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TJ.sql"
-TK: 2 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TK.sql"
-TL: 18 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TL.sql"
-TM: 28 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TM.sql"
-TN: 124 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TN.sql"
-TO: 8 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TO.sql"
-TR: 1681 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TR.sql"
-TT: 18 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TT.sql"
-TV: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TV.sql"
-TW: 92 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TW.sql"
-TZ: 186 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/TZ.sql"
-UA: 2870 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/UA.sql"
-UG: 137 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/UG.sql"
-UM: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/UM.sql" || true
-US: 16731 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/US.sql"
-UY: 290 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/UY.sql"
-UZ: 162 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/UZ.sql"
-VA: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VA.sql"
-VC: 9 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VC.sql"
-VE: 622 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VE.sql"
-VG: 4 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VG.sql"
-VI: 4 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VI.sql"
-VN: 1741 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VV.sql" || true
-VU: 8 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/VU.sql"
-WF: 0 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/WF.sql" || true
-WS: 7 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/WS.sql"
-YE: 111 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/YE.sql"
-YT: 1 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/YT.sql"
-ZA: 1128 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ZA.sql"
-ZM: 119 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ZM.sql"
-ZW: 90 cities
-wrangler d1 execute "$DB_NAME" $REMOTE_FLAG --env dev --file="migrations/cities/ZW.sql"
+# AD: 10 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AD.sql" || { echo "WARNING: AD failed (likely 0 cities or empty), continuing"; true; }
+# AE: 30 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AE.sql" || { echo "WARNING: AE failed (likely 0 cities or empty), continuing"; true; }
+# AF: 100 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AF.sql" || { echo "WARNING: AF failed (likely 0 cities or empty), continuing"; true; }
+# AG: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AG.sql" || { echo "WARNING: AG failed (likely 0 cities or empty), continuing"; true; }
+# AL: 143 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AL.sql" || { echo "WARNING: AL failed (likely 0 cities or empty), continuing"; true; }
+# AM: 308 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AM.sql" || { echo "WARNING: AM failed (likely 0 cities or empty), continuing"; true; }
+# AO: 72 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AO.sql" || { echo "WARNING: AO failed (likely 0 cities or empty), continuing"; true; }
+# AR: 1136 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AR.sql" || { echo "WARNING: AR failed (likely 0 cities or empty), continuing"; true; }
+# AS: 14 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AS.sql" || { echo "WARNING: AS failed (likely 0 cities or empty), continuing"; true; }
+# AT: 2360 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AT.sql" || { echo "WARNING: AT failed (likely 0 cities or empty), continuing"; true; }
+# AU: 4147 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AU.sql" || { echo "WARNING: AU failed (likely 0 cities or empty), continuing"; true; }
+# AW: 12 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AW.sql" || { echo "WARNING: AW failed (likely 0 cities or empty), continuing"; true; }
+# AX: 12 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AX.sql" || { echo "WARNING: AX failed (likely 0 cities or empty), continuing"; true; }
+# AZ: 180 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/AZ.sql" || { echo "WARNING: AZ failed (likely 0 cities or empty), continuing"; true; }
+# BA: 232 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BA.sql" || { echo "WARNING: BA failed (likely 0 cities or empty), continuing"; true; }
+# BB: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BB.sql" || { echo "WARNING: BB failed (likely 0 cities or empty), continuing"; true; }
+# BD: 64 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BD.sql" || { echo "WARNING: BD failed (likely 0 cities or empty), continuing"; true; }
+# BE: 549 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BE.sql" || { echo "WARNING: BE failed (likely 0 cities or empty), continuing"; true; }
+# BF: 92 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BF.sql" || { echo "WARNING: BF failed (likely 0 cities or empty), continuing"; true; }
+# BG: 504 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BG.sql" || { echo "WARNING: BG failed (likely 0 cities or empty), continuing"; true; }
+# BH: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BH.sql" || { echo "WARNING: BH failed (likely 0 cities or empty), continuing"; true; }
+# BI: 17 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BI.sql" || { echo "WARNING: BI failed (likely 0 cities or empty), continuing"; true; }
+# BJ: 36 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BJ.sql" || { echo "WARNING: BJ failed (likely 0 cities or empty), continuing"; true; }
+# BL: 1 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BL.sql" || { echo "WARNING: BL failed (likely 0 cities or empty), continuing"; true; }
+# BM: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BM.sql" || { echo "WARNING: BM failed (likely 0 cities or empty), continuing"; true; }
+# BN: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BN.sql" || { echo "WARNING: BN failed (likely 0 cities or empty), continuing"; true; }
+# BO: 228 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BO.sql" || { echo "WARNING: BO failed (likely 0 cities or empty), continuing"; true; }
+# BQ: 8 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BQ.sql" || { echo "WARNING: BQ failed (likely 0 cities or empty), continuing"; true; }
+# BR: 5629 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BR.sql" || { echo "WARNING: BR failed (likely 0 cities or empty), continuing"; true; }
+# BS: 21 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BS.sql" || { echo "WARNING: BS failed (likely 0 cities or empty), continuing"; true; }
+# BT: 57 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BT.sql" || { echo "WARNING: BT failed (likely 0 cities or empty), continuing"; true; }
+# BW: 75 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BW.sql" || { echo "WARNING: BW failed (likely 0 cities or empty), continuing"; true; }
+# BY: 329 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BY.sql" || { echo "WARNING: BY failed (likely 0 cities or empty), continuing"; true; }
+# BZ: 13 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/BZ.sql" || { echo "WARNING: BZ failed (likely 0 cities or empty), continuing"; true; }
+# CA: 1080 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CA.sql" || { echo "WARNING: CA failed (likely 0 cities or empty), continuing"; true; }
+# CD: 67 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CD.sql" || { echo "WARNING: CD failed (likely 0 cities or empty), continuing"; true; }
+# CF: 42 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CF.sql" || { echo "WARNING: CF failed (likely 0 cities or empty), continuing"; true; }
+# CG: 17 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CG.sql" || { echo "WARNING: CG failed (likely 0 cities or empty), continuing"; true; }
+# CH: 1507 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CH.sql" || { echo "WARNING: CH failed (likely 0 cities or empty), continuing"; true; }
+# CI: 95 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CI.sql" || { echo "WARNING: CI failed (likely 0 cities or empty), continuing"; true; }
+# CL: 300 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CL.sql" || { echo "WARNING: CL failed (likely 0 cities or empty), continuing"; true; }
+# CM: 139 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CM.sql" || { echo "WARNING: CM failed (likely 0 cities or empty), continuing"; true; }
+# CN: 4133 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CN.sql" || { echo "WARNING: CN failed (likely 0 cities or empty), continuing"; true; }
+# CO: 1122 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CO.sql" || { echo "WARNING: CO failed (likely 0 cities or empty), continuing"; true; }
+# CR: 159 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CR.sql" || { echo "WARNING: CR failed (likely 0 cities or empty), continuing"; true; }
+# CU: 187 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CU.sql" || { echo "WARNING: CU failed (likely 0 cities or empty), continuing"; true; }
+# CV: 28 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CV.sql" || { echo "WARNING: CV failed (likely 0 cities or empty), continuing"; true; }
+# CY: 95 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CY.sql" || { echo "WARNING: CY failed (likely 0 cities or empty), continuing"; true; }
+# CZ: 1355 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/CZ.sql" || { echo "WARNING: CZ failed (likely 0 cities or empty), continuing"; true; }
+# DE: 7104 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DE.sql" || { echo "WARNING: DE failed (likely 0 cities or empty), continuing"; true; }
+# DJ: 12 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DJ.sql" || { echo "WARNING: DJ failed (likely 0 cities or empty), continuing"; true; }
+# DK: 430 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DK.sql" || { echo "WARNING: DK failed (likely 0 cities or empty), continuing"; true; }
+# DM: 17 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DM.sql" || { echo "WARNING: DM failed (likely 0 cities or empty), continuing"; true; }
+# DO: 207 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DO.sql" || { echo "WARNING: DO failed (likely 0 cities or empty), continuing"; true; }
+# DZ: 293 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/DZ.sql" || { echo "WARNING: DZ failed (likely 0 cities or empty), continuing"; true; }
+# EC: 114 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/EC.sql" || { echo "WARNING: EC failed (likely 0 cities or empty), continuing"; true; }
+# EE: 162 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/EE.sql" || { echo "WARNING: EE failed (likely 0 cities or empty), continuing"; true; }
+# EG: 163 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/EG.sql" || { echo "WARNING: EG failed (likely 0 cities or empty), continuing"; true; }
+# ER: 11 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ER.sql" || { echo "WARNING: ER failed (likely 0 cities or empty), continuing"; true; }
+# ES: 8405 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ES.sql" || { echo "WARNING: ES failed (likely 0 cities or empty), continuing"; true; }
+# ET: 144 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ET.sql" || { echo "WARNING: ET failed (likely 0 cities or empty), continuing"; true; }
+# FI: 437 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/FI.sql" || { echo "WARNING: FI failed (likely 0 cities or empty), continuing"; true; }
+# FJ: 20 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/FJ.sql" || { echo "WARNING: FJ failed (likely 0 cities or empty), continuing"; true; }
+# FM: 80 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/FM.sql" || { echo "WARNING: FM failed (likely 0 cities or empty), continuing"; true; }
+# FO: 27 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/FO.sql" || { echo "WARNING: FO failed (likely 0 cities or empty), continuing"; true; }
+# FR: 10534 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/FR.sql" || { echo "WARNING: FR failed (likely 0 cities or empty), continuing"; true; }
+# GA: 28 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GA.sql" || { echo "WARNING: GA failed (likely 0 cities or empty), continuing"; true; }
+# GB: 3879 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GB.sql" || { echo "WARNING: GB failed (likely 0 cities or empty), continuing"; true; }
+# GD: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GD.sql" || { echo "WARNING: GD failed (likely 0 cities or empty), continuing"; true; }
+# GE: 110 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GE.sql" || { echo "WARNING: GE failed (likely 0 cities or empty), continuing"; true; }
+# GF: 22 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GF.sql" || { echo "WARNING: GF failed (likely 0 cities or empty), continuing"; true; }
+# GG: 5 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GG.sql" || { echo "WARNING: GG failed (likely 0 cities or empty), continuing"; true; }
+# GH: 121 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GH.sql" || { echo "WARNING: GH failed (likely 0 cities or empty), continuing"; true; }
+# GL: 18 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GL.sql" || { echo "WARNING: GL failed (likely 0 cities or empty), continuing"; true; }
+# GM: 104 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GM.sql" || { echo "WARNING: GM failed (likely 0 cities or empty), continuing"; true; }
+# GN: 54 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GN.sql" || { echo "WARNING: GN failed (likely 0 cities or empty), continuing"; true; }
+# GP: 32 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GP.sql" || { echo "WARNING: GP failed (likely 0 cities or empty), continuing"; true; }
+# GQ: 26 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GQ.sql" || { echo "WARNING: GQ failed (likely 0 cities or empty), continuing"; true; }
+# GR: 1103 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GR.sql" || { echo "WARNING: GR failed (likely 0 cities or empty), continuing"; true; }
+# GT: 382 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GT.sql" || { echo "WARNING: GT failed (likely 0 cities or empty), continuing"; true; }
+# GU: 25 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GU.sql" || { echo "WARNING: GU failed (likely 0 cities or empty), continuing"; true; }
+# GW: 15 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GW.sql" || { echo "WARNING: GW failed (likely 0 cities or empty), continuing"; true; }
+# GY: 14 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/GY.sql" || { echo "WARNING: GY failed (likely 0 cities or empty), continuing"; true; }
+# HK: 27 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/HK.sql" || { echo "WARNING: HK failed (likely 0 cities or empty), continuing"; true; }
+# HN: 545 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/HN.sql" || { echo "WARNING: HN failed (likely 0 cities or empty), continuing"; true; }
+# HR: 663 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/HR.sql" || { echo "WARNING: HR failed (likely 0 cities or empty), continuing"; true; }
+# HT: 124 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/HT.sql" || { echo "WARNING: HT failed (likely 0 cities or empty), continuing"; true; }
+# HU: 1074 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/HU.sql" || { echo "WARNING: HU failed (likely 0 cities or empty), continuing"; true; }
+# ID: 799 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ID.sql" || { echo "WARNING: ID failed (likely 0 cities or empty), continuing"; true; }
+# IE: 370 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IE.sql" || { echo "WARNING: IE failed (likely 0 cities or empty), continuing"; true; }
+# IL: 150 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IL.sql" || { echo "WARNING: IL failed (likely 0 cities or empty), continuing"; true; }
+# IM: 16 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IM.sql" || { echo "WARNING: IM failed (likely 0 cities or empty), continuing"; true; }
+# IN: 4198 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IN.sql" || { echo "WARNING: IN failed (likely 0 cities or empty), continuing"; true; }
+# IQ: 135 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IQ.sql" || { echo "WARNING: IQ failed (likely 0 cities or empty), continuing"; true; }
+# IR: 1847 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IR.sql" || { echo "WARNING: IR failed (likely 0 cities or empty), continuing"; true; }
+# IS: 73 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IS.sql" || { echo "WARNING: IS failed (likely 0 cities or empty), continuing"; true; }
+# IT: 9852 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/IT.sql" || { echo "WARNING: IT failed (likely 0 cities or empty), continuing"; true; }
+# JE: 51 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/JE.sql" || { echo "WARNING: JE failed (likely 0 cities or empty), continuing"; true; }
+# JM: 837 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/JM.sql" || { echo "WARNING: JM failed (likely 0 cities or empty), continuing"; true; }
+# JO: 82 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/JO.sql" || { echo "WARNING: JO failed (likely 0 cities or empty), continuing"; true; }
+# JP: 1655 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/JP.sql" || { echo "WARNING: JP failed (likely 0 cities or empty), continuing"; true; }
+# KE: 145 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KE.sql" || { echo "WARNING: KE failed (likely 0 cities or empty), continuing"; true; }
+# KG: 53 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KG.sql" || { echo "WARNING: KG failed (likely 0 cities or empty), continuing"; true; }
+# KH: 107 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KH.sql" || { echo "WARNING: KH failed (likely 0 cities or empty), continuing"; true; }
+# KI: 37 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KI.sql" || { echo "WARNING: KI failed (likely 0 cities or empty), continuing"; true; }
+# KM: 88 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KM.sql" || { echo "WARNING: KM failed (likely 0 cities or empty), continuing"; true; }
+# KN: 13 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KN.sql" || { echo "WARNING: KN failed (likely 0 cities or empty), continuing"; true; }
+# KP: 80 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KP.sql" || { echo "WARNING: KP failed (likely 0 cities or empty), continuing"; true; }
+# KR: 308 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KR.sql" || { echo "WARNING: KR failed (likely 0 cities or empty), continuing"; true; }
+# KW: 25 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KW.sql" || { echo "WARNING: KW failed (likely 0 cities or empty), continuing"; true; }
+# KY: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KY.sql" || { echo "WARNING: KY failed (likely 0 cities or empty), continuing"; true; }
+# KZ: 259 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/KZ.sql" || { echo "WARNING: KZ failed (likely 0 cities or empty), continuing"; true; }
+# LA: 76 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LA.sql" || { echo "WARNING: LA failed (likely 0 cities or empty), continuing"; true; }
+# LB: 26 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LB.sql" || { echo "WARNING: LB failed (likely 0 cities or empty), continuing"; true; }
+# LC: 479 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LC.sql" || { echo "WARNING: LC failed (likely 0 cities or empty), continuing"; true; }
+# LI: 11 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LI.sql" || { echo "WARNING: LI failed (likely 0 cities or empty), continuing"; true; }
+# LK: 147 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LK.sql" || { echo "WARNING: LK failed (likely 0 cities or empty), continuing"; true; }
+# LR: 18 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LR.sql" || { echo "WARNING: LR failed (likely 0 cities or empty), continuing"; true; }
+# LS: 12 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LS.sql" || { echo "WARNING: LS failed (likely 0 cities or empty), continuing"; true; }
+# LT: 128 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LT.sql" || { echo "WARNING: LT failed (likely 0 cities or empty), continuing"; true; }
+# LU: 144 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LU.sql" || { echo "WARNING: LU failed (likely 0 cities or empty), continuing"; true; }
+# LV: 125 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LV.sql" || { echo "WARNING: LV failed (likely 0 cities or empty), continuing"; true; }
+# LY: 54 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/LY.sql" || { echo "WARNING: LY failed (likely 0 cities or empty), continuing"; true; }
+# MA: 222 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MA.sql" || { echo "WARNING: MA failed (likely 0 cities or empty), continuing"; true; }
+# MC: 17 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MC.sql" || { echo "WARNING: MC failed (likely 0 cities or empty), continuing"; true; }
+# MD: 72 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MD.sql" || { echo "WARNING: MD failed (likely 0 cities or empty), continuing"; true; }
+# ME: 40 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ME.sql" || { echo "WARNING: ME failed (likely 0 cities or empty), continuing"; true; }
+# MF: 1 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MF.sql" || { echo "WARNING: MF failed (likely 0 cities or empty), continuing"; true; }
+# MG: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MG.sql" || { echo "WARNING: MG failed (likely 0 cities or empty), continuing"; true; }
+# MH: 26 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MH.sql" || { echo "WARNING: MH failed (likely 0 cities or empty), continuing"; true; }
+# MK: 194 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MK.sql" || { echo "WARNING: MK failed (likely 0 cities or empty), continuing"; true; }
+# ML: 47 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ML.sql" || { echo "WARNING: ML failed (likely 0 cities or empty), continuing"; true; }
+# MM: 74 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MM.sql" || { echo "WARNING: MM failed (likely 0 cities or empty), continuing"; true; }
+# MN: 40 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MN.sql" || { echo "WARNING: MN failed (likely 0 cities or empty), continuing"; true; }
+# MQ: 34 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MQ.sql" || { echo "WARNING: MQ failed (likely 0 cities or empty), continuing"; true; }
+# MR: 42 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MR.sql" || { echo "WARNING: MR failed (likely 0 cities or empty), continuing"; true; }
+# MT: 87 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MT.sql" || { echo "WARNING: MT failed (likely 0 cities or empty), continuing"; true; }
+# MU: 168 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MU.sql" || { echo "WARNING: MU failed (likely 0 cities or empty), continuing"; true; }
+# MV: 21 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MV.sql" || { echo "WARNING: MV failed (likely 0 cities or empty), continuing"; true; }
+# MW: 61 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MW.sql" || { echo "WARNING: MW failed (likely 0 cities or empty), continuing"; true; }
+# MX: 9321 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MX.sql" || { echo "WARNING: MX failed (likely 0 cities or empty), continuing"; true; }
+# MY: 223 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MY.sql" || { echo "WARNING: MY failed (likely 0 cities or empty), continuing"; true; }
+# MZ: 38 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/MZ.sql" || { echo "WARNING: MZ failed (likely 0 cities or empty), continuing"; true; }
+# NA: 48 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NA.sql" || { echo "WARNING: NA failed (likely 0 cities or empty), continuing"; true; }
+# NC: 10 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NC.sql" || { echo "WARNING: NC failed (likely 0 cities or empty), continuing"; true; }
+# NE: 71 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NE.sql" || { echo "WARNING: NE failed (likely 0 cities or empty), continuing"; true; }
+# NG: 491 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NG.sql" || { echo "WARNING: NG failed (likely 0 cities or empty), continuing"; true; }
+# NI: 155 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NI.sql" || { echo "WARNING: NI failed (likely 0 cities or empty), continuing"; true; }
+# NL: 1644 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NL.sql" || { echo "WARNING: NL failed (likely 0 cities or empty), continuing"; true; }
+# NO: 666 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NO.sql" || { echo "WARNING: NO failed (likely 0 cities or empty), continuing"; true; }
+# NP: 77 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NP.sql" || { echo "WARNING: NP failed (likely 0 cities or empty), continuing"; true; }
+# NR: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NR.sql" || { echo "WARNING: NR failed (likely 0 cities or empty), continuing"; true; }
+# NZ: 160 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/NZ.sql" || { echo "WARNING: NZ failed (likely 0 cities or empty), continuing"; true; }
+# OM: 28 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/OM.sql" || { echo "WARNING: OM failed (likely 0 cities or empty), continuing"; true; }
+# PA: 551 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PA.sql" || { echo "WARNING: PA failed (likely 0 cities or empty), continuing"; true; }
+# PE: 485 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PE.sql" || { echo "WARNING: PE failed (likely 0 cities or empty), continuing"; true; }
+# PF: 48 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PF.sql" || { echo "WARNING: PF failed (likely 0 cities or empty), continuing"; true; }
+# PG: 100 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PG.sql" || { echo "WARNING: PG failed (likely 0 cities or empty), continuing"; true; }
+# PH: 5357 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PH.sql" || { echo "WARNING: PH failed (likely 0 cities or empty), continuing"; true; }
+# PK: 456 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PK.sql" || { echo "WARNING: PK failed (likely 0 cities or empty), continuing"; true; }
+# PL: 2810 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PL.sql" || { echo "WARNING: PL failed (likely 0 cities or empty), continuing"; true; }
+# PM: 2 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PM.sql" || { echo "WARNING: PM failed (likely 0 cities or empty), continuing"; true; }
+# PR: 78 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PR.sql" || { echo "WARNING: PR failed (likely 0 cities or empty), continuing"; true; }
+# PS: 132 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PS.sql" || { echo "WARNING: PS failed (likely 0 cities or empty), continuing"; true; }
+# PT: 1296 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PT.sql" || { echo "WARNING: PT failed (likely 0 cities or empty), continuing"; true; }
+# PW: 15 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PW.sql" || { echo "WARNING: PW failed (likely 0 cities or empty), continuing"; true; }
+# PY: 152 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/PY.sql" || { echo "WARNING: PY failed (likely 0 cities or empty), continuing"; true; }
+# QA: 15 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/QA.sql" || { echo "WARNING: QA failed (likely 0 cities or empty), continuing"; true; }
+# RE: 24 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/RE.sql" || { echo "WARNING: RE failed (likely 0 cities or empty), continuing"; true; }
+# RO: 7949 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/RO.sql" || { echo "WARNING: RO failed (likely 0 cities or empty), continuing"; true; }
+# RS: 379 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/RS.sql" || { echo "WARNING: RS failed (likely 0 cities or empty), continuing"; true; }
+# RU: 5523 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/RU.sql" || { echo "WARNING: RU failed (likely 0 cities or empty), continuing"; true; }
+# RW: 12 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/RW.sql" || { echo "WARNING: RW failed (likely 0 cities or empty), continuing"; true; }
+# SA: 399 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SA.sql" || { echo "WARNING: SA failed (likely 0 cities or empty), continuing"; true; }
+# SB: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SB.sql" || { echo "WARNING: SB failed (likely 0 cities or empty), continuing"; true; }
+# SC: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SC.sql" || { echo "WARNING: SC failed (likely 0 cities or empty), continuing"; true; }
+# SD: 71 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SD.sql" || { echo "WARNING: SD failed (likely 0 cities or empty), continuing"; true; }
+# SE: 800 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SE.sql" || { echo "WARNING: SE failed (likely 0 cities or empty), continuing"; true; }
+# SG: 26 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SG.sql" || { echo "WARNING: SG failed (likely 0 cities or empty), continuing"; true; }
+# SI: 312 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SI.sql" || { echo "WARNING: SI failed (likely 0 cities or empty), continuing"; true; }
+# SK: 233 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SK.sql" || { echo "WARNING: SK failed (likely 0 cities or empty), continuing"; true; }
+# SL: 91 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SL.sql" || { echo "WARNING: SL failed (likely 0 cities or empty), continuing"; true; }
+# SM: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SM.sql" || { echo "WARNING: SM failed (likely 0 cities or empty), continuing"; true; }
+# SN: 73 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SN.sql" || { echo "WARNING: SN failed (likely 0 cities or empty), continuing"; true; }
+# SO: 51 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SO.sql" || { echo "WARNING: SO failed (likely 0 cities or empty), continuing"; true; }
+# SR: 13 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SR.sql" || { echo "WARNING: SR failed (likely 0 cities or empty), continuing"; true; }
+# SS: 1 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SS.sql" || { echo "WARNING: SS failed (likely 0 cities or empty), continuing"; true; }
+# ST: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ST.sql" || { echo "WARNING: ST failed (likely 0 cities or empty), continuing"; true; }
+# SV: 100 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SV.sql" || { echo "WARNING: SV failed (likely 0 cities or empty), continuing"; true; }
+# SY: 142 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SY.sql" || { echo "WARNING: SY failed (likely 0 cities or empty), continuing"; true; }
+# SZ: 34 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/SZ.sql" || { echo "WARNING: SZ failed (likely 0 cities or empty), continuing"; true; }
+# TD: 49 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TD.sql" || { echo "WARNING: TD failed (likely 0 cities or empty), continuing"; true; }
+# TF: 5 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TF.sql" || { echo "WARNING: TF failed (likely 0 cities or empty), continuing"; true; }
+# TG: 22 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TG.sql" || { echo "WARNING: TG failed (likely 0 cities or empty), continuing"; true; }
+# TH: 1241 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TH.sql" || { echo "WARNING: TH failed (likely 0 cities or empty), continuing"; true; }
+# TJ: 71 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TJ.sql" || { echo "WARNING: TJ failed (likely 0 cities or empty), continuing"; true; }
+# TL: 55 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TL.sql" || { echo "WARNING: TL failed (likely 0 cities or empty), continuing"; true; }
+# TM: 30 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TM.sql" || { echo "WARNING: TM failed (likely 0 cities or empty), continuing"; true; }
+# TN: 165 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TN.sql" || { echo "WARNING: TN failed (likely 0 cities or empty), continuing"; true; }
+# TO: 8 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TO.sql" || { echo "WARNING: TO failed (likely 0 cities or empty), continuing"; true; }
+# TR: 980 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TR.sql" || { echo "WARNING: TR failed (likely 0 cities or empty), continuing"; true; }
+# TT: 25 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TT.sql" || { echo "WARNING: TT failed (likely 0 cities or empty), continuing"; true; }
+# TV: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TV.sql" || { echo "WARNING: TV failed (likely 0 cities or empty), continuing"; true; }
+# TW: 40 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TW.sql" || { echo "WARNING: TW failed (likely 0 cities or empty), continuing"; true; }
+# TZ: 303 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/TZ.sql" || { echo "WARNING: TZ failed (likely 0 cities or empty), continuing"; true; }
+# UA: 1819 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/UA.sql" || { echo "WARNING: UA failed (likely 0 cities or empty), continuing"; true; }
+# UG: 91 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/UG.sql" || { echo "WARNING: UG failed (likely 0 cities or empty), continuing"; true; }
+# US: 16731 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/US.sql" || { echo "WARNING: US failed (likely 0 cities or empty), continuing"; true; }
+# UY: 2010 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/UY.sql" || { echo "WARNING: UY failed (likely 0 cities or empty), continuing"; true; }
+# UZ: 135 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/UZ.sql" || { echo "WARNING: UZ failed (likely 0 cities or empty), continuing"; true; }
+# VC: 9 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/VC.sql" || { echo "WARNING: VC failed (likely 0 cities or empty), continuing"; true; }
+# VE: 136 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/VE.sql" || { echo "WARNING: VE failed (likely 0 cities or empty), continuing"; true; }
+# VI: 20 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/VI.sql" || { echo "WARNING: VI failed (likely 0 cities or empty), continuing"; true; }
+# VN: 488 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/VN.sql" || { echo "WARNING: VN failed (likely 0 cities or empty), continuing"; true; }
+# VU: 7 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/VU.sql" || { echo "WARNING: VU failed (likely 0 cities or empty), continuing"; true; }
+# WF: 3 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/WF.sql" || { echo "WARNING: WF failed (likely 0 cities or empty), continuing"; true; }
+# WS: 20 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/WS.sql" || { echo "WARNING: WS failed (likely 0 cities or empty), continuing"; true; }
+# XK: 59 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/XK.sql" || { echo "WARNING: XK failed (likely 0 cities or empty), continuing"; true; }
+# YE: 339 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/YE.sql" || { echo "WARNING: YE failed (likely 0 cities or empty), continuing"; true; }
+# YT: 57 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/YT.sql" || { echo "WARNING: YT failed (likely 0 cities or empty), continuing"; true; }
+# ZA: 314 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ZA.sql" || { echo "WARNING: ZA failed (likely 0 cities or empty), continuing"; true; }
+# ZM: 71 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ZM.sql" || { echo "WARNING: ZM failed (likely 0 cities or empty), continuing"; true; }
+# ZW: 109 cities
+wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="migrations/cities/ZW.sql" || { echo "WARNING: ZW failed (likely 0 cities or empty), continuing"; true; }
 
 echo "✅ All cities seeded."
