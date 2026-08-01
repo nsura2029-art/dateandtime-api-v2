@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS countries (
   name                TEXT NOT NULL,                  -- 'United States'
   official_name       TEXT,                           -- 'United States of America'
   capital             TEXT,                           -- 'Washington, D.C.'
-  region_id           INTEGER NOT NULL,
+  region_id           INTEGER,                 -- NULLABLE — Bouvet Island (BV) and Heard Island (HM) have no region in dr5hn
   subregion_id        INTEGER,                 -- NULLABLE — Antarctica has no sub-region
   currency_code       TEXT,                           -- 'ISO 4217 currency code (USD, INR, JPY)
   currency_name       TEXT,                           -- 'US Dollar'

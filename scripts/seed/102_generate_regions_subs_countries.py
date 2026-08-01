@@ -154,11 +154,16 @@ VALUES\n"""
         if c.get('latlng') and len(c['latlng']) == 2:
             lat, lng = c['latlng']
 
+        # dr5hn has 2 territories (BV, HM) with no region_id — they're
+        # sub-Antarctic islands that should be in the 'Polar' region (id=6).
+        # Fall back to 6 if region_id is None.
+        region_id = c.get('region_id') if c.get('region_id') is not None else 6
+
         # Official name: try to construct from native + name, or use name
         official_name = c.get('native') or c.get('name')
 
         row = f"""  ({c['id']}, {escape_sql(c.get('iso2'))}, {escape_sql(c.get('iso3'))}, {escape_sql(c.get('numeric_code'))}, NULL, {escape_sql(c.get('name'))}, {escape_sql(official_name)}, {escape_sql(c.get('capital'))},
-   {sql_num(c.get('region_id'))}, {sql_num(c.get('subregion_id'))}, {escape_sql(c.get('currency'))}, {escape_sql(c.get('currency_name'))}, {escape_sql(c.get('currency_symbol'))},
+   {sql_num(region_id)}, {sql_num(c.get('subregion_id'))}, {escape_sql(c.get('currency'))}, {escape_sql(c.get('currency_name'))}, {escape_sql(c.get('currency_symbol'))},
    {escape_sql(c.get('phonecode'))}, {sql_num(lat)}, {sql_num(lng)}, {sql_num(c.get('area_sq_km'))}, {sql_num(c.get('population'))}, {escape_sql(c.get('tld'))}, {escape_sql(c.get('nationality'))})"""
         rows.append(row)
     sql += ",\n".join(rows) + ";\n"
