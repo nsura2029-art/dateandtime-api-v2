@@ -109,7 +109,7 @@ status.openapi(statusRoute, async (c) => {
           deployedAt,
         },
         database: {
-          binding: "timeandtimepro-full" as const,
+          binding: "timeandtimepro-full-v2" as const,
           connected: true,
           version: c.env.API_VERSION,
           tables,
