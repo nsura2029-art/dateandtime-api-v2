@@ -233,19 +233,29 @@ git checkout -b feature/<name>   # e.g. feature/v25-cities, feature/rate-limit, 
 # 4. Push the branch
 git push -u origin feature/<name>
 
-# 5. Merge to develop
+# 5. AUTOMATED CHECKS + USER FEEDBACK — REQUIRED before merge
+#    Run the full check suite. THEN show the user:
+#      - The diff summary (what changed, line counts)
+#      - The test results (typecheck + lint + test + smoke output)
+#      - Any new endpoints/behavior the user should review
+#      - Screenshots if visual changes
+#    Wait for explicit user approval ("ship it" / "go" / "lgtm" / "merge it") before proceeding.
+#    If the user requests changes, address them in additional commits on the same branch.
+
+# 6. Merge to develop (after user approval)
 git checkout develop
 git merge --no-ff -m "merge: <description> (feature/<name>)" feature/<name>
 git push origin develop
 
-# 6. DELETE the feature branch (local + remote) — they're ephemeral
+# 7. DELETE the feature branch (local + remote) — they're ephemeral
 git branch -d feature/<name>
 git push origin --delete feature/<name>
 
-# 7. Deploy develop to the API Worker in Cloudflare (dev env)
+# 8. Deploy develop to the API Worker in Cloudflare (dev env)
 npm run deploy:dev
 
-# 8. Verify the deploy (curl /api/v1/health, /api/v1/status, new endpoints)
+# 9. Verify the deploy (curl /api/v1/health, /api/v1/status, new endpoints)
+#    AND ask the user to spot-check the dev Worker (give them the URL)
 ```
 
 **Rules (binding):**
@@ -266,15 +276,21 @@ npm run deploy:dev
    - Not found (id that doesn't exist, country code not in DB)
    - Auth/permission failures (if applicable)
 6. **Unit tests for pure functions.** Helpers in `src/lib/` (parsers, formatters, validators) MUST have unit tests in `tests/unit/` (no server required).
-7. **Delete the branch on merge.** Feature branches are ephemeral. Once merged to develop, delete both local and remote copies immediately. This keeps the branch list clean and prevents stale code from being merged later by accident.
-8. **Deploy develop after merge.** After deleting the branch, deploy develop to the dev API Worker (`dt-api-v2-dev`) via `npm run deploy:dev`. Verify the deploy with `curl https://dev.api.dateandtime.live/api/v1/health`.
-9. **Never force-push to develop or main.** Use `--no-ff` for merge commits so the history is preserved.
-10. **Prod deploy is a separate step.** Once develop has been verified in dev for at least 24 hours (or all tests pass), request "ship it" before `npm run deploy:prod`.
+7. **User feedback is part of testing — REQUIRED before merge.** After all automated checks pass, present a clear summary to the user (diff stats, test output, new endpoints, behavior changes) and wait for explicit approval. Automated tests don't catch design issues, naming preferences, or whether the API "feels right" — humans do. The user's feedback may include:
+   - Approval to merge ("ship it", "go", "lgtm", "merge it")
+   - Requested changes (implement in additional commits on the same branch, then re-request feedback)
+   - Questions or clarifications (address before merging)
+   NEVER merge to develop without explicit user approval.
+8. **Delete the branch on merge.** Feature branches are ephemeral. Once merged to develop, delete both local and remote copies immediately. This keeps the branch list clean and prevents stale code from being merged later by accident.
+9. **Deploy develop after merge.** After deleting the branch, deploy develop to the dev API Worker (`dt-api-v2-dev`) via `npm run deploy:dev`. Verify the deploy with `curl https://dev.api.dateandtime.live/api/v1/health` AND ask the user to spot-check it in their browser.
+10. **Never force-push to develop or main.** Use `--no-ff` for merge commits so the history is preserved.
+11. **Prod deploy is a separate step.** Once develop has been verified in dev for at least 24 hours (or all tests pass), request "ship it" before `npm run deploy:prod`.
 
 **Why this workflow:**
 
 - **Ephemeral branches** keep the repo clean. A 6-month-old feature branch is a liability.
-- **Test everything before merge** prevents broken code from reaching develop. CI catches what humans miss.
+- **Automated tests** catch type errors, lint issues, and shape mismatches. They're fast and repeatable.
+- **User feedback** catches design issues, naming, ergonomics, and "feels right" judgments. It MUST happen before merge — never after.
 - **Deploy develop to dev Worker** means every merge is immediately verifiable against real D1 data.
 - **Prod deploy is gated** by the "ship it" rule — never auto-deploy to prod.
 
