@@ -51,12 +51,23 @@ git checkout develop
 
 # Install deps from lock file
 npm ci
+
+# Create .dev.vars (wrangler 4.x requires this file to exist)
+touch .dev.vars
+# Or copy the template and customize:
+# cp .dev.vars.example .dev.vars
 ```
 
 **Why `npm ci` instead of `npm install`?**
 - Uses the exact versions in `package-lock.json` (reproducible)
 - Faster (skips dependency resolution)
 - Doesn't modify `package.json` (no drift)
+
+**Why does `.dev.vars` need to exist?**
+- Wrangler 4.x requires this file (even if empty) for `wrangler dev` to start
+- It's gitignored — `.dev.vars.example` is the template, you copy it to `.dev.vars`
+- For local dev with empty D1, you can have an empty `.dev.vars`
+- For remote D1 mode, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` lines
 
 ---
 

@@ -1,0 +1,21 @@
+# Local dev env vars (wrangler 4.x requires this file to exist, even if empty)
+# Copy this file to .dev.vars and fill in any values you need:
+#   cp .dev.vars.example .dev.vars
+#
+# .dev.vars is gitignored. .dev.vars.example is committed.
+# Never commit your real .dev.vars — it may contain secrets.
+
+# CORS allowed origins (comma-separated). Use "*" for dev only.
+ALLOWED_ORIGINS="*"
+
+# Admin API key (for /api/v1/admin/* endpoints). Leave empty to disable admin routes.
+ADMIN_API_KEY=""
+
+# Log level: debug | info | warn | error
+LOG_LEVEL="debug"
+
+# For wrangler dev --remote mode (uses the deployed Worker's D1):
+# Create a token at https://dash.cloudflare.com/profile/api-tokens
+# Use the "Edit Cloudflare Workers" template.
+# CLOUDFLARE_API_TOKEN="your-NEW-token-here"
+# CLOUDFLARE_ACCOUNT_ID="your-account-id-here"

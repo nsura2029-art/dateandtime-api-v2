@@ -27,6 +27,26 @@ node --version
 # Should print v22.x or higher
 ```
 
+### `Failed to load local dev variables file ".dev.vars"`
+
+**Cause:** Wrangler 4.x requires the `.dev.vars` file to exist (even if empty).
+
+**Fix:**
+```bash
+# Quick fix: create an empty file
+cd /c/dev/dt-live/dateandtime-api-v2
+touch .dev.vars
+
+# Or copy the template (recommended):
+cp .dev.vars.example .dev.vars
+# Then edit .dev.vars to add any env vars you need (CORS, log level, etc.)
+
+# Now wrangler dev will start normally
+npm run dev
+```
+
+The `.dev.vars` file is gitignored (it's for local-only env vars). The template `.dev.vars.example` is committed. For more on what goes in `.dev.vars`, see [setup.md §2](./setup.md#2-clone-the-repo).
+
 ---
 
 ## npm install / lock file
