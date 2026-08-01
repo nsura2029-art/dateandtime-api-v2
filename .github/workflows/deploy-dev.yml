@@ -184,6 +184,12 @@ jobs:
         # 22 Null Island (0,0) cities kept current TZ, flagged for review.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/125_tz_polygon_overrides.sql
 
+      - name: Apply migration 126 (schema enrichment)
+        # Adds 7 new columns to cities (state_code, native, type, level, parent_id, wiki_data_id, flag)
+        # and 4 new tables (postcodes, translations, airports, migrations).
+        # All new columns are NULL until M3-M5 populate them.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/126_schema_enrichment.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
