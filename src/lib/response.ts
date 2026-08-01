@@ -3,7 +3,6 @@
  *
  * Shape: `{ success: true | false, data?: T, error?: { code, message, details? } }`
  */
-import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 export type SuccessResponse<T> = {
@@ -76,10 +75,17 @@ export const Errors = {
   serviceUnavailable: (msg = "Service unavailable") => fail("SERVICE_UNAVAILABLE", msg, 503),
 } as const;
 
-/** Hono middleware: catch ZodError and return 400. */
-export function zodErrorResponse(err: unknown): Response | null {
+/** Zod error shape — return from `zodErrorData` so middleware can build its own response. */
+export type ZodErrorData = { code: "BAD_REQUEST"; message: string; details: unknown };
+
+/** Detect a ZodError and return a serializable error body, or null. */
+export function zodErrorData(err: unknown): ZodErrorData | null {
   if (err && typeof err === "object" && "issues" in err && Array.isArray((err as { issues: unknown[] }).issues)) {
-    return Errors.badRequest("Validation failed", (err as { issues: unknown }).issues);
+    return {
+      code: "BAD_REQUEST",
+      message: "Validation failed",
+      details: (err as { issues: unknown }).issues,
+    };
   }
   return null;
 }
