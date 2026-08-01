@@ -159,8 +159,25 @@ if [ ! -d "node_modules" ] && [ "$NO_BUILD" = "0" ]; then
   if npm ci --no-audit --no-fund > /tmp/npm-ci.log 2>&1; then
     ok "npm ci completed"
   else
-    fail "npm ci failed — see /tmp/npm-ci.log"
-    tail -10 /tmp/npm-ci.log | sed 's/^/    /'
+    # Check if the error is "lock out of sync" — give a specific fix
+    if grep -q "package.json and package-lock.json or npm-shrinkwrap.json are in sync" /tmp/npm-ci.log 2>/dev/null; then
+      fail "npm ci failed: package.json + package-lock.json are out of sync"
+      echo ""
+      echo -e "    ${YELLOW}Fix:${NC} regenerate the lock file from package.json"
+      echo -e "      rm package-lock.json"
+      echo -e "      npm install"
+      echo -e "      git add package-lock.json && git commit -m 'chore: regenerate lock'"
+      echo -e "      git push"
+      echo ""
+      echo -e "    ${YELLOW}Why this happens:${NC}"
+      echo -e "      You (or someone) changed a version range in package.json"
+      echo -e "      (e.g. ^4.19.0 -> ~4.19.0) but didn't regenerate the lock."
+      echo -e "      npm ci requires exact match; only npm install can update the lock."
+      echo ""
+    else
+      fail "npm ci failed — see /tmp/npm-ci.log"
+      tail -10 /tmp/npm-ci.log | sed 's/^/    /'
+    fi
     exit 5
   fi
 else
