@@ -1,91 +1,215 @@
-# tests/ — Vitest tests
+# tests/AGENTS.md
 
-## Purpose
+> Conventions for tests. Read this BEFORE writing any new test file.
+> Sub-context of root AGENTS.md.
 
-Integration tests for the API. Run against a live server (`npm run dev` or remote).
+## Test framework
 
-## Ownership
+- **Vitest 2.1+** — `vitest run` (CI) or `vitest watch` (dev)
+- **In-process app testing** — no real server, no real D1
+- **Hono `app.request()`** — call routes as if they were HTTP requests
 
-| File | Owns |
-|---|---|
-| `<resource>.test.ts` | Integration tests for a resource's endpoints |
+## Directory structure
 
-Future: `unit/` for unit tests (no server), `e2e/` for end-to-end (full D1 + Cloudflare).
+```
+tests/
+├── AGENTS.md                  ← (this file)
+├── setup.ts                   ← Vitest config (alias, env, mocks)
+├── helpers/
+│   ├── create-test-app.ts     ← Build a fresh app instance for each test
+│   ├── create-mock-db.ts      ← In-memory D1 mock (or fixture)
+│   └── fixtures.ts            ← Pre-populated test data
+├── unit/
+│   ├── daos/
+│   │   ├── cities.test.ts
+│   │   └── countries.test.ts
+│   ├── formatters/
+│   └── validators/
+├── integration/
+│   ├── health.test.ts
+│   ├── status.test.ts
+│   └── routes/
+│       ├── cities.test.ts
+│       └── countries.test.ts
+└── e2e/                       ← (planned) Playwright for full app
+```
 
-## Local Contracts
+## In-process D1 mock
 
-### Integration test pattern
-
-Tests run against `http://localhost:8787` by default, or `$API_URL` if set. Each test file:
-
-1. Checks if the server is reachable in `beforeAll`.
-2. If not reachable, **skips** the tests with a warning (so CI can run without a server).
-3. Otherwise, makes real HTTP requests and asserts on the response.
+D1 doesn't run locally, so we mock the binding for tests:
 
 ```ts
-import { describe, it, expect, beforeAll } from "vitest";
+// tests/helpers/create-mock-db.ts
+import { vi } from 'vitest';
 
-const BASE_URL = process.env.API_URL ?? "http://localhost:8787";
-
-async function isServerUp(url: string): Promise<boolean> {
-  try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(1000) });
-    return r.status < 500;
-  } catch {
-    return false;
-  }
+export function createMockDb(overrides: Partial<D1Database> = {}): D1Database {
+  return {
+    prepare: vi.fn().mockReturnValue({
+      bind: vi.fn().mockReturnThis(),
+      all: vi.fn().mockResolvedValue({ results: [], success: true, meta: {} }),
+      first: vi.fn().mockResolvedValue(null),
+      run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 0 } }),
+    }),
+    dump: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue({ count: 0, duration: 0 }),
+    ...overrides,
+  } as unknown as D1Database;
 }
+```
 
-describe("cities (integration)", () => {
-  let serverUp = false;
+For tests that need real SQL behavior, use `better-sqlite3` in-memory DB and shim D1 API.
 
-  beforeAll(async () => {
-    serverUp = await isServerUp(BASE_URL);
-    if (!serverUp) {
-      console.warn(`⚠️  Server not reachable at ${BASE_URL} — tests will skip.`);
-    }
+## In-process Hono test
+
+```ts
+// tests/integration/health.test.ts
+import { describe, it, expect } from 'vitest';
+import { app } from '../../src/index';
+import { createMockDb } from '../helpers/create-mock-db';
+
+describe('GET /api/v1/health', () => {
+  it('returns 200 with DB stats', async () => {
+    const env = { DB: createMockDb() };
+    const res = await app.request('/api/v1/health', { method: 'GET' }, env);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('database');
+    expect(body.database).toHaveProperty('regions');
   });
 
-  it("GET /api/v1/cities returns paginated list", async () => {
-    if (!serverUp) return;
-    const r = await fetch(`${BASE_URL}/api/v1/cities?limit=2`);
-    expect(r.status).toBe(200);
-    const body = await r.json();
-    expect(body.success).toBe(true);
-    expect(body.data.items.length).toBe(2);
-    expect(body.data.pagination.total).toBeGreaterThan(0);
+  it('returns 503 when DB is unavailable', async () => {
+    const env = { DB: createMockDb({ prepare: () => { throw new Error('DB unavailable'); } }) };
+    const res = await app.request('/api/v1/health', { method: 'GET' }, env);
+    expect(res.status).toBe(503);
+  });
+
+  it('HEAD returns 200 with no body', async () => {
+    const env = { DB: createMockDb() };
+    const res = await app.request('/api/v1/health', { method: 'HEAD' }, env);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toBe('');
   });
 });
 ```
 
-### Test categories
+## Edge case coverage (binding)
 
-| Category | Purpose | Server needed? |
-|---|---|---|
-| Integration (this dir) | Test the full HTTP stack + real D1 | Yes (skips if not) |
-| Unit (future `unit/`) | Test pure functions in `src/lib/` | No |
-| E2E (future `e2e/`) | Test deploy flows | Yes (deployed) |
+Every endpoint MUST cover:
+1. **Happy path** — typical valid request
+2. **Boundary** — empty result, max limit, exact match
+3. **Invalid input** — bad query params, missing required fields
+4. **Not found** — valid request, no matching data
+5. **Auth (if applicable)** — missing/invalid token
+6. **Error path** — DB unavailable, internal error
 
-## Work Guidance
+Example:
 
-### Adding tests for a new resource
-
-1. Create `tests/<resource>.test.ts`.
-2. Mirror the resource's routes (one test per endpoint).
-3. Cover happy path + at least one error case (400, 404).
-4. Use `isServerUp` so tests skip if no server.
-
-### Adding a test that needs the remote D1
-
-Set `API_URL=https://api-v2.dateandtime.live npm test`. Tests will run against the deployed API instead of local.
-
-## Verification
-
-```bash
-npm test                # runs all tests, skips if no server
-npm test -- tests/cities.test.ts  # run a specific file
+```ts
+describe('GET /api/v1/cities', () => {
+  it('returns 200 with paginated cities (happy path)', ...);
+  it('returns empty array when no matches (boundary)', ...);
+  it('returns 400 for invalid country code (invalid input)', ...);
+  it('returns 400 for negative limit (invalid input)', ...);
+  it('defaults limit=50 when not specified (default)', ...);
+  it('filters by country=US correctly (filter)', ...);
+  it('returns 503 when DB unavailable (error path)', ...);
+});
 ```
 
-## Child DOX Index
+## Coverage targets
 
-No children.
+- **Unit tests:** 100% for pure functions (DAOs, formatters, validators)
+- **Integration tests:** Every endpoint has at least 1 test
+- **Edge cases:** Every endpoint covers all 6 categories above
+
+## Vitest config
+
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./tests/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.test.ts', 'src/index.ts'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 75,
+        statements: 80,
+      },
+    },
+  },
+});
+```
+
+## Mocking Cloudflare APIs
+
+For tests that need to mock KV, R2, etc.:
+
+```ts
+import { vi } from 'vitest';
+
+const mockKV = {
+  get: vi.fn().mockResolvedValue('mock-value'),
+  put: vi.fn().mockResolvedValue(undefined),
+  delete: vi.fn().mockResolvedValue(undefined),
+  list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+};
+```
+
+## Smoke test (npm run smoke)
+
+A separate `tests/smoke.test.ts` that runs against the live dev Worker:
+
+```ts
+import { describe, it, expect } from 'vitest';
+
+const BASE_URL = process.env.SMOKE_URL || 'http://localhost:8787';
+
+describe.skipIf(!process.env.SMOKE_URL)('smoke', () => {
+  it('health endpoint responds', async () => {
+    const res = await fetch(`${BASE_URL}/api/v1/health`);
+    expect(res.status).toBe(200);
+  });
+});
+```
+
+`describe.skipIf` lets the test skip cleanly when no server is available (matches
+`npm run dev:remote` for local dev).
+
+## Running tests
+
+```bash
+npm test              # vitest run
+npm run test:watch    # vitest watch
+npm run test:cov      # vitest run --coverage
+npm run smoke         # vitest run tests/smoke.test.ts
+```
+
+## Common gotchas
+
+- **Test isolation** — each test should create its own app/DB instance. Use `beforeEach`.
+- **Async cleanup** — call `await app.close()` if your app holds resources.
+- **Floating promises** — Vitest doesn't warn about them by default. Use `no-floating-promises` ESLint rule.
+- **Hono context** — when testing middleware, the `c.env` is whatever you pass as the 3rd
+  arg to `app.request()`. Don't rely on process.env.
+- **Time-dependent tests** — use `vi.useFakeTimers()` for tests that depend on `Date.now()`.
+
+## Adding a new test (checklist)
+
+1. Identify the test type: unit (pure function), integration (route + DB), e2e (full app)
+2. Add to the right directory: `tests/unit/`, `tests/integration/`, or `tests/e2e/`
+3. Cover all 6 edge cases (happy, boundary, invalid, not-found, auth, error)
+4. Use `createMockDb()` for DB-bound tests
+5. Use `app.request()` for HTTP testing (no real server)
+6. Run `npm run test:cov` to check coverage stays > 80%
+7. Commit on the same `feature/*` branch as the code change
