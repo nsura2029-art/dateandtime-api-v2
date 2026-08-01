@@ -44,6 +44,10 @@ echo "=== Health + version ==="
 check "API root"        GET  "/"                          200
 check "Health"          GET  "/api/v1/health"              200
 check "Health HEAD"     HEAD "/api/v1/health"              200
+check "Status"          GET  "/api/v1/status"              200
+check "Status HEAD"     HEAD "/api/v1/status"              200
+check "OpenAPI spec"    GET  "/openapi.json"               200
+check "Swagger UI"      GET  "/docs"                       200
 
 echo ""
 echo "=== Cities (Phase 1) ==="

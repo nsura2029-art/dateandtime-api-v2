@@ -1,19 +1,21 @@
 /**
  * dateandtime-api-v2 — entry point.
  *
- * Routes are registered as sub-apps; each owns its prefix.
- * See `src/routes/*` for the actual handlers.
+ * Uses OpenAPIHono (extends Hono) so all routes can be introspected
+ * for the /openapi.json spec and /docs Swagger UI.
  */
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { logger } from "@/middleware/logger";
 import { errorHandler, notFoundHandler } from "@/middleware/error-handler";
 import { handleCorsPreflight, getCorsHeaders } from "@/config/cors";
 import { loadEnv } from "@/config/env";
 import health from "@/routes/health";
+import status from "@/routes/status";
+import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
 
-const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+const app = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
 
 // ============================================================================
 // Middleware (order matters)
@@ -31,9 +33,11 @@ app.options("*", (c) => {
 // ============================================================================
 // Routes
 // ============================================================================
-app.route("/", health); // / and /api/v1/health
+app.route("/", health); // GET / and GET /api/v1/health
+app.route("/", status); // GET /api/v1/status
 
-// Future: app.route("/", cities); app.route("/", countries); etc.
+// OpenAPI + Swagger UI
+registerDocs(app);
 
 // ============================================================================
 // CORS headers on every response

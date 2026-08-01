@@ -2,7 +2,7 @@
 
 ## Purpose
 
-One file per API resource. Each file exports a Hono sub-app that owns all endpoints for that resource (e.g. `cities.ts` owns every `/api/v1/cities/*` endpoint).
+One file per API resource. Each file exports an `OpenAPIHono` sub-app that owns all endpoints for that resource (e.g. `cities.ts` owns every `/api/v1/cities/*` endpoint). Endpoints are defined via `createRoute()` from `@hono/zod-openapi` for auto-generated OpenAPI docs.
 
 ## Ownership
 
@@ -19,29 +19,34 @@ Routes own HTTP shape, not business logic. Business logic (D1 queries, validatio
  *   GET  /api/v1/<resource>/:id         — <one-line description>
  *   POST /api/v1/<resource>             — <one-line description>
  */
-import { Hono } from "hono";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { z } from "zod";
-import { success, fail, paginate, Errors } from "@/lib/response";
+import { success, paginate, Errors } from "@/lib/response";
 import { Cities } from "@/lib/db";
-import { PaginationQuery, Cca2Param, ... } from "@/lib/validation";
+import { City, CityQuery, CityParams, ErrorResponse, listResponse, singleResponse } from "@/lib/schemas";
 import type { Env, Variables } from "@/types/env";
 
-const <resource> = new Hono<{ Bindings: Env; Variables: Variables }>();
+const <resource> = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
 
-/** <One-line description of the endpoint> */
-<resource>.get("/api/v1/<resource>", async (c) => {
-  const { limit, offset } = c.req.valid("query");  // or c.req.query() for inline
-  const items = await <Resource>.list(c.env.DB, { limit, offset });
-  const total = await <Resource>.count(c.env.DB);
-  return paginate(items, { total, limit, offset });
+// Define route via createRoute() — generates OpenAPI metadata
+const listRoute = createRoute({
+  method: "get",
+  path: "/api/v1/<resource>",
+  summary: "List <resource> (paginated)",
+  description: "Returns a paginated list of <resource> with optional filters",
+  tags: ["<Resource>"],
+  request: { query: CityQuery },
+  responses: {
+    200: { content: { "application/json": { schema: listResponse(City) } }, description: "OK" },
+    400: { content: { "application/json": { schema: ErrorResponse } }, description: "Bad request" },
+  },
 });
 
-/** <One-line description> */
-<resource>.get("/api/v1/<resource>/:id", async (c) => {
-  const id = NumericIdParam.parse(c.req.param("id"));
-  const item = await <Resource>.byId(c.env.DB, id);
-  if (!item) return Errors.notFound(`City ${id} not found`);
-  return success({ city: item });
+<resource>.openapi(listRoute, async (c) => {
+  const { limit, offset, country, tz, sort, order } = c.req.valid("query");
+  const items = await Cities.list(c.env.DB, { limit, offset, country, tz, sort, order });
+  const total = await Cities.count(c.env.DB, { country, tz });
+  return c.json({ success: true, data: { items, pagination: { total, limit, offset, hasMore: offset + items.length < total } } });
 });
 
 // HEAD probe for boot-time feature detection
