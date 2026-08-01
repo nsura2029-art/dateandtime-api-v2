@@ -11,16 +11,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
     "lib": ["esnext"],
-    "types": ["@cloudflare/workers-types", "vitest/globals"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "types": ["node"]
   },
-  "include": ["src/**/*", "tests/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist", ".wrangler", "scripts/**/*"]
+  "include": ["scripts/**/*"],
+  "exclude": ["node_modules"]
 }
