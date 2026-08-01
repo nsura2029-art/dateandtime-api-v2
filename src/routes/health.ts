@@ -10,7 +10,7 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { z } from "zod";
 import { HealthResponse, ErrorResponse } from "@/lib/schemas";
-import { Cities, Countries, Timezones, Otd, CityAliases } from "@/lib/db";
+import { Regions, Subregions, Countries, AdminRegions, Cities, Timezones } from "@/lib/db";
 import type { Env, Variables } from "@/types/env";
 
 const health = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
@@ -64,28 +64,21 @@ health.openapi(rootRoute, async (c) => {
         endpoints: {
           health: "/api/v1/health",
           status: "/api/v1/status",
-          cities: "/api/v1/cities",
-          citiesById: "/api/v1/cities/:id",
-          citiesSearch: "/api/v1/cities/search",
-          citiesNear: "/api/v1/cities/near",
-          citiesClimate: "/api/v1/cities/:id/climate",
-          citiesAliases: "/api/v1/cities/:id/aliases",
+          // Phase 1 (data layer)
+          regions: "/api/v1/regions",
+          regionsSubregions: "/api/v1/regions/:code/subregions",
+          subregionsCountries: "/api/v1/subregions/:code/countries",
           countries: "/api/v1/countries",
           countryByCca2: "/api/v1/countries/:cca2",
-          countryCities: "/api/v1/countries/:cca2/cities",
-          countryWorkingHours: "/api/v1/countries/:cca2/working-hours",
+          countryStates: "/api/v1/countries/:cca2/states",
+          cityById: "/api/v1/cities/:id",
+          cities: "/api/v1/cities",
+          citiesSearch: "/api/v1/cities/search",
+          citiesNear: "/api/v1/cities/near",
+          // Phase 2+
+          search: "/api/v1/search",
           timezones: "/api/v1/timezones",
           timezoneById: "/api/v1/timezones/:id",
-          timeNow: "/api/v1/time/now",
-          timeSun: "/api/v1/time/sun",
-          holidays: "/api/v1/holidays",
-          holidaysToday: "/api/v1/holidays/today",
-          holidaysUpcoming: "/api/v1/holidays/upcoming",
-          onthisday: "/api/v1/onthisday",
-          dstUpcoming: "/api/v1/dst/upcoming",
-          popularCities: "/api/v1/popular/cities",
-          popularDefaults: "/api/v1/popular/defaults",
-          search: "/api/v2/search",
         },
       },
     },
@@ -101,9 +94,9 @@ const healthRoute = createRoute({
   path: "/api/v1/health",
   summary: "Health check (DB stats + latency)",
   description:
-    "Returns the API's liveness + the connected D1's row counts for each main table " +
-    "(`cities`, `countries`, `timezones`, `onthisday`, `city_aliases`) and the round-trip " +
-    "query latency in ms. Use this for uptime monitoring dashboards.\n\n" +
+    "Returns the API's liveness + row counts for each main table " +
+    "(`regions`, `subregions`, `countries`, `administrative_regions`, `cities`, `time_zones`) " +
+    "and the round-trip query latency in ms.\n\n" +
     "For deeper runtime/build info, use /api/v1/status.",
   tags: ["Meta"],
   responses: {
@@ -113,19 +106,20 @@ const healthRoute = createRoute({
     },
     503: {
       content: { "application/json": { schema: ErrorResponse } },
-      description: "DB unreachable or tables missing (e.g. local D1 with no migrations)",
+      description: "DB unreachable or tables missing",
     },
   },
 });
 
 health.openapi(healthRoute, async (c) => {
   const start = Date.now();
-  const [cities, countries, tzs, otd, aliases] = await Promise.all([
-    Cities.count(c.env.DB),
+  const [regions, subregions, countries, adminRegions, cities, timezones] = await Promise.all([
+    Regions.count(c.env.DB),
+    Subregions.count(c.env.DB),
     Countries.count(c.env.DB),
+    AdminRegions.count(c.env.DB),
+    Cities.count(c.env.DB),
     Timezones.count(c.env.DB),
-    Otd.count(c.env.DB),
-    CityAliases.count(c.env.DB),
   ]);
   const latencyMs = Date.now() - start;
 
@@ -134,7 +128,14 @@ health.openapi(healthRoute, async (c) => {
       success: true as const,
       data: {
         status: "ok" as const,
-        db: { cities, countries, timezones: tzs, onthisday: otd, cityAliases: aliases },
+        db: {
+          regions,
+          subregions,
+          countries,
+          administrativeRegions: adminRegions,
+          cities,
+          timezones,
+        },
         dbVersion: c.env.API_VERSION,
         apiVersion: c.env.API_VERSION,
         env: c.env.API_NAME,

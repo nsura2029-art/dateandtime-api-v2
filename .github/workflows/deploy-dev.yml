@@ -1,0 +1,127 @@
+# .github/workflows/deploy-dev.yml
+#
+# Deploy the Worker to dt-api-v2-dev on every push to develop.
+# Also applies D1 migrations to timeandtimepro-full-v2.
+#
+# Required secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   - Cloudflare API token (Account: D1:Edit, Workers Scripts:Edit, Account Settings:Read)
+#   CLOUDFLARE_ACCOUNT_ID  - Cloudflare account ID (e.g. f0de6c4b68becd81e60507ecf9410199)
+#
+# Usage: just push to develop. No manual action needed.
+
+name: Deploy to dt-api-v2-dev
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:  # allow manual trigger from GitHub UI
+
+# Cancel in-progress runs when a new commit is pushed
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Apply migrations + deploy Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      DB_NAME: timeandtimepro-full-v2
+      WRANGLER_ENV: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify wrangler + auth
+        run: |
+          npx wrangler --version
+          npx wrangler whoami
+
+      - name: Apply schema migrations
+        run: |
+          echo "Applying 101_create_schema.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/101_create_schema.sql
+
+          echo "Applying 102_seed_regions.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/102_seed_regions.sql
+
+          echo "Applying 103_seed_subregions.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/103_seed_subregions.sql
+
+          echo "Applying 104_seed_countries.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/104_seed_countries.sql
+
+          echo "Applying 105_seed_admin_regions.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/105_seed_admin_regions.sql
+
+          echo "Applying 106_seed_time_zones.sql..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/106_seed_time_zones.sql
+
+      - name: Apply cities (if any .sql files exist)
+        run: |
+          CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
+          if [ "$CITY_COUNT" -lt 200 ]; then
+            echo "::warning::Only $CITY_COUNT city files found (expected 223+). Skipping cities apply."
+            echo "If you want to apply cities, generate them locally with:"
+            echo "  py scripts/seed/107_generate_cities.py"
+            echo "Then commit and push the migrations/cities/*.sql files."
+            exit 0
+          fi
+
+          echo "Cleaning cities table..."
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --yes --command="DELETE FROM cities;"
+
+          echo "Applying $CITY_COUNT city files (~5-15 min)..."
+          DB_NAME="$DB_NAME" REMOTE=1 bash migrations/cities/run-all.sh
+
+      - name: Verify counts
+        run: |
+          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --json --command="
+            SELECT 'regions' AS t, COUNT(*) AS n FROM regions
+            UNION SELECT 'subregions', COUNT(*) FROM subregions
+            UNION SELECT 'countries', COUNT(*) FROM countries
+            UNION SELECT 'admin', COUNT(*) FROM administrative_regions
+            UNION SELECT 'cities', COUNT(*) FROM cities
+            UNION SELECT 'time_zones', COUNT(*) FROM time_zones;"
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test -- --run
+
+      - name: Sync README
+        run: npm run sync:readme
+
+      - name: Deploy to dev Worker
+        run: npx wrangler deploy --env "$WRANGLER_ENV"
+
+      - name: Smoke test
+        run: |
+          sleep 5  # give the Worker a moment to start
+          curl -sf https://dt-api-v2-dev.nsura2029.workers.dev/api/v1/health > smoke.json
+          cat smoke.json
+          echo ""
+          echo "Smoke test passed!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed. See logs above."
+          echo "Check: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
