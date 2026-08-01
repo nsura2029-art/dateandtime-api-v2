@@ -24,7 +24,10 @@
     "migrate:prod": "wrangler d1 execute timeandtimepro-full --file=migrations/000_initial.sql",
     "smoke": "bash scripts/test-endpoints.sh",
     "sync:readme": "bash scripts/sync-readme.sh",
-    "sync:readme:check": "bash scripts/sync-readme.sh --check"
+    "sync:readme:check": "bash scripts/sync-readme.sh --check",
+    "verify": "bash scripts/verify-and-run.sh",
+    "verify:checks": "bash scripts/verify-and-run.sh --checks-only",
+    "verify:server": "bash scripts/verify-and-run.sh --server-only"
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.16.0",
