@@ -14,13 +14,14 @@ Usage:
 import json
 import urllib.request
 import sys
+import tempfile
 from pathlib import Path
 
 DOWNLOAD_URL = (
     "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/"
     "master/json/countries+states+cities.json"
 )
-TMP_FILE = "/tmp/countries-states-cities.json"
+TMP_FILE = str(Path(tempfile.gettempdir()) / "countries-states-cities.json")
 OUTPUT = "migrations/105_seed_admin_regions.sql"
 
 

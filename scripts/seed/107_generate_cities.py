@@ -19,6 +19,7 @@ Usage:
 import json
 import urllib.request
 import os
+import tempfile
 from pathlib import Path
 from collections import defaultdict
 
@@ -26,7 +27,8 @@ DOWNLOAD_URL = (
     "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/"
     "master/json/countries+states+cities.json"
 )
-TMP_FILE = "/tmp/countries-states-cities.json"
+# Use OS-appropriate temp dir (works on Windows, macOS, Linux)
+TMP_FILE = str(Path(tempfile.gettempdir()) / "countries-states-cities.json")
 OUTPUT_DIR = Path("migrations/cities")
 
 
@@ -99,7 +101,7 @@ def main():
         "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/"
         "master/json/countries+cities.json"
     )
-    cities_simple_tmp = "/tmp/countries-cities.json"
+    cities_simple_tmp = str(Path(tempfile.gettempdir()) / "countries-cities.json")
     if not os.path.exists(cities_simple_tmp):
         print(f"  Downloading {cities_simple_url}...")
         urllib.request.urlretrieve(cities_simple_url, cities_simple_tmp)

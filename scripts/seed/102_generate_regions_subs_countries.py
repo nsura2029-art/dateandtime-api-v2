@@ -13,6 +13,7 @@ Usage:
 import json
 import urllib.request
 import sys
+import tempfile
 from pathlib import Path
 
 # UN M49 codes for regions (per UN Statistics Division)
@@ -84,27 +85,30 @@ def sql_num(v) -> str:
 
 
 def main():
+    # Use OS-appropriate temp dir (works on Windows, macOS, Linux)
+    tmp = Path(tempfile.gettempdir())
+
     # Download the source JSON files
     print("=== Downloading dr5hn source data ===")
     download(
         "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/master/json/regions.json",
-        "/tmp/regions.json"
+        str(tmp / "regions.json")
     )
     download(
         "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/master/json/subregions.json",
-        "/tmp/subregions.json"
+        str(tmp / "subregions.json")
     )
     download(
         "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/master/json/countries.json",
-        "/tmp/countries.json"
+        str(tmp / "countries.json")
     )
 
     # Load
-    with open('/tmp/regions.json') as f:
+    with open(tmp / "regions.json") as f:
         regions = json.load(f)
-    with open('/tmp/subregions.json') as f:
+    with open(tmp / "subregions.json") as f:
         subregions = json.load(f)
-    with open('/tmp/countries.json') as f:
+    with open(tmp / "countries.json") as f:
         countries = json.load(f)
 
     # === 102_seed_regions.sql ===
