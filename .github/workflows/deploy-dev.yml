@@ -133,6 +133,11 @@ jobs:
         # GeoNames cities1000. Idempotent: resets flags then re-applies.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/114_set_capitals_from_geonames.sql
 
+      - name: Apply migration 115 (alt-name matched capitals)
+        # Adds ~108 more state/country capitals via alt-name matching
+        # (Bogotá→Bogota, São Paulo→Sao Paulo, etc.)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/115_alt_name_capitals.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
