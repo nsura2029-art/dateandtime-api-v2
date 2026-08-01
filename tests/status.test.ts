@@ -102,6 +102,33 @@ describe("openapi + docs (integration)", () => {
     expect(urls).toContain("http://localhost:8787");
   });
 
+  it("openapi.json includes / and /api/v1/health in the Meta tag", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as {
+      paths: Record<string, Record<string, { tags?: string[]; summary?: string }>>;
+    };
+    // Both endpoints should be in the OpenAPI spec and tagged as Meta
+    expect(spec.paths["/"]).toBeDefined();
+    expect(spec.paths["/"]?.get?.tags).toContain("Meta");
+    expect(spec.paths["/"]?.get?.summary).toBeTruthy();
+    expect(spec.paths["/api/v1/health"]).toBeDefined();
+    expect(spec.paths["/api/v1/health"]?.get?.tags).toContain("Meta");
+    expect(spec.paths["/api/v1/health"]?.get?.summary).toBeTruthy();
+  });
+
+  it("openapi.json has response schemas on health (200 + 503)", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as {
+      paths: Record<string, Record<string, { responses: Record<string, { description: string }> }>>;
+    };
+    const healthResponses = spec.paths["/api/v1/health"]?.get?.responses;
+    expect(healthResponses).toBeDefined();
+    expect(healthResponses?.["200"]).toBeDefined();
+    expect(healthResponses?.["503"]).toBeDefined();
+  });
+
   it("GET /docs returns the Swagger UI HTML", async () => {
     if (!serverUp) return;
     const r = await fetch(`${BASE_URL}/docs`);
