@@ -118,6 +118,16 @@ jobs:
             echo "::notice::migrations/111_seed_alt_names.sql not found, skipping GeoNames alt names seed. To enable, run scripts/seed/alt_names.py locally and commit the file."
           fi
 
+      - name: Apply migration 112 (seed population from GeoNames)
+        # 124,561 cities with population from GeoNames cities1000.
+        # Idempotent: re-applying overwrites the same values.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/112_seed_population.sql
+
+      - name: Apply migration 113 (re-tier by population)
+        # Reclassifies tier1 (pop>4M), tier2 (1M-4M + capitals), tier3 (rest).
+        # Idempotent: resets tier to NULL first, then re-applies rules.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/113_retier_by_population.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
