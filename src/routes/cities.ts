@@ -43,6 +43,10 @@ const CitySearchResult = z.object({
   id: z.number().describe("City ID (dr5hn)"),
   name: z.string().describe("City name (any script)"),
   asciiName: z.string().nullable().describe("ASCII transliteration"),
+  native: z.string().nullable().describe("Local name in native script (dr5hn)"),
+  stateCode: z.string().nullable().describe("State/province code, e.g. 'FL'"),
+  type: z.string().nullable().describe("dr5hn type: city, adm2, district, etc."),
+  wikiDataId: z.string().nullable().describe("Wikidata QID"),
   tier: z.string().nullable().describe("tier1 (capital) | tier2 (top 3) | tier3 (rest)"),
   capitalType: z.string().nullable().describe("country_capital | state_capital | both | null"),
   isCountryCapital: z.boolean(),
@@ -90,10 +94,25 @@ const searchQuery = z.object({
 // ============================================================================
 // City detail schema
 // ============================================================================
+const PostcodeSample = z.object({
+  code: z.string(),
+  localityName: z.string().nullable(),
+  type: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+});
+
 const CityDetail = z.object({
   id: z.number(),
   name: z.string(),
   asciiName: z.string().nullable(),
+  native: z.string().nullable().describe("Local name in native script (dr5hn)"),
+  stateCode: z.string().nullable().describe("State/province code, e.g. 'FL' (dr5hn)"),
+  type: z.string().nullable().describe("dr5hn type: city, adm2, district, etc."),
+  level: z.number().nullable().describe("Administrative level (1, 2, 3)"),
+  parentId: z.number().nullable().describe("Parent city id (for hierarchy)"),
+  wikiDataId: z.string().nullable().describe("Wikidata QID, e.g. 'Q3459226'"),
+  flag: z.boolean().describe("1 = active, 0 = deprecated"),
   tier: z.string().nullable(),
   capitalType: z.string().nullable(),
   isCountryCapital: z.boolean(),
@@ -116,6 +135,10 @@ const CityDetail = z.object({
     language: z.string().nullable(),
     type: z.string(),
   })).describe("Other names (transliterations, alternates) — Phase 2.5 will add more languages"),
+  postcodes: z.object({
+    total: z.number().describe("Total postcodes for this city (state-scoped)"),
+    sample: z.array(PostcodeSample).describe("First 5 postcodes as preview"),
+  }).nullable().describe("Postal codes (M4: dr5hn postcodes.json)"),
 });
 
 const CityDetailResponse = z.object({
@@ -168,6 +191,10 @@ type RawResult = {
   city_id: number;
   city_name: string;
   ascii_name: string | null;
+  native: string | null;
+  state_code: string | null;
+  type: string | null;
+  wiki_data_id: string | null;
   tier: string | null;
   capital_type: string | null;
   is_country_capital: number;
@@ -299,7 +326,8 @@ cities.openapi(searchRoute, async (c) => {
   // escapes the * wildcard. The query is already sanitized above.
   const sql = `
     SELECT
-      ci.id as city_id, ci.name as city_name, ci.ascii_name,
+      ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.native,
+      ci.state_code, ci.type, ci.wiki_data_id,
       ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
       ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
       co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
@@ -420,6 +448,10 @@ cities.openapi(searchRoute, async (c) => {
     id: r.city_id,
     name: r.city_name,
     asciiName: r.ascii_name,
+    native: r.native,
+    stateCode: r.state_code,
+    type: r.type,
+    wikiDataId: r.wiki_data_id,
     tier: r.tier,
     capitalType: r.capital_type,
     isCountryCapital: r.is_country_capital === 1,
@@ -474,7 +506,8 @@ const cityDetailRoute = createRoute({
   summary: "Get city detail by ID",
   description:
     "Returns the full record for a single city: name, country, admin region, " +
-    "timezone, capital status, tier, and known place names.",
+    "timezone, capital status, tier, dr5hn enrichment (type, native, stateCode, " +
+    "wikiDataId, parentId), known place names, and postcodes (sample + total).",
   tags: ["Cities"],
   request: {
     params: z.object({ id: z.coerce.number().int().positive() }),
@@ -490,7 +523,8 @@ cities.openapi(cityDetailRoute, async (c) => {
 
   const sql = `
     SELECT
-      ci.id, ci.name, ci.ascii_name, ci.tier, ci.capital_type,
+      ci.id, ci.name, ci.ascii_name, ci.native, ci.state_code, ci.type, ci.level,
+      ci.parent_id, ci.wiki_data_id, ci.flag, ci.tier, ci.capital_type,
       ci.is_country_capital, ci.is_state_capital,
       ci.latitude, ci.longitude, ci.population, ci.elevation,
       ci.disputed, ci.claimed_by, ci.source_id, ci.source_version,
@@ -510,6 +544,13 @@ cities.openapi(cityDetailRoute, async (c) => {
     id: number;
     name: string;
     ascii_name: string | null;
+    native: string | null;
+    state_code: string | null;
+    type: string | null;
+    level: number | null;
+    parent_id: number | null;
+    wiki_data_id: string | null;
+    flag: number | null;
     tier: string | null;
     capital_type: string | null;
     is_country_capital: number;
@@ -554,6 +595,32 @@ cities.openapi(cityDetailRoute, async (c) => {
     type: n.name_type,
   }));
 
+  // Get postcodes (M4) — scoped to country + state for accuracy
+  // (dr5hn postcodes have NULL city_id, so we use state as the proxy)
+  let postcodesData: { total: number; sample: Array<{ code: string; localityName: string | null; type: string | null; latitude: number | null; longitude: number | null }> } | null = null;
+  if (row.ar_id && row.co_id) {
+    const totalResult = await c.env.DB.prepare(
+      `SELECT COUNT(*) as n FROM postcodes WHERE country_id = ? AND state_id = ?`
+    ).bind(row.co_id, row.ar_id).first<{ n: number }>();
+    const sampleResult = await c.env.DB.prepare(
+      `SELECT code, locality_name, type, latitude, longitude
+       FROM postcodes
+       WHERE country_id = ? AND state_id = ?
+       ORDER BY id
+       LIMIT 5`
+    ).bind(row.co_id, row.ar_id).all<{ code: string; locality_name: string | null; type: string | null; latitude: number | null; longitude: number | null }>();
+    postcodesData = {
+      total: totalResult?.n ?? 0,
+      sample: (sampleResult.results || []).map((p) => ({
+        code: p.code,
+        localityName: p.locality_name,
+        type: p.type,
+        latitude: p.latitude,
+        longitude: p.longitude,
+      })),
+    };
+  }
+
   return c.json(
     {
       success: true as const,
@@ -561,6 +628,13 @@ cities.openapi(cityDetailRoute, async (c) => {
         id: row.id,
         name: row.name,
         asciiName: row.ascii_name,
+        native: row.native,
+        stateCode: row.state_code,
+        type: row.type,
+        level: row.level,
+        parentId: row.parent_id,
+        wikiDataId: row.wiki_data_id,
+        flag: row.flag === 1,
         tier: row.tier,
         capitalType: row.capital_type,
         isCountryCapital: row.is_country_capital === 1,
@@ -593,6 +667,7 @@ cities.openapi(cityDetailRoute, async (c) => {
           version: row.source_version,
         },
         placeNames,
+        postcodes: postcodesData,
       },
     },
     200

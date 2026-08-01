@@ -219,6 +219,19 @@ jobs:
       - name: Apply migration 127c (set flag default)
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/127c_set_flag_default.sql
 
+      - name: Apply migration 128 (postcodes nearest_city_id column)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/128_postcodes_nearest_city.sql
+
+      - name: Apply migration 129 (postcodes import 20 parts)
+        run: |
+          for i in $(seq -f "%02g" 1 20); do
+            echo "Applying 129_postcodes_pt${i}.sql..."
+            npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file="migrations/129_parts/129_postcodes_pt${i}.sql"
+          done
+
+      - name: Apply migration 129a (postcodes index cleanup)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/129a_postcodes_index_cleanup.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
