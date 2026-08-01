@@ -103,6 +103,51 @@ info "Pre-flight checks"
 hr
 echo ""
 
+# Node version check — fail fast with a clear message
+if command -v node >/dev/null 2>&1; then
+  NODE_MAJOR=$(node -v | sed -E 's/^v([0-9]+).*/\1/')
+  NODE_FULL=$(node -v)
+  if [ "$NODE_MAJOR" = "23" ]; then
+    echo -e "  ${RED}✗${NC} Node $NODE_FULL detected (odd-numbered = 'current' release, not LTS)"
+    echo -e "    ${YELLOW}wrangler + some eslint deps require ^20.19.0 || ^22.13.0 || >=24${NC}"
+    echo -e "    Switch to Node 22 LTS:"
+    echo -e "      nvm install 22 && nvm use 22"
+    echo -e "    Or Node 24+ (if you prefer current LTS):"
+    echo -e "      nvm install 24 && nvm use 24"
+    echo ""
+    exit 1
+  elif [ "$NODE_MAJOR" = "20" ]; then
+    NODE_MINOR=$(node -v | sed -E 's/^v([0-9]+)\.([0-9]+).*/\2/')
+    if [ "$NODE_MINOR" -lt 19 ]; then
+      echo -e "  ${YELLOW}⚠${NC} Node $NODE_FULL detected — package wants 20.19+"
+      echo -e "    nvm install 20.19.0 && nvm use 20.19.0"
+      echo ""
+      exit 1
+    else
+      ok "Node $NODE_FULL"
+    fi
+  elif [ "$NODE_MAJOR" = "22" ]; then
+    NODE_MINOR=$(node -v | sed -E 's/^v([0-9]+)\.([0-9]+).*/\2/')
+    if [ "$NODE_MINOR" -lt 13 ]; then
+      echo -e "  ${YELLOW}⚠${NC} Node $NODE_FULL detected — package wants 22.13+"
+      echo -e "    nvm install 22 && nvm use 22"
+      echo ""
+      exit 1
+    else
+      ok "Node $NODE_FULL"
+    fi
+  elif [ "$NODE_MAJOR" -ge 24 ]; then
+    ok "Node $NODE_FULL"
+  else
+    echo -e "  ${YELLOW}⚠${NC} Node $NODE_FULL — untested version, may not work"
+    echo ""
+  fi
+else
+  echo -e "  ${RED}✗${NC} Node not found — install Node 22 LTS from https://nodejs.org/"
+  echo ""
+  exit 1
+fi
+
 if [ ! -f "package.json" ]; then
   fail "package.json not found. Run from the repo root."
   exit 1
