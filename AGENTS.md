@@ -359,3 +359,4 @@ The endpoints table in `README.md` is **auto-generated** by `npm run sync:readme
 | `scripts/AGENTS.md` | CLI tools: dev, deploy, smoke, extract, sync |
 | `docker/AGENTS.md` | Local dev stack: docker-compose, Dockerfile, volumes |
 | `.github/AGENTS.md` | CI workflows, deploy gates, required checks |
+| `docs/AGENTS.md` | Project documentation (setup, troubleshooting, architecture) |
