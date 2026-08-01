@@ -57,25 +57,23 @@ jobs:
           npx wrangler --version
           npx wrangler whoami
 
-      - name: Apply schema migrations
-        run: |
-          echo "Applying 101_create_schema.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/101_create_schema.sql
+      - name: Apply migration 101 (create schema)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/101_create_schema.sql
 
-          echo "Applying 102_seed_regions.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/102_seed_regions.sql
+      - name: Apply migration 102 (seed regions)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/102_seed_regions.sql
 
-          echo "Applying 103_seed_subregions.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/103_seed_subregions.sql
+      - name: Apply migration 103 (seed subregions)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/103_seed_subregions.sql
 
-          echo "Applying 104_seed_countries.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/104_seed_countries.sql
+      - name: Apply migration 104 (seed countries)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/104_seed_countries.sql
 
-          echo "Applying 105_seed_admin_regions.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/105_seed_admin_regions.sql
+      - name: Apply migration 105 (seed admin regions)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/105_seed_admin_regions.sql
 
-          echo "Applying 106_seed_time_zones.sql..."
-          npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/106_seed_time_zones.sql
+      - name: Apply migration 106 (seed time zones)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/106_seed_time_zones.sql
 
       - name: Apply cities (if any .sql files exist)
         run: |
