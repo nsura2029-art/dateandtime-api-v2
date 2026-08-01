@@ -362,7 +362,7 @@ export const DataSources = {
   },
 };
 
-export const ImportHistory = {
+export const ImportHistories = {
   async recent(db: D1Database, limit = 20): Promise<ImportHistory[]> {
     const result = await db
       .prepare("SELECT * FROM import_history ORDER BY started_at DESC LIMIT ?")
