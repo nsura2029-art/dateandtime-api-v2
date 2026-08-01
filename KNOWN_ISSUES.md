@@ -64,6 +64,35 @@ Use `npm run dev:remote` (talks to real Cloudflare D1, has all 33,945 cities) OR
 
 ---
 
+## [TODO-1] Port commit a61d5d5 from feature/complete-swagger-ui (discarded branch)
+
+**Status:** Pending
+**Severity:** Nice-to-have (UX improvement)
+**Source branch:** `feature/complete-swagger-ui` (now deleted, work was mostly superseded by `feature/verify-and-run-script`)
+
+### What was on the original branch
+- `48c4192` — convert health.ts to OpenAPIHono (fully duplicated by `fe62821` in our merged branch) → **discarded**
+- `a61d5d5` — add explicit spec fetch + better error message in /docs (NOT in our merged code) → **port this**
+
+### What a61d5d5 added
+Before: Swagger UI showed "Undocumented" with cryptic "URL scheme" error if `/openapi.json` was unreachable.
+
+After: Pre-fetches the spec with explicit error handling. If the fetch fails, shows a styled error panel with:
+  - The URL that was tried
+  - The actual error message
+  - Common causes (dev server not running, file:// URL, etc.)
+  - An `onComplete` log when Swagger UI is ready
+
+### How to port
+1. Create branch: `feature/docs-better-spec-errors`
+2. Apply a61d5d5 to `src/routes/docs.ts` (just the script section)
+3. Re-test, re-merge
+4. Delete the branch
+
+Estimated effort: 5 minutes.
+
+---
+
 ## How to add a new known issue
 
 ```markdown
