@@ -1,0 +1,887 @@
+{
+  "info": {
+    "name": "dateandtime-api-v2",
+    "description": "API collection for dateandtime.live v2 API. Each request includes test scripts that verify happy-path responses, plus edge-case variants.\n\nBase URL: https://dt-api-v2-dev.nsura2029.workers.dev",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://dt-api-v2-dev.nsura2029.workers.dev",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Meta",
+      "item": [
+        {
+          "name": "GET / (API root)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success=true', () => pm.expect(pm.response.json().success).to.eql(true));",
+                  "pm.test('Has data.name', () => pm.expect(pm.response.json().data.name).to.be.a('string'));",
+                  "pm.test('Has data.endpoints', () => pm.expect(pm.response.json().data.endpoints).to.be.an('object'));",
+                  "pm.test('Has docs path', () => pm.expect(pm.response.json().data.docs).to.eql('/docs'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('status=ok', () => pm.expect(d.status).to.eql('ok'));",
+                  "pm.test('Has all table counts', () => {",
+                  "  pm.expect(d.db.regions).to.be.a('number');",
+                  "  pm.expect(d.db.subregions).to.be.a('number');",
+                  "  pm.expect(d.db.countries).to.be.a('number');",
+                  "  pm.expect(d.db.cities).to.be.a('number');",
+                  "  pm.expect(d.db.timezones).to.be.a('number');",
+                  "});",
+                  "pm.test('Cities ~ 152K', () => pm.expect(d.db.cities).to.be.above(150000));",
+                  "pm.test('latencyMs is a number', () => pm.expect(d.latencyMs).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "HEAD /api/v1/health",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "status"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('status=operational', () => pm.expect(d.status).to.eql('operational'));",
+                  "pm.test('binding=timeandtimepro-full-v2', () => pm.expect(d.database.binding).to.eql('timeandtimepro-full-v2'));",
+                  "pm.test('dbConnected=true', () => pm.expect(d.database.connected).to.eql(true));",
+                  "pm.test('Platform cloudflare-workers', () => pm.expect(d.runtime.platform).to.eql('cloudflare-workers'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /openapi.json",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["openapi.json"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Valid OpenAPI 3.1', () => {",
+                  "  const spec = pm.response.json();",
+                  "  pm.expect(spec.openapi).to.match(/^3\\./);",
+                  "  pm.expect(spec.info.title).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /docs (Swagger UI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["docs"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns HTML', () => pm.expect(pm.response.headers.get('content-type')).to.match(/text\\/html/));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cities — Search",
+      "item": [
+        {
+          "name": "[Happy] Search 'Mumbai' (English, exact match)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "Mumbai"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Has results', () => pm.expect(r.results).to.be.an('array'));",
+                  "pm.test('First result is Mumbai IN', () => {",
+                  "  const first = r.results[0];",
+                  "  pm.expect(first.name).to.match(/Mumbai|Navi Mumbai/);",
+                  "  pm.expect(first.country.cca2).to.eql('IN');",
+                  "});",
+                  "pm.test('Match type is exact or prefix', () => pm.expect(['exact','prefix']).to.include(r.results[0].matchType));",
+                  "pm.test('Has timezone info', () => {",
+                  "  pm.expect(r.results[0].timezone.id).to.be.a('string');",
+                  "  pm.expect(r.results[0].timezone.utc_offset_minutes).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Happy] Prefix 'mum' (typeahead)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=mum&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "mum"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Has multiple results', () => pm.expect(r.results.length).to.be.above(1));",
+                  "pm.test('All match type is prefix', () => r.results.forEach(x => pm.expect(x.matchType).to.eql('prefix')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Happy] 'Berlin' (tier1 capital)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Berlin&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "Berlin"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Top result is Berlin DE (tier1)', () => {",
+                  "  pm.expect(r.results[0].name).to.eql('Berlin');",
+                  "  pm.expect(r.results[0].country.cca2).to.eql('DE');",
+                  "  pm.expect(r.results[0].tier).to.eql('tier1');",
+                  "  pm.expect(r.results[0].isCountryCapital).to.eql(true);",
+                  "  pm.expect(r.results[0].isStateCapital).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Disambiguation] 'Hyderabad' with country=IN (user boost)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Hyderabad&country=IN&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "Hyderabad"},
+                {"key": "country", "value": "IN"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Top result is Hyderabad IN', () => {",
+                  "  pm.expect(r.results[0].name).to.eql('Hyderabad');",
+                  "  pm.expect(r.results[0].country.cca2).to.eql('IN');",
+                  "  pm.expect(r.results[0].score).to.be.above(r.results[1]?.score || 0);",
+                  "});",
+                  "pm.test('PK result is deprioritized', () => {",
+                  "  const pk = r.results.find(x => x.country.cca2 === 'PK');",
+                  "  if (pk) {",
+                  "    pm.expect(pk.score).to.be.below(r.results[0].score);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Multilingual] 'München' (German)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=M%C3%BCnchen&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "München"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Finds Munich DE', () => {",
+                  "  const munich = r.results.find(x => x.name === 'Munich' && x.country.cca2 === 'DE');",
+                  "  pm.expect(munich).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Multilingual] 'मुम्बई' (Hindi)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=%E0%A4%AE%E0%A5%81%E0%A4%AE%E0%A5%8D%E0%A4%AC%E0%A4%88&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "मुम्बई"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Finds Mumbai IN', () => {",
+                  "  const mumbai = r.results.find(x => x.country.cca2 === 'IN');",
+                  "  pm.expect(mumbai).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Multilingual] '北京' (Chinese)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=%E5%8C%97%E4%BA%AC&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "北京"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Finds Beijing CN', () => {",
+                  "  const bj = r.results.find(x => x.country.cca2 === 'CN');",
+                  "  pm.expect(bj).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Proximity] 'Mumbai' with user lat/lon (Bombay)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai&lat=19.07&lon=72.87&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "Mumbai"},
+                {"key": "lat", "value": "19.07"},
+                {"key": "lon", "value": "72.87"},
+                {"key": "limit", "value": "5"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Top result has distanceKm < 10', () => {",
+                  "  pm.expect(r.results[0].distanceKm).to.be.a('number');",
+                  "  pm.expect(r.results[0].distanceKm).to.be.below(10);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Empty] No match (gibberish)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=xyzqwerty",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "xyzqwerty"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().data;",
+                  "pm.test('Empty results array', () => pm.expect(r.results).to.eql([]));",
+                  "pm.test('total = 0', () => pm.expect(r.total).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Single char query (1 char)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=a",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "a"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 (or 400)', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Max length (100 chars)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 400', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Limit max (50)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=London&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "London"},
+                {"key": "limit", "value": "50"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns up to 50 results', () => pm.expect(pm.response.json().data.results.length).to.be.at.most(50));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Limit invalid (999)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=London&limit=999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "London"},
+                {"key": "limit", "value": "999"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Invalid country code (3 letters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=London&country=USA",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "London"},
+                {"key": "country", "value": "USA"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] SQL injection attempt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai%27%3B%20DROP%20TABLE%20cities%3B--",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "Mumbai'; DROP TABLE cities;--"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 (sanitized, no SQL exec)', () => pm.response.to.have.status(200));",
+                  "pm.test('No error from SQL injection', () => pm.expect(pm.response.json().success).to.eql(true));",
+                  "pm.test('Cities table still has data', () => pm.expect(pm.response.json().data.total).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Out of range lat (95)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=London&lat=95&lon=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "search"],
+              "query": [
+                {"key": "q", "value": "London"},
+                {"key": "lat", "value": "95"},
+                {"key": "lon", "value": "0"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cities — Detail",
+      "item": [
+        {
+          "name": "[Happy] Get Mumbai (id=133024)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/133024",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "133024"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('id matches', () => pm.expect(d.id).to.eql(133024));",
+                  "pm.test('name is Mumbai', () => pm.expect(d.name).to.eql('Mumbai'));",
+                  "pm.test('Has country', () => {",
+                  "  pm.expect(d.country.cca2).to.eql('IN');",
+                  "  pm.expect(d.country.name).to.eql('India');",
+                  "});",
+                  "pm.test('Has admin region', () => {",
+                  "  pm.expect(d.adminRegion).to.exist;",
+                  "  pm.expect(d.adminRegion.name).to.eql('Maharashtra');",
+                  "});",
+                  "pm.test('Has timezone', () => {",
+                  "  pm.expect(d.timezone.id).to.eql('Asia/Kolkata');",
+                  "  pm.expect(d.timezone.utc_offset_minutes).to.eql(330);",
+                  "  pm.expect(d.timezone.current_abbreviation).to.eql('IST');",
+                  "});",
+                  "pm.test('Has placeNames', () => {",
+                  "  pm.expect(d.placeNames).to.be.an('array');",
+                  "  pm.expect(d.placeNames.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Happy] Get Berlin (id=24053) — capital, both country+state",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/24053",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "24053"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('capitalType = both', () => pm.expect(d.capitalType).to.eql('both'));",
+                  "pm.test('tier = tier1', () => pm.expect(d.tier).to.eql('tier1'));",
+                  "pm.test('isCountryCapital = true', () => pm.expect(d.isCountryCapital).to.eql(true));",
+                  "pm.test('isStateCapital = true', () => pm.expect(d.isStateCapital).to.eql(true));",
+                  "pm.test('Timezone = Europe/Berlin', () => pm.expect(d.timezone.id).to.eql('Europe/Berlin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Get non-existent city (id=999999)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "999999"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('success=false', () => pm.expect(pm.response.json().success).to.eql(false));",
+                  "pm.test('error.code=NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Invalid id format (negative)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "-1"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] Invalid id (string 'abc')",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "abc"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[Edge] id=0 (boundary)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cities", "0"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 (positive required)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Docs",
+      "item": [
+        {
+          "name": "OpenAPI Spec",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": ["{{baseUrl}}"],
+              "path": ["openapi.json"]
+            }
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["docs"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
