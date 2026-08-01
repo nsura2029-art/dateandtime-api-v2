@@ -169,6 +169,21 @@ jobs:
         # This migration overwrites wrong values with correct (name, state) matches.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/122_fix_wrong_us_population.sql
 
+      - name: Apply migration 123 (global timezone polygon fix)
+        # Per spec section 1: cities must be assigned from lat/lon via polygon
+        # lookup. timezonefinder (timezone-boundary-builder) resolves 2,983
+        # cities where dr5hn timezone disagrees with the polygon result.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/123_global_timezone_polygon.sql
+
+      - name: Apply migration 124 (add missing IANA timezones)
+        # America/Atikokan, America/Creston — needed for migration 123 results.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/124_add_missing_timezones.sql
+
+      - name: Apply migration 125 (timezone polygon overrides)
+        # 13 manual overrides for oceanic/edge cities (spec section 28).
+        # 22 Null Island (0,0) cities kept current TZ, flagged for review.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/125_tz_polygon_overrides.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
