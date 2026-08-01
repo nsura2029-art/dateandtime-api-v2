@@ -79,6 +79,29 @@ describe("openapi + docs (integration)", () => {
     expect(Object.keys(spec.paths).length).toBeGreaterThan(0);
   });
 
+  it("openapi.json servers[0] is the current deployment origin (for Swagger UI 'Try it out')", async () => {
+    // The FIRST server in the list is what Swagger UI uses by default for
+    // "Try it out" requests. It MUST be the URL the spec was served from,
+    // not a hard-coded prod URL. Otherwise 'Try it out' would 404 on
+    // dev/local deployments.
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as { servers: Array<{ url: string }> };
+    const currentOrigin = new URL(BASE_URL).origin;
+    expect(spec.servers[0]?.url).toBe(currentOrigin);
+  });
+
+  it("openapi.json includes prod and dev Worker URLs as options", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as { servers: Array<{ url: string; description: string }> };
+    const urls = spec.servers.map((s) => s.url);
+    // The Workers are named in wrangler.toml — these are the real Cloudflare URLs
+    expect(urls).toContain("https://dt-api-v2.nsura2029.workers.dev");
+    expect(urls).toContain("https://dt-api-v2-dev.nsura2029.workers.dev");
+    expect(urls).toContain("http://localhost:8787");
+  });
+
   it("GET /docs returns the Swagger UI HTML", async () => {
     if (!serverUp) return;
     const r = await fetch(`${BASE_URL}/docs`);
