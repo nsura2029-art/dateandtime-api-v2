@@ -26,6 +26,12 @@ function registerDocs(app: OpenAPIHono<{ Bindings: Env; Variables: Variables }>)
   // GET /openapi.json — OpenAPI 3.1 spec
   // ============================================================================
   app.get("/openapi.json", (c) => {
+    // Derive the current deployment URL from the request — this becomes
+    // the default server for "Try it out" requests, so it always works
+    // regardless of which Worker (prod / dev / local) served the spec.
+    const currentOrigin = new URL(c.req.url).origin;
+    const isDev = c.env.API_NAME.includes("-dev") || currentOrigin.includes("localhost");
+
     return c.json(
       app.getOpenAPI31Document({
         openapi: "3.1.0",
@@ -37,9 +43,16 @@ function registerDocs(app: OpenAPIHono<{ Bindings: Env; Variables: Variables }>)
             "Hono + Cloudflare D1 + Zod. See https://github.com/nsura2029-art/dateandtime-api-v2 for source.",
         },
         servers: [
-          { url: "https://api.dateandtime.live", description: "Production" },
-          { url: "https://dev.api.dateandtime.live", description: "Dev (same D1, separate Worker)" },
-          { url: "http://localhost:8787", description: "Local dev (wrangler dev)" },
+          // Current deployment (always first → Swagger UI's default)
+          { url: currentOrigin, description: `Current (${isDev ? "dev" : "prod"} — auto-detected)` },
+
+          // Workers (Cloudflare-provided *.workers.dev subdomains)
+          // Worker name comes from wrangler.toml [env.*] name field
+          { url: "https://dt-api-v2.nsura2029.workers.dev", description: "Production Worker" },
+          { url: "https://dt-api-v2-dev.nsura2029.workers.dev", description: "Dev Worker" },
+
+          // Local dev
+          { url: "http://localhost:8787", description: "Local (wrangler dev)" },
         ],
         tags: [
           { name: "Meta", description: "API metadata, health, status" },
