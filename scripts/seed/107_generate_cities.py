@@ -77,20 +77,33 @@ def main():
         for s in c.get('states', []):
             state_name_to_id[(c['id'], s.get('name'))] = s['id']
 
+    # Build the set of valid state_ids (across all countries) for FK validation
+    # If a state_id is referenced by a city but not in our admin_regions, NULL it
+    valid_state_ids = set()
+    for c in data:
+        for s in c.get('states', []):
+            valid_state_ids.add(s['id'])
+
     # Collect cities per country
     cities_by_country = defaultdict(list)
     total_cities = 0
+    orphan_state_count = 0
     for c in data:
         country_id = c['id']
         for state in c.get('states', []):
             state_code = state.get('iso2')  # e.g. 'AK', 'AL' for US states
             state_tz = state.get('timezone')  # state-level default
             for city in state.get('cities', []):
+                # If the state's id is not in our admin_regions set (shouldn't
+                # happen since we use the same source, but be safe), NULL it
+                state_id = state['id'] if state['id'] in valid_state_ids else None
+                if state_id is None:
+                    orphan_state_count += 1
                 cities_by_country[country_id].append({
                     'id': city['id'],
                     'name': city.get('name'),
                     'country_id': country_id,
-                    'state_id': state['id'],
+                    'state_id': state_id,
                     '_state_code': state_code,  # for state-level tz lookup (internal)
                     'latitude': city.get('latitude'),
                     'longitude': city.get('longitude'),
@@ -99,6 +112,9 @@ def main():
                     'feature_code': None,
                 })
                 total_cities += 1
+
+    if orphan_state_count:
+        print(f"  NULLed {orphan_state_count} orphan state_id references (states not in admin_regions)")
 
     # Now find timezones for cities by re-walking data with timezone info
     # (The countries+cities.json has timezone inside city object, but
