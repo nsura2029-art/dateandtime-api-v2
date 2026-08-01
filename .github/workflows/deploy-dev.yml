@@ -128,6 +128,11 @@ jobs:
         # Idempotent: resets tier to NULL first, then re-applies rules.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/113_retier_by_population.sql
 
+      - name: Apply migration 114 (state + country capitals from GeoNames)
+        # 3,047 state capitals (PPLA) + 199 country capitals (PPLC) from
+        # GeoNames cities1000. Idempotent: resets flags then re-applies.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/114_set_capitals_from_geonames.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
