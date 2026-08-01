@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS regions (
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS subregions (
   id          INTEGER PRIMARY KEY,            -- 1..22
-  code        TEXT UNIQUE,                    -- UN M49 code, e.g. '021' (Northern America); NULLABLE because some sub-regions (e.g. Polar) have no UN M49 code
+  code        TEXT,                           -- UN M49 code, e.g. '021' (Northern America). NULLABLE — not all regions/sub-regions have UN M49 codes; no UNIQUE constraint because our hand-curated map has duplicate codes.
   name        TEXT NOT NULL,
   region_id   INTEGER NOT NULL,
   FOREIGN KEY (region_id) REFERENCES regions(id)
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS countries (
   official_name       TEXT,                           -- 'United States of America'
   capital             TEXT,                           -- 'Washington, D.C.'
   region_id           INTEGER NOT NULL,
-  subregion_id        INTEGER NOT NULL,
+  subregion_id        INTEGER,                 -- NULLABLE — Antarctica has no sub-region
   currency_code       TEXT,                           -- 'ISO 4217 currency code (USD, INR, JPY)
   currency_name       TEXT,                           -- 'US Dollar'
   currency_symbol     TEXT,                           -- '$', '₹', '¥'

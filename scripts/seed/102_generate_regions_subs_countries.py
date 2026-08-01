@@ -27,30 +27,33 @@ UN_M49_REGIONS = {
 }
 
 # UN M49 codes for sub-regions (per dr5hn's subregion_id)
+# Source: UN M49 standard (https://unstats.un.org/unsd/methodology/m49/)
+# Map keyed by dr5hn subregion_id. Some are approximate because the
+# UN M49 standard is more granular than dr5hn's 22 sub-regions.
+# Use NULL when there's no good match (column is nullable).
 UN_M49_SUBREGIONS = {
-    19: '053',   # Australia and New Zealand
-    7:  '029',   # Caribbean
-    9:  '013',   # Central America
-    10: '143',   # Central Asia
-    4:  '014',   # Eastern Africa
-    17: '151',   # Eastern Europe
-    21: '030',   # Eastern Asia
-    18: '034',   # Southern Asia
-    14: '034',   # Southern Asia (alt)
-    15: '039',   # Southern Europe
-    11: '005',   # South-Eastern Africa
-    6:  '017',   # Middle Africa
-    5:  '015',   # Northern Africa
-    21: '021',   # Northern America
-    13: '154',   # Northern Europe
-    12: '009',   # Micronesia (subregion of Oceania)
-    16: '035',   # South-Eastern Asia
-    22: '127',   # Central Asia
-    8:  '005',   # Western Africa (sometimes '011')
-    20: '145',   # Western Asia
+    1:  None,    # Polar (Antarctica) — no UN M49 sub-region code
     2:  '011',   # Western Africa
     3:  '155',   # Western Europe
-    1:  None,    # placeholder for Antarctic (no sub-regions)
+    4:  '014',   # Eastern Africa
+    5:  '015',   # Northern Africa
+    6:  '017',   # Middle Africa
+    7:  '029',   # Caribbean
+    8:  '018',   # Southern Africa
+    9:  '013',   # Central America
+    10: '143',   # Central Asia
+    11: None,    # Sub-region not in standard (dr5hn has it as 'South-Eastern Africa' which is non-standard)
+    12: '057',   # Micronesia
+    13: '154',   # Northern Europe
+    14: '034',   # Southern Asia
+    15: '039',   # Southern Europe
+    16: '035',   # South-Eastern Asia
+    17: '151',   # Eastern Europe
+    18: '034',   # Southern Asia (alt dr5hn id; same UN M49 as 14)
+    19: '053',   # Australia and New Zealand
+    20: '145',   # Western Asia
+    21: '021',   # Northern America
+    22: '030',   # Eastern Asia
 }
 
 
@@ -65,6 +68,19 @@ def escape_sql(s: str) -> str:
     if s is None:
         return 'NULL'
     return "'" + str(s).replace("'", "''") + "'"
+
+
+def sql_num(v) -> str:
+    """Coerce a numeric value to SQL literal.
+    - None → 'NULL'
+    - 0   → '0' (preserved; using `or` would turn 0 into 'NULL')
+    - 12.5 → '12.5'
+    """
+    if v is None:
+        return 'NULL'
+    if isinstance(v, bool):
+        return '1' if v else '0'
+    return str(v)
 
 
 def main():
@@ -114,8 +130,8 @@ INSERT INTO regions (id, code, name, un_m49_code) VALUES\n"""
 INSERT INTO subregions (id, code, name, region_id) VALUES\n"""
     rows = []
     for sr in subregions:
-        m49 = UN_M49_SUBREGIONS.get(sr['id'], '999')
-        rows.append(f"  ({sr['id']}, {escape_sql(m49)}, {escape_sql(sr['name'])}, {sr['region_id']})")
+        m49 = UN_M49_SUBREGIONS.get(sr['id'])
+        rows.append(f"  ({sr['id']}, {escape_sql(m49)}, {escape_sql(sr['name'])}, {sql_num(sr['region_id'])})")
     sql += ",\n".join(rows) + ";\n"
     Path('migrations/103_seed_subregions.sql').write_text(sql)
     print(f"  → migrations/103_seed_subregions.sql")
@@ -142,8 +158,8 @@ VALUES\n"""
         official_name = c.get('native') or c.get('name')
 
         row = f"""  ({c['id']}, {escape_sql(c.get('iso2'))}, {escape_sql(c.get('iso3'))}, {escape_sql(c.get('numeric_code'))}, NULL, {escape_sql(c.get('name'))}, {escape_sql(official_name)}, {escape_sql(c.get('capital'))},
-   {c.get('region_id')}, {c.get('subregion_id')}, {escape_sql(c.get('currency'))}, {escape_sql(c.get('currency_name'))}, {escape_sql(c.get('currency_symbol'))},
-   {escape_sql(c.get('phonecode'))}, {lat or 'NULL'}, {lng or 'NULL'}, {c.get('area_sq_km') or 'NULL'}, {c.get('population') or 'NULL'}, {escape_sql(c.get('tld'))}, {escape_sql(c.get('nationality'))})"""
+   {sql_num(c.get('region_id'))}, {sql_num(c.get('subregion_id'))}, {escape_sql(c.get('currency'))}, {escape_sql(c.get('currency_name'))}, {escape_sql(c.get('currency_symbol'))},
+   {escape_sql(c.get('phonecode'))}, {sql_num(lat)}, {sql_num(lng)}, {sql_num(c.get('area_sq_km'))}, {sql_num(c.get('population'))}, {escape_sql(c.get('tld'))}, {escape_sql(c.get('nationality'))})"""
         rows.append(row)
     sql += ",\n".join(rows) + ";\n"
     Path('migrations/104_seed_countries.sql').write_text(sql)
