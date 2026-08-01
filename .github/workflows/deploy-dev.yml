@@ -9,15 +9,18 @@
 #
 # Usage: just push to develop. No manual action needed.
 
-name: Deploy to dt-api-v2-dev
+name: Deploy to dt-api-v2-dev (manual)
 
 on:
-  push:
-    branches:
-      - develop
-  workflow_dispatch:  # allow manual trigger from GitHub UI
+  workflow_dispatch:  # manual trigger only — use Actions UI "Run workflow"
+  # NOTE: auto-on-push was removed 2026-08-01. The dev Worker should only be
+  # touched intentionally (not on every develop commit). To deploy:
+  #   1. Go to https://github.com/nsura2029-art/dateandtime-api-v2/actions
+  #   2. Click "Deploy to dt-api-v2-dev (manual)"
+  #   3. Click "Run workflow" → "Run workflow"
+  # For local deploy: bash scripts/deploy.sh dev
 
-# Cancel in-progress runs when a new commit is pushed
+# Cancel in-progress runs if you re-trigger while one is running
 concurrency:
   group: deploy-dev
   cancel-in-progress: true
