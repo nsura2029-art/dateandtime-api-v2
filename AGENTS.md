@@ -211,18 +211,72 @@ npm run deploy:prod   # → dt-api-v2
 
 **Rule:** Before `npm run deploy:prod`, paste the diff summary and wait for "ship it". No exceptions.
 
-## Branch Workflow
+## Branch Workflow (binding)
 
 ```bash
+# 1. Start from develop
 git checkout develop
-git checkout -b feature/<name>  # off develop, NOT main
-# work
+git pull
+
+# 2. Create a feature branch
+git checkout -b feature/<name>   # e.g. feature/v25-cities, feature/rate-limit, feature/openapi-and-status
+
+# 3. Implement task-by-task or endpoint-by-endpoint
+#    - Each task: implement → write tests (unit + integration + edge cases) → verify → commit
+#    - Run after every meaningful change:
+#      npm run typecheck           # 0 errors
+#      npm run lint                # 0 errors, 0 warnings
+#      npm test                    # all pass
+#      bash scripts/test-endpoints.sh  # all smoke checks pass
+#      npm run sync:readme:check   # README in sync
+
+# 4. Push the branch
 git push -u origin feature/<name>
-# create PR → develop
-# after merge, develop → main via release branch
+
+# 5. Merge to develop
+git checkout develop
+git merge --no-ff -m "merge: <description> (feature/<name>)" feature/<name>
+git push origin develop
+
+# 6. DELETE the feature branch (local + remote) — they're ephemeral
+git branch -d feature/<name>
+git push origin --delete feature/<name>
+
+# 7. Deploy develop to the API Worker in Cloudflare (dev env)
+npm run deploy:dev
+
+# 8. Verify the deploy (curl /api/v1/health, /api/v1/status, new endpoints)
 ```
 
-**Rule:** Work on `feature/*` branches off `develop`. Never commit directly to `main` or `develop`.
+**Rules (binding):**
+
+1. **Work on `feature/*` branches off `develop`.** Never commit directly to `main` or `develop`.
+2. **One feature = one branch.** Don't mix unrelated changes.
+3. **Task-by-task or endpoint-by-endpoint.** Commit per logical unit. Each commit should pass all checks.
+4. **Test everything before merging.** Required checks (all must pass):
+   - `npm run typecheck` — 0 TypeScript errors
+   - `npm run lint` — 0 ESLint errors, 0 warnings
+   - `npm test` — all vitest cases pass (unit + integration)
+   - `bash scripts/test-endpoints.sh` — all smoke checks pass
+   - `npm run sync:readme:check` — README in sync with code
+5. **Cover edge cases.** For every endpoint, test at minimum:
+   - Happy path (valid input, expected output)
+   - Boundary values (limit=0, limit=1000, offset=0, max-offset)
+   - Invalid input (bad types, missing fields, malformed params)
+   - Not found (id that doesn't exist, country code not in DB)
+   - Auth/permission failures (if applicable)
+6. **Unit tests for pure functions.** Helpers in `src/lib/` (parsers, formatters, validators) MUST have unit tests in `tests/unit/` (no server required).
+7. **Delete the branch on merge.** Feature branches are ephemeral. Once merged to develop, delete both local and remote copies immediately. This keeps the branch list clean and prevents stale code from being merged later by accident.
+8. **Deploy develop after merge.** After deleting the branch, deploy develop to the dev API Worker (`dt-api-v2-dev`) via `npm run deploy:dev`. Verify the deploy with `curl https://dev.api.dateandtime.live/api/v1/health`.
+9. **Never force-push to develop or main.** Use `--no-ff` for merge commits so the history is preserved.
+10. **Prod deploy is a separate step.** Once develop has been verified in dev for at least 24 hours (or all tests pass), request "ship it" before `npm run deploy:prod`.
+
+**Why this workflow:**
+
+- **Ephemeral branches** keep the repo clean. A 6-month-old feature branch is a liability.
+- **Test everything before merge** prevents broken code from reaching develop. CI catches what humans miss.
+- **Deploy develop to dev Worker** means every merge is immediately verifiable against real D1 data.
+- **Prod deploy is gated** by the "ship it" rule — never auto-deploy to prod.
 
 ## README Maintenance
 
