@@ -115,7 +115,7 @@ Plus:
 
 ```bash
 # Use --json to avoid wrangler's table truncation
-wrangler d1 execute <db> --env dev --remote --json --command="
+npx wrangler d1 execute <db> --env dev --remote --json --command="
   SELECT 'regions' AS t, COUNT(*) AS n FROM regions
   UNION SELECT 'subregions', COUNT(*) FROM subregions
   UNION SELECT 'countries', COUNT(*) FROM countries
@@ -177,7 +177,7 @@ npm run dev:remote
 # This binds to the real D1, not local
 
 # Or for offline testing:
-wrangler d1 execute <db> --local --file=migrations/<your>.sql
+npx wrangler d1 execute <db> --local --file=migrations/<your>.sql
 # Note: --local uses local SQLite, no D1-specific features
 ```
 

@@ -10,7 +10,7 @@
 # Requires:
 #   - CLOUDFLARE_API_TOKEN exported in this shell
 #   - CLOUDFLARE_ACCOUNT_ID exported in this shell
-#   - wrangler installed (npm i -g wrangler)
+#   - wrangler available (via npx or globally)
 #
 # Expected output: "Cities: 152970"
 
@@ -44,9 +44,9 @@ if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
 fi
 
 # 2. Sanity check: wrangler available?
-if ! command -v wrangler &> /dev/null; then
+if ! npx wrangler --version >/dev/null 2>&1; then
   echo -e "${RED}✗ wrangler not found.${NC}"
-  echo "  Run: npm install -g wrangler"
+  echo "  Run: npm ci (installs wrangler as a dev dep)"
   exit 1
 fi
 
@@ -76,13 +76,13 @@ fi
 # 5. DELETE
 echo ""
 echo -e "${GREEN}[1/3]${NC} Deleting existing cities..."
-DELETED=$(wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="DELETE FROM cities;" 2>&1)
+DELETED=$(npx wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="DELETE FROM cities;" 2>&1)
 echo "$DELETED" | head -5
 
 # 6. Verify empty
 echo ""
 echo -e "${GREEN}[2/3]${NC} Verifying cities is empty..."
-COUNT=$(wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="SELECT COUNT(*) AS n FROM cities;" 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['results'][0]['n'])" 2>/dev/null || echo "PARSE_ERROR")
+COUNT=$(npx wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="SELECT COUNT(*) AS n FROM cities;" 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['results'][0]['n'])" 2>/dev/null || echo "PARSE_ERROR")
 if [ "$COUNT" != "0" ]; then
   echo -e "${RED}✗ Cities count is $COUNT, not 0. Aborting.${NC}"
   exit 1
@@ -117,7 +117,7 @@ fi
 # 9. Final count
 echo ""
 echo -e "${GREEN}[Final]${NC} Counting cities..."
-FINAL=$(wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="SELECT COUNT(*) AS n FROM cities;" 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['results'][0]['n'])" 2>/dev/null || echo "PARSE_ERROR")
+FINAL=$(npx wrangler d1 execute "$DB_NAME" --env dev --remote --json --command="SELECT COUNT(*) AS n FROM cities;" 2>&1 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['results'][0]['n'])" 2>/dev/null || echo "PARSE_ERROR")
 
 EXPECTED=152970
 echo ""

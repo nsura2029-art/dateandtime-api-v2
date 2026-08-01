@@ -98,7 +98,7 @@ else
   REMOTE_FLAG=""
 fi
 
-wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="$1" \
+npx wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="$1" \
   || { echo "WARNING: $1 failed, continuing"; true; }
 ```
 
