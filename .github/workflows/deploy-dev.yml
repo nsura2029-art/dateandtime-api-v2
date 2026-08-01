@@ -31,10 +31,12 @@ jobs:
     env:
       DB_NAME: timeandtimepro-full-v2
       WRANGLER_ENV: dev
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # Wrangler 3 uses CF_API_TOKEN; wrangler 4 uses CLOUDFLARE_API_TOKEN.
       # Set both from the same GitHub Secret so the workflow works on either.
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CI: true
 
     steps:
       - name: Checkout
