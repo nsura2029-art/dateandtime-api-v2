@@ -6,7 +6,7 @@
  */
 import { Hono } from "hono";
 import { success } from "@/lib/response";
-import { Cities, Countries, Timezones, OnThisDay, CityAliases } from "@/lib/db";
+import { Cities, Countries, Timezones, Otd, CityAliases } from "@/lib/db";
 import type { Env, Variables } from "@/types/env";
 
 const health = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -58,7 +58,7 @@ health.get("/api/v1/health", async (c) => {
     Cities.count(c.env.DB),
     Countries.count(c.env.DB),
     Timezones.count(c.env.DB),
-    OnThisDay.count(c.env.DB),
+    Otd.count(c.env.DB),
     CityAliases.count(c.env.DB),
   ]);
   const latencyMs = Date.now() - start;

@@ -5,7 +5,7 @@
  */
 import type { Context, MiddlewareHandler } from "hono";
 import type { Env, Variables } from "@/types/env";
-import { Errors, zodErrorResponse } from "@/lib/response";
+import { zodErrorData } from "@/lib/response";
 import { loadEnv } from "@/config/env";
 
 export const errorHandler = (): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> => {
@@ -14,9 +14,9 @@ export const errorHandler = (): MiddlewareHandler<{ Bindings: Env; Variables: Va
       await next();
     } catch (err) {
       // ZodError → 400 with details
-      const zodResp = zodErrorResponse(err);
-      if (zodResp) {
-        return c.newResponse(zodResp.body, zodResp.status as 400, zodResp.headers);
+      const zodData = zodErrorData(err);
+      if (zodData) {
+        return c.json({ success: false, error: zodData }, 400);
       }
 
       // Log unexpected errors with full context
@@ -36,17 +36,16 @@ export const errorHandler = (): MiddlewareHandler<{ Bindings: Env; Variables: Va
       // In dev, include the error message in the response for faster debugging
       if (env.LOG_LEVEL === "debug") {
         const msg = err instanceof Error ? err.message : String(err);
-        return c.newResponse(
-          JSON.stringify({
+        return c.json(
+          {
             success: false,
             error: { code: "INTERNAL_ERROR", message: msg, stack: err instanceof Error ? err.stack : undefined },
-          }),
-          500,
-          { "Content-Type": "application/json; charset=utf-8" }
+          },
+          500
         );
       }
 
-      return c.newResponse(Errors.internal().body, 500, { "Content-Type": "application/json; charset=utf-8" });
+      return c.json({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal server error" } }, 500);
     }
   };
 };
@@ -55,12 +54,8 @@ export const errorHandler = (): MiddlewareHandler<{ Bindings: Env; Variables: Va
  * 404 fallback — when no route matches.
  */
 export function notFoundHandler(c: Context): Response {
-  return c.newResponse(
-    JSON.stringify({
-      success: false,
-      error: { code: "NOT_FOUND", message: `Route ${c.req.method} ${c.req.path} not found` },
-    }),
-    404,
-    { "Content-Type": "application/json; charset=utf-8" }
+  return c.json(
+    { success: false, error: { code: "NOT_FOUND", message: `Route ${c.req.method} ${c.req.path} not found` } },
+    404
   );
 }

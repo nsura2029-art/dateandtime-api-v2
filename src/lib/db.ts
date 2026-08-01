@@ -200,8 +200,8 @@ export const Holidays = {
   },
 };
 
-/** Onthisday table. */
-export const OnThisDay = {
+/** Onthisday table — exported as `Otd` to avoid name collision with the `OnThisDay` row type. */
+export const Otd = {
   async byDate(db: D1Database, month: number, day: number): Promise<OnThisDay[]> {
     const result = await db
       .prepare("SELECT * FROM onthisday WHERE month = ? AND day = ? ORDER BY year ASC NULLS LAST")

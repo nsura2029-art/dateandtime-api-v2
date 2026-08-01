@@ -22,6 +22,7 @@ npm install
 
 # 2. Run locally (no Docker)
 npm run dev          # → http://localhost:8787
+# D1 is auto-persisted to .wrangler/state/v3/d1/
 
 # 3. Or run in Docker
 docker compose -f docker/docker-compose.yml up
