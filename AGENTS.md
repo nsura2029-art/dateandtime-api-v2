@@ -229,6 +229,14 @@ git checkout -b feature/<name>   # e.g. feature/v25-cities, feature/rate-limit
 #      npm test                    # all pass
 #      bash scripts/test-endpoints.sh  # all smoke checks pass
 #      npm run sync:readme:check   # README in sync
+#
+# 3a. CHANGING package.json? REGENERATE THE LOCK FILE (binding)
+#     If you change a version range in package.json (e.g. ^4.19.0 -> ~4.19.0),
+#     you MUST also regenerate the lock file in the SAME commit:
+#       rm package-lock.json && npm install && git add package-lock.json
+#     Otherwise `npm ci` will fail with:
+#       "package.json and package-lock.json are in sync. Please update your lock file"
+#     The verify-and-run.sh script will give this exact fix as a hint.
 
 # 4. Push the branch (DO NOT merge yet — wait for user)
 git push -u origin feature/<name>
@@ -359,3 +367,4 @@ The endpoints table in `README.md` is **auto-generated** by `npm run sync:readme
 | `scripts/AGENTS.md` | CLI tools: dev, deploy, smoke, extract, sync |
 | `docker/AGENTS.md` | Local dev stack: docker-compose, Dockerfile, volumes |
 | `.github/AGENTS.md` | CI workflows, deploy gates, required checks |
+| `docs/AGENTS.md` | Project documentation (setup, troubleshooting, architecture) |

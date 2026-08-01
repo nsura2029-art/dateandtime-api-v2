@@ -1,7 +1,7 @@
 # dateandtime-api-v2 — dev container
-# Node 20-alpine, wrangler, wrangler dev with persisted D1
+# Node 22-alpine (wrangler 3.114+ requires Node 22+)
 
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install system deps
 RUN apk add --no-cache git bash curl
@@ -11,9 +11,8 @@ WORKDIR /app
 
 # Install deps (cached layer)
 COPY package.json ./
-# Uncomment the lockfile once we have one
-# COPY pnpm-lock.yaml ./
-RUN npm install --no-audit --no-fund
+COPY package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
 # Copy source (mounted as volume in docker-compose for hot reload)
 COPY . .

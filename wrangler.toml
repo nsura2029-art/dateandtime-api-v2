@@ -34,8 +34,9 @@ migrations_dir = "migrations"
 API_VERSION = "2.0.0"
 API_NAME = "dt-api-v2"
 LOG_LEVEL = "info"
-# Comma-separated list of allowed origins for CORS
-ALLOWED_ORIGINS = "https://dateandtime.live,https://tdp-landing-dev.nsura2029.workers.dev,http://localhost:5173"
+# Comma-separated list of allowed origins for CORS.
+# Supports exact match + "http://localhost:*" port wildcard (for local Swagger UI testing).
+ALLOWED_ORIGINS = "https://dateandtime.live,https://tdp-landing-dev.nsura2029.workers.dev,http://localhost:5173,http://localhost:*"
 
 # ============================================================================
 # Dev environment — same D1, lower log level, looser CORS

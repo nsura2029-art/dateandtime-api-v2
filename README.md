@@ -31,7 +31,7 @@ npm run dev:docker:remote   # remote D1 (needs CLOUDFLARE_API_TOKEN)
 # 4. Run tests
 npm test
 
-# 5. Smoke test all endpoints
+# 5. Smoke test all endpoints (needs a running server)
 npm run smoke
 
 # 6. Sync README endpoint table (run after adding a route)
@@ -39,7 +39,73 @@ npm run sync:readme
 
 # 7. Check README is in sync (used by CI)
 npm run sync:readme:check
+
+# 8. Run all 5 checks at once (no server required — smoke test skips if no server)
+npm run verify:checks
 ```
+
+## First-time setup on Windows (Git Bash)
+
+```bash
+# 1. Clone the repo
+cd /c/dev/dt-live
+git clone https://github.com/nsura2029-art/dateandtime-api-v2.git
+cd dateandtime-api-v2
+git checkout develop
+npm ci
+
+# 2. (Optional) Set up Cloudflare for remote D1 mode
+#    a) Create an API token at https://dash.cloudflare.com/profile/api-tokens
+#       - Click "Use template" next to "Edit Cloudflare Workers"
+#       - This auto-includes: Workers Scripts:Edit, D1:Edit, Workers KV Storage:Edit
+#       - Set Account Resources: your account
+#       - Set Zone Resources: All zones (or specific)
+#       - Click "Continue to summary" → "Create Token"
+#       - COPY the token (you'll only see it once — never share it in chat)
+#    b) Get your Account ID:
+#       - Cloudflare dashboard → Workers & Pages → right sidebar → "Account ID"
+#    c) Set env vars (in Git Bash — NOT PowerShell):
+export CLOUDFLARE_API_TOKEN="your-NEW-token-here"
+export CLOUDFLARE_ACCOUNT_ID="your-account-id-here"
+
+# 3. Verify the token works
+npx wrangler whoami
+# Should print your account name + ID. If it errors, the token is wrong.
+
+# 4. Run the dev server (local D1 — no token needed)
+npm run dev
+# → http://localhost:8787/
+
+# 5. Or run in Docker (local D1)
+npm run dev:docker
+# → same URL, but in a container
+
+# 6. Or run with REMOTE D1 (real 33,945 cities — needs token)
+npm run dev:remote
+# → talks to the deployed Worker; uses prod data
+```
+
+### Shell-specific notes
+
+| Shell | Prompt | Env var syntax |
+|---|---|---|
+| **PowerShell** | `PS C:\dev\...>` | `$env:NAME="value"` |
+| **Git Bash (MINGW64)** | `user@host MINGW64 /c/...` | `export NAME="value"` |
+| **CMD** | `C:\dev\...>` | `set NAME=value` |
+
+**Common gotcha**: setting env vars in PowerShell doesn't persist to Git Bash and vice versa. Set them in whichever shell you'll use to run wrangler.
+
+## Common issues
+
+| Error | Fix |
+|---|---|
+| `Wrangler requires at least Node.js v22.0.0` | Update Node to 22+. Use `nvm install 22` or download from nodejs.org. Docker users: pull latest image (already on Node 22). |
+| `npm error EUSAGE: ... can only install with an existing package-lock.json` | `git pull` then re-run. Lock file might be missing on your branch. |
+| `npm error EUSAGE: package.json and package-lock.json out of sync` | Run `npm install` to update lock file, then `git add package-lock.json` and commit. |
+| `Unknown argument: persist` | Update to latest wrangler (`npm install wrangler@latest`). The `--persist` flag is gone in 3.x. |
+| `Failed to fetch. URL scheme must be "http" or "https" for CORS request` (in Swagger UI) | Dev server not running. Start with `npm run dev` first. |
+| Docker: `exited with code 1 (restarting)` | Usually a Node version mismatch or missing token. Check `docker compose logs`. |
+| `CLOUDFLARE_API_TOKEN env var is required for remote mode` | Run with `--local` flag, or set the env var first. |
 
 ## Interactive API docs
 
