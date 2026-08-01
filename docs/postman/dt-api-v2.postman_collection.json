@@ -22,8 +22,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
             }
           },
           "event": [
@@ -49,8 +53,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
             }
           },
           "event": [
@@ -83,8 +93,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
             }
           },
           "event": [
@@ -106,8 +122,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "status"
+              ]
             }
           },
           "event": [
@@ -134,8 +156,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/openapi.json",
-              "host": ["{{baseUrl}}"],
-              "path": ["openapi.json"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
             }
           },
           "event": [
@@ -162,8 +188,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/docs",
-              "host": ["{{baseUrl}}"],
-              "path": ["docs"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
             }
           },
           "event": [
@@ -182,7 +212,7 @@
       ]
     },
     {
-      "name": "Cities — Search",
+      "name": "Cities \u2014 Search",
       "item": [
         {
           "name": "[Happy] Search 'Mumbai' (English, exact match)",
@@ -191,11 +221,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "Mumbai"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -230,11 +273,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=mum&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "mum"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "mum"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -260,11 +316,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=Berlin&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "Berlin"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "Berlin"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -295,12 +364,28 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=Hyderabad&country=IN&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "Hyderabad"},
-                {"key": "country", "value": "IN"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "Hyderabad"
+                },
+                {
+                  "key": "country",
+                  "value": "IN"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -329,17 +414,30 @@
           ]
         },
         {
-          "name": "[Multilingual] 'München' (German)",
+          "name": "[Multilingual] 'M\u00fcnchen' (German)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=M%C3%BCnchen&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "München"},
-                {"key": "limit", "value": "10"}
+                {
+                  "key": "q",
+                  "value": "M\u00fcnchen"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -361,17 +459,30 @@
           ]
         },
         {
-          "name": "[Multilingual] 'मुम्बई' (Hindi)",
+          "name": "[Multilingual] '\u092e\u0941\u092e\u094d\u092c\u0908' (Hindi)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=%E0%A4%AE%E0%A5%81%E0%A4%AE%E0%A5%8D%E0%A4%AC%E0%A4%88&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "मुम्बई"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "\u092e\u0941\u092e\u094d\u092c\u0908"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -393,17 +504,30 @@
           ]
         },
         {
-          "name": "[Multilingual] '北京' (Chinese)",
+          "name": "[Multilingual] '\u5317\u4eac' (Chinese)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=%E5%8C%97%E4%BA%AC&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "北京"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "\u5317\u4eac"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -431,13 +555,32 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai&lat=19.07&lon=72.87&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "Mumbai"},
-                {"key": "lat", "value": "19.07"},
-                {"key": "lon", "value": "72.87"},
-                {"key": "limit", "value": "5"}
+                {
+                  "key": "q",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "lat",
+                  "value": "19.07"
+                },
+                {
+                  "key": "lon",
+                  "value": "72.87"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -465,10 +608,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=xyzqwerty",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "xyzqwerty"}
+                {
+                  "key": "q",
+                  "value": "xyzqwerty"
+                }
               ]
             }
           },
@@ -494,10 +647,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=a",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "a"}
+                {
+                  "key": "q",
+                  "value": "a"
+                }
               ]
             }
           },
@@ -522,10 +685,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+                {
+                  "key": "q",
+                  "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
               ]
             }
           },
@@ -550,11 +723,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=London&limit=50",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "London"},
-                {"key": "limit", "value": "50"}
+                {
+                  "key": "q",
+                  "value": "London"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
               ]
             }
           },
@@ -578,11 +764,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=London&limit=999",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "London"},
-                {"key": "limit", "value": "999"}
+                {
+                  "key": "q",
+                  "value": "London"
+                },
+                {
+                  "key": "limit",
+                  "value": "999"
+                }
               ]
             }
           },
@@ -605,11 +804,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=London&country=USA",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "London"},
-                {"key": "country", "value": "USA"}
+                {
+                  "key": "q",
+                  "value": "London"
+                },
+                {
+                  "key": "country",
+                  "value": "USA"
+                }
               ]
             }
           },
@@ -632,10 +844,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=Mumbai%27%3B%20DROP%20TABLE%20cities%3B--",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "Mumbai'; DROP TABLE cities;--"}
+                {
+                  "key": "q",
+                  "value": "Mumbai'; DROP TABLE cities;--"
+                }
               ]
             }
           },
@@ -660,12 +882,28 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/search?q=London&lat=95&lon=0",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
               "query": [
-                {"key": "q", "value": "London"},
-                {"key": "lat", "value": "95"},
-                {"key": "lon", "value": "0"}
+                {
+                  "key": "q",
+                  "value": "London"
+                },
+                {
+                  "key": "lat",
+                  "value": "95"
+                },
+                {
+                  "key": "lon",
+                  "value": "0"
+                }
               ]
             }
           },
@@ -680,11 +918,1991 @@
               }
             }
           ]
+        },
+        {
+          "name": "[TZ Edge] Miami (US) \u2192 America/New_York",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Miami&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Miami",
+                  "description": "Florida Eastern"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/New_York"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Miami returns timezone America/New_York (Florida Eastern)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/New_York', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/New_York');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Pensacola (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Pensacola&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Pensacola",
+                  "description": "Florida Central (panhandle)"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Pensacola returns timezone America/Chicago (Florida Central (panhandle))",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Detroit (US) \u2192 America/Detroit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Detroit&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Detroit",
+                  "description": "Michigan Eastern"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Detroit"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Detroit returns timezone America/Detroit (Michigan Eastern)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Detroit', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Detroit');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Menominee (US) \u2192 America/Menominee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Menominee&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Menominee",
+                  "description": "Michigan UP Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Menominee"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Menominee returns timezone America/Menominee (Michigan UP Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Menominee', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Menominee');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Indianapolis (US) \u2192 America/Indiana/Indianapolis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Indianapolis&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Indianapolis",
+                  "description": "Indiana Eastern"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Indiana/Indianapolis"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Indianapolis returns timezone America/Indiana/Indianapolis (Indiana Eastern)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Indiana/Indianapolis', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Indiana/Indianapolis');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Gary (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Gary&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Gary",
+                  "description": "Indiana Central (NW)"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Gary returns timezone America/Chicago (Indiana Central (NW))",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Knox (US) \u2192 America/Indiana/Knox",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Knox&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Knox",
+                  "description": "Indiana special zone"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Indiana/Knox"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Knox returns timezone America/Indiana/Knox (Indiana special zone)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Indiana/Knox', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Indiana/Knox');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Tell City (US) \u2192 America/Indiana/Tell_City",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Tell%20City&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Tell City",
+                  "description": "Indiana special zone"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Indiana/Tell_City"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Tell City returns timezone America/Indiana/Tell_City (Indiana special zone)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Indiana/Tell_City', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Indiana/Tell_City');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Louisville (US) \u2192 America/Kentucky/Louisville",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Louisville&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Louisville",
+                  "description": "Kentucky Eastern"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Kentucky/Louisville"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Louisville returns timezone America/Kentucky/Louisville (Kentucky Eastern)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Kentucky/Louisville', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Kentucky/Louisville');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Bowling Green (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Bowling%20Green&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Bowling Green",
+                  "description": "Kentucky Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Bowling Green returns timezone America/Chicago (Kentucky Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Knoxville (US) \u2192 America/New_York",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Knoxville&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Knoxville",
+                  "description": "Tennessee Eastern"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/New_York"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Knoxville returns timezone America/New_York (Tennessee Eastern)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/New_York', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/New_York');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Nashville (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Nashville&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Nashville",
+                  "description": "Tennessee Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Nashville returns timezone America/Chicago (Tennessee Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Fargo (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Fargo&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Fargo",
+                  "description": "North Dakota Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Fargo returns timezone America/Chicago (North Dakota Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Center (US) \u2192 America/North_Dakota/Center",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Center&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Center",
+                  "description": "North Dakota special zone"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/North_Dakota/Center"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Center returns timezone America/North_Dakota/Center (North Dakota special zone)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/North_Dakota/Center', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/North_Dakota/Center');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Beulah (US) \u2192 America/North_Dakota/Beulah",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Beulah&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Beulah",
+                  "description": "North Dakota special zone"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/North_Dakota/Beulah"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Beulah returns timezone America/North_Dakota/Beulah (North Dakota special zone)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/North_Dakota/Beulah', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/North_Dakota/Beulah');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Sioux Falls (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Sioux%20Falls&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Sioux Falls",
+                  "description": "South Dakota Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Sioux Falls returns timezone America/Chicago (South Dakota Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Rapid City (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Rapid%20City&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Rapid City",
+                  "description": "South Dakota Mountain"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Rapid City returns timezone America/Denver (South Dakota Mountain)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Murdo (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Murdo&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Murdo",
+                  "description": "Boundary exception"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Murdo returns timezone America/Chicago (Boundary exception)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Omaha (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Omaha&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Omaha",
+                  "description": "Nebraska Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Omaha returns timezone America/Chicago (Nebraska Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Scottsbluff (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Scottsbluff&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Scottsbluff",
+                  "description": "Nebraska Mountain"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Scottsbluff returns timezone America/Denver (Nebraska Mountain)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Wichita (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Wichita&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Wichita",
+                  "description": "Kansas Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Wichita returns timezone America/Chicago (Kansas Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Goodland (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Goodland&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Goodland",
+                  "description": "Kansas Mountain"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Goodland returns timezone America/Denver (Kansas Mountain)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Dallas (US) \u2192 America/Chicago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Dallas&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Dallas",
+                  "description": "Texas Central"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Chicago"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Dallas returns timezone America/Chicago (Texas Central)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Chicago', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Chicago');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] El Paso (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=El%20Paso&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "El Paso",
+                  "description": "Texas Mountain"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify El Paso returns timezone America/Denver (Texas Mountain)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Boise (US) \u2192 America/Boise",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Boise&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Boise",
+                  "description": "Idaho Mountain"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Boise"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Boise returns timezone America/Boise (Idaho Mountain)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Boise', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Boise');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Coeur d'Alene (US) \u2192 America/Los_Angeles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Coeur%20d%27Alene&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Coeur d'Alene",
+                  "description": "Idaho Pacific (panhandle)"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Los_Angeles"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Coeur d'Alene returns timezone America/Los_Angeles (Idaho Pacific (panhandle))",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Los_Angeles', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Los_Angeles');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Portland (US) \u2192 America/Los_Angeles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Portland&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Portland",
+                  "description": "Oregon Pacific"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Los_Angeles"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Portland returns timezone America/Los_Angeles (Oregon Pacific)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Los_Angeles', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Los_Angeles');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Ontario (US) \u2192 America/Boise",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Ontario&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Ontario",
+                  "description": "Oregon Mountain (Malheur)"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Boise"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Ontario returns timezone America/Boise (Oregon Mountain (Malheur))",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Boise', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Boise');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Las Vegas (US) \u2192 America/Los_Angeles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Las%20Vegas&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Las Vegas",
+                  "description": "Nevada Pacific"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Los_Angeles"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Las Vegas returns timezone America/Los_Angeles (Nevada Pacific)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Los_Angeles', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Los_Angeles');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] West Wendover (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=West%20Wendover&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "West Wendover",
+                  "description": "Nevada Mountain exception"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify West Wendover returns timezone America/Denver (Nevada Mountain exception)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Phoenix (US) \u2192 America/Phoenix",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Phoenix&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Phoenix",
+                  "description": "Arizona without DST"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Phoenix"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Phoenix returns timezone America/Phoenix (Arizona without DST)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Phoenix', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Phoenix');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Window Rock (US) \u2192 America/Denver",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Window%20Rock&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Window Rock",
+                  "description": "Navajo Nation with DST"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Denver"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Window Rock returns timezone America/Denver (Navajo Nation with DST)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Denver', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Denver');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Anchorage (US) \u2192 America/Anchorage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Anchorage&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Anchorage",
+                  "description": "Alaska main zone"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Anchorage"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Anchorage returns timezone America/Anchorage (Alaska main zone)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Anchorage', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Anchorage');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Metlakatla (US) \u2192 America/Metlakatla",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Metlakatla&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Metlakatla",
+                  "description": "Alaska special history"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Metlakatla"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Metlakatla returns timezone America/Metlakatla (Alaska special history)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Metlakatla', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Metlakatla');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] Honolulu (US) \u2192 Pacific/Honolulu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=Honolulu&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Honolulu",
+                  "description": "Hawaii"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: Pacific/Honolulu"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify Honolulu returns timezone Pacific/Honolulu (Hawaii)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is Pacific/Honolulu', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('Pacific/Honolulu');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[TZ Edge] San Juan (US) \u2192 America/Puerto_Rico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q=San%20Juan&country=US&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "San Juan",
+                  "description": "Puerto Rico"
+                },
+                {
+                  "key": "country",
+                  "value": "US",
+                  "description": "Expected timezone: America/Puerto_Rico"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Verify San Juan returns timezone America/Puerto_Rico (Puerto Rico)",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Has results', () => {",
+                  "    pm.expect(data.data.results.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Timezone is America/Puerto_Rico', () => {",
+                  "    const tz = data.data.results[0].timezone.id;",
+                  "    pm.expect(tz).to.equal('America/Puerto_Rico');",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "Cities — Detail",
+      "name": "Cities \u2014 Detail",
       "item": [
         {
           "name": "[Happy] Get Mumbai (id=133024)",
@@ -693,8 +2911,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/133024",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "133024"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "133024"
+              ]
             }
           },
           "event": [
@@ -730,14 +2955,21 @@
           ]
         },
         {
-          "name": "[Happy] Get Berlin (id=24053) — capital, both country+state",
+          "name": "[Happy] Get Berlin (id=24053) \u2014 capital, both country+state",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/24053",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "24053"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "24053"
+              ]
             }
           },
           "event": [
@@ -765,8 +2997,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/999999",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "999999"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "999999"
+              ]
             }
           },
           "event": [
@@ -790,8 +3029,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/-1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "-1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "-1"
+              ]
             }
           },
           "event": [
@@ -813,8 +3059,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/abc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "abc"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "abc"
+              ]
             }
           },
           "event": [
@@ -836,8 +3089,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/cities/0",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "cities", "0"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "0"
+              ]
             }
           },
           "event": [
@@ -864,8 +3124,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/openapi.json",
-              "host": ["{{baseUrl}}"],
-              "path": ["openapi.json"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
             }
           }
         },
@@ -876,8 +3140,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/docs",
-              "host": ["{{baseUrl}}"],
-              "path": ["docs"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
             }
           }
         }

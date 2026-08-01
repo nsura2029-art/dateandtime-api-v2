@@ -213,16 +213,18 @@ function scoreResult(
   s += Math.max(0, -r.fts_rank);
 
   // Capital status
-  if (r.is_country_capital) s += 800;
-  if (r.is_state_capital) s += 200;
+  if (r.is_country_capital) s += 500;
+  if (r.is_state_capital) s += 50;
 
   // Tier
   if (r.tier === "tier1") s += 200;
   else if (r.tier === "tier2") s += 80;
 
-  // Population (log scale, only if available)
+  // Population (log scale, only if available) — STRONG weight so big cities
+  // outrank small same-name state capitals. Phoenix AZ (1.6M) should beat
+  // Phoenix OR (4.5K state capital).
   if (r.population && r.population > 0) {
-    s += Math.log10(r.population + 1) * 10;
+    s += Math.log10(r.population + 1) * 100;
   }
 
   // User country boost
