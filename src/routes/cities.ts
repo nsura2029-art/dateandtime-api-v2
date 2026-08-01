@@ -139,6 +139,10 @@ const CityDetail = z.object({
     total: z.number().describe("Total postcodes for this city (state-scoped)"),
     sample: z.array(PostcodeSample).describe("First 5 postcodes as preview"),
   }).nullable().describe("Postal codes (M4: dr5hn postcodes.json)"),
+  translations: z.object({
+    available: z.number().describe("Number of languages this city has been translated to (max 19)"),
+    languages: z.array(z.string()).describe("List of available language codes (e.g. ['ja', 'es', 'ar'])"),
+  }).describe("Available translations (M5: dr5hn translations.csv). Full text via /cities/{id}/translations"),
 });
 
 const CityDetailResponse = z.object({
@@ -621,6 +625,15 @@ cities.openapi(cityDetailRoute, async (c) => {
     };
   }
 
+  // Get translations count + languages (M5)
+  const translationsResult = await c.env.DB.prepare(
+    `SELECT language FROM translations WHERE place_id = ? AND place_type = 'city' ORDER BY language`
+  ).bind(id).all<{ language: string }>();
+  const translations = {
+    available: translationsResult.results?.length || 0,
+    languages: (translationsResult.results || []).map((t) => t.language),
+  };
+
   return c.json(
     {
       success: true as const,
@@ -668,6 +681,7 @@ cities.openapi(cityDetailRoute, async (c) => {
         },
         placeNames,
         postcodes: postcodesData,
+        translations,
       },
     },
     200
