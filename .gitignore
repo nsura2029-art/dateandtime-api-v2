@@ -40,3 +40,4 @@ migrations/cities/*.sql
 # Migration 111 alt names — regenerate from scripts/seed/alt_names.py
 # (43MB file, too large for git)
 migrations/111_seed_alt_names.sql
+tmp/
