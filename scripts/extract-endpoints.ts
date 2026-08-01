@@ -329,9 +329,29 @@ function main() {
     }
     const currentBlock = currentContent.slice(startIdx, endIdx + endMarker.length);
     const expectedBlock = `${startMarker}\n\n${table}\n${endMarker}`;
-    if (currentBlock.trim() !== expectedBlock.trim()) {
+    // Normalize: collapse multiple blank lines and trailing whitespace
+    // so the check is robust to formatting changes (e.g. extra newlines).
+    const normalize = (s: string) =>
+      s
+        .split("\n")
+        .map((l) => l.replace(/\s+$/, ""))
+        .filter((l, i, arr) => !(l === "" && arr[i - 1] === ""))
+        .join("\n")
+        .trim();
+    if (normalize(currentBlock) !== normalize(expectedBlock)) {
       console.error(`❌ README.md is out of sync with src/routes/`);
       console.error(`   Run: npm run sync:readme`);
+      // Show a diff hint so the user can see what's different
+      const curLines = normalize(currentBlock).split("\n");
+      const expLines = normalize(expectedBlock).split("\n");
+      for (let i = 0; i < Math.max(curLines.length, expLines.length); i++) {
+        if (curLines[i] !== expLines[i]) {
+          console.error(`\n   first diff at line ${i + 1}:`);
+          console.error(`   current: ${curLines[i] ?? "(missing)"}`);
+          console.error(`   expected: ${expLines[i] ?? "(missing)"}`);
+          break;
+        }
+      }
       process.exit(1);
     }
     console.log(`✓  README.md is in sync (${allEndpoints.length} endpoints)`);
