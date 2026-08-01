@@ -14,6 +14,7 @@
     "deploy:dev": "bash scripts/deploy.sh dev",
     "deploy:prod": "bash scripts/deploy.sh prod",
     "deploy:dev:dry": "bash scripts/deploy.sh dev --dry-run",
+    "deploy:prod:dry": "bash scripts/deploy.sh prod --dry-run",
     "tail:dev": "wrangler tail --env dev",
     "tail:prod": "wrangler tail",
     "test": "vitest run",
