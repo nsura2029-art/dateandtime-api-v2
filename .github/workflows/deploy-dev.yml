@@ -87,6 +87,37 @@ jobs:
         # Idempotent: uses INSERT OR IGNORE.
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/107_seed_missing_time_zones.sql
 
+      - name: Apply migration 108 (set capital flags)
+        # Sets is_country_capital, is_state_capital, capital_type on cities
+        # based on name match with countries.capital and admin_regions.name.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/108_set_capital_flags.sql
+
+      - name: Apply migration 109 (add tier column)
+        # Adds tier1/tier2/tier3 classification to cities.
+        # Idempotent: ALTER TABLE ADD COLUMN with IF NOT EXISTS, UPDATE
+        # statements set tier where NULL.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/109_add_tier_column.sql
+
+      - name: Apply migration 110 (seed place_names)
+        # Seeds 152,970 place_names rows (one per city, English official +
+        # ASCII variant). Powers FTS5 search.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/110_seed_place_names.sql
+
+      - name: Apply migration 111 (seed GeoNames alt names)
+        # Seeds ~452K place_names rows from GeoNames alternateNamesV2.txt
+        # (filtered to real ISO 639 language codes). Covers 52K of our cities
+        # matched by name+country against cities1000.txt. After applying,
+        # search must rebuild FTS5 index (handled in the verify step).
+        # Skipped if the file is missing (it's gitignored — see .gitignore).
+        run: |
+          if [ -f migrations/111_seed_alt_names.sql ]; then
+            npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/111_seed_alt_names.sql
+            echo "Rebuilding FTS5 index..."
+            npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --command="INSERT INTO place_names_fts(place_names_fts) VALUES('rebuild');"
+          else
+            echo "::notice::migrations/111_seed_alt_names.sql not found, skipping GeoNames alt names seed. To enable, run scripts/seed/alt_names.py locally and commit the file."
+          fi
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)

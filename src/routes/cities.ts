@@ -273,15 +273,24 @@ cities.openapi(searchRoute, async (c) => {
 
   // Normalize query for matching
   const qLower = q.toLowerCase().trim();
-  const qNorm = qLower.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  // For ASCII queries, build a normalized form (lowercase, no diacritics, alphanum only)
+  // For non-ASCII queries (Hindi, Arabic, Chinese, etc.), keep the original — we can't
+  // transliterate, and FTS5 has the original Unicode strings in place_names.
+  const isAscii = /^[\x00-\x7f]+$/.test(qLower);
+  const qNorm = isAscii
+    ? qLower.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")
+    : qLower;
 
   // FTS5 query: use prefix match for partial typing
   // NOTE: D1 binds parameters as strings, so the FTS5 MATCH operator needs
   // the raw query string inlined, not parameterized. (The FTS5 `?` binding
   // does NOT correctly pass MATCH operators like `*`.)
   const ftsQuery = qNorm.length >= 2 ? `${qNorm}*` : qNorm;
-  // Sanitize: only allow alphanumeric + the FTS5 prefix wildcard
-  const safeFts = ftsQuery.replace(/[^a-z0-9*]/g, '');
+  // Sanitize: keep ASCII alphanumeric + *, or pass Unicode through as-is for non-ASCII
+  // The FTS5 tokenizer handles Unicode, so we just need to remove SQL-breaking chars
+  const safeFts = ftsQuery
+    .replace(/[\\'"`;]/g, '')  // strip SQL-breaking chars
+    .replace(/^\*+|\*+$/g, '');  // strip leading/trailing stars
 
   // Query: FTS5 → place_names → cities → country → admin → timezone
   // NOTE: FTS5 MATCH is inlined (not bound) because D1's parameter binding
