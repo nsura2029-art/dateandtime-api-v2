@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS regions (
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS subregions (
   id          INTEGER PRIMARY KEY,            -- 1..22
-  code        TEXT UNIQUE NOT NULL,           -- UN M49 code, e.g. '021' (Northern America)
+  code        TEXT UNIQUE,                    -- UN M49 code, e.g. '021' (Northern America); NULLABLE because some sub-regions (e.g. Polar) have no UN M49 code
   name        TEXT NOT NULL,
   region_id   INTEGER NOT NULL,
   FOREIGN KEY (region_id) REFERENCES regions(id)
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS countries (
   capital             TEXT,                           -- 'Washington, D.C.'
   region_id           INTEGER NOT NULL,
   subregion_id        INTEGER NOT NULL,
-  currency_code       TEXT,                           -- 'USD', 'INR', 'JPY'
+  currency_code       TEXT,                           -- 'ISO 4217 currency code (USD, INR, JPY)
   currency_name       TEXT,                           -- 'US Dollar'
   currency_symbol     TEXT,                           -- '$', '₹', '¥'
   phone_code          TEXT,                           -- '+1', '+91', '+81'
@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS countries (
   population          INTEGER,
   flag_emoji          TEXT,                           -- '🇺🇸', '🇮🇳', '🇯🇵'
   tld                 TEXT,                           -- '.us', '.in', '.jp'
+  nationality         TEXT,                           -- 'Afghan', 'American' (denonym)
   un_member           INTEGER DEFAULT 0,              -- 0/1
   landlocked          INTEGER DEFAULT 0,              -- 0/1
   independent         INTEGER DEFAULT 0,              -- 0/1
