@@ -47,6 +47,8 @@ const CitySearchResult = z.object({
   capitalType: z.string().nullable().describe("country_capital | state_capital | both | null"),
   isCountryCapital: z.boolean(),
   isStateCapital: z.boolean(),
+  disputed: z.boolean().describe("True if boundary/sovereignty is contested"),
+  claimedBy: z.array(z.string()).nullable().describe("ISO country codes that claim this city"),
   latitude: z.number(),
   longitude: z.number(),
   population: z.number().nullable(),
@@ -173,6 +175,8 @@ type RawResult = {
   latitude: number;
   longitude: number;
   population: number | null;
+  disputed: number;
+  claimed_by: string | null;
   country_id: number;
   country_cca2: string;
   country_cca3: string | null;
@@ -286,7 +290,7 @@ cities.openapi(searchRoute, async (c) => {
     SELECT
       ci.id as city_id, ci.name as city_name, ci.ascii_name,
       ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
-      ci.latitude, ci.longitude, ci.population,
+      ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
       co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
       co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
       ar.id as admin_id, ar.name as admin_name,
@@ -314,6 +318,38 @@ cities.openapi(searchRoute, async (c) => {
       { success: false as const, error: { code: "SEARCH_FAILED", message: String(err) } },
       400
     );
+  }
+
+  // Fuzzy fallback: if FTS5 returns nothing (e.g. typo, transliteration mismatch),
+  // try a LIKE-based search on normalized_name.
+  if (ftsResults.length === 0 && qNorm.length >= 3) {
+    const fuzzySql = `
+      SELECT
+        ci.id as city_id, ci.name as city_name, ci.ascii_name,
+        ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
+        ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
+        co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
+        co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
+        ar.id as admin_id, ar.name as admin_name,
+        tz.id as timezone_id, tz.current_offset as utc_offset,
+        tz.current_abbreviation as tz_abbrev, tz.is_dst,
+        0.0 as fts_rank
+      FROM place_names pn
+      JOIN cities ci ON ci.id = pn.canonical_place_id
+      JOIN countries co ON co.id = ci.country_id
+      LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+      LEFT JOIN time_zones tz ON tz.id = ci.timezone
+      WHERE pn.normalized_name LIKE ?
+        AND ci.is_active = 1
+      ORDER BY LENGTH(pn.normalized_name) ASC
+      LIMIT 50
+    `;
+    try {
+      const fuzzyResult = await c.env.DB.prepare(fuzzySql).bind(`${qNorm}%`).all<RawResult>();
+      ftsResults = fuzzyResult.results || [];
+    } catch {
+      // Ignore fuzzy errors — FTS5 result is empty anyway
+    }
   }
 
   // Deduplicate by city_id (same city may have multiple place_names matches)
@@ -344,14 +380,21 @@ cities.openapi(searchRoute, async (c) => {
     return { ...r, score, distanceKm };
   });
 
-  // Same-name penalty: if multiple cities share the same name (e.g. Hyderabad),
-  // penalize those NOT in user's country.
+  // Same-name handling: if multiple cities share the same name (e.g. Hyderabad),
+  //   - Boost the one in user's country (if known)
+  //   - Penalize the others
+  // Without user country, all same-name cities stay at base score.
   const nameCounts = new Map<string, number>();
   for (const r of scored) nameCounts.set(r.city_name, (nameCounts.get(r.city_name) || 0) + 1);
   for (const r of scored) {
     const cnt = nameCounts.get(r.city_name) || 1;
-    if (cnt > 1 && country && r.country_cca2 !== country) {
-      r.score -= 400;
+    if (cnt > 1) {
+      if (country && r.country_cca2 === country) {
+        r.score += 500; // strong boost for user's country
+      } else if (country) {
+        r.score -= 400; // penalty for non-user country
+      }
+      // If no user country, all same-name cities are equal (base score)
     }
   }
 
@@ -370,6 +413,8 @@ cities.openapi(searchRoute, async (c) => {
     capitalType: r.capital_type,
     isCountryCapital: r.is_country_capital === 1,
     isStateCapital: r.is_state_capital === 1,
+    disputed: r.disputed === 1,
+    claimedBy: r.claimed_by ? String(r.claimed_by).split(",").map((s: string) => s.trim()) : null,
     latitude: r.latitude,
     longitude: r.longitude,
     population: r.population,
