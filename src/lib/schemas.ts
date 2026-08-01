@@ -242,7 +242,7 @@ export const StatusResponse = z.object({
       deployedAt: z.string().datetime().nullable().describe("ISO 8601 deploy timestamp, null if unset"),
     }),
     database: z.object({
-      binding: z.literal("timeandtimepro-full").describe("D1 database name bound to this Worker"),
+      binding: z.literal("timeandtimepro-full-v2").describe("D1 database name bound to this Worker"),
       connected: z.boolean().describe("True if the DB responded to the test query"),
       version: z.string().nullable().describe("Schema version (from data_sources table if present)"),
       tables: DatabaseStats,

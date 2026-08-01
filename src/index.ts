@@ -11,6 +11,7 @@ import { handleCorsPreflight, getCorsHeaders } from "@/config/cors";
 import { loadEnv } from "@/config/env";
 import health from "@/routes/health";
 import status from "@/routes/status";
+import cities from "@/routes/cities";
 import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
@@ -35,6 +36,7 @@ app.options("*", (c) => {
 // ============================================================================
 app.route("/", health); // GET / and GET /api/v1/health
 app.route("/", status); // GET /api/v1/status
+app.route("/", cities); // GET /api/v1/cities/search and /api/v1/cities/:id
 
 // OpenAPI + Swagger UI
 registerDocs(app);
