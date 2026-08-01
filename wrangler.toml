@@ -1,0 +1,62 @@
+# dateandtime-api-v2 — Hono + D1 on Cloudflare Workers
+#
+# Prod:  wrangler deploy                      → dt-api-v2
+# Dev:   wrangler deploy --env dev            → dt-api-v2-dev
+# Local: wrangler dev --persist               → http://localhost:8787
+
+name = "dt-api-v2"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ============================================================================
+# Production D1 (existing timeandtimepro-full — 33,945 cities / 242 countries)
+# ============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "timeandtimepro-full"
+database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+migrations_dir = "migrations"
+
+# ============================================================================
+# KV for caching hot endpoints (popular, health)
+# ============================================================================
+# Create with: wrangler kv:namespace create CACHE
+# Then paste the id below
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "<paste-id-here>"
+
+# ============================================================================
+# Production environment variables
+# ============================================================================
+[vars]
+API_VERSION = "2.0.0"
+API_NAME = "dt-api-v2"
+LOG_LEVEL = "info"
+# Comma-separated list of allowed origins for CORS
+ALLOWED_ORIGINS = "https://dateandtime.live,https://tdp-landing-dev.nsura2029.workers.dev,http://localhost:5173"
+
+# ============================================================================
+# Dev environment — same D1, lower log level, looser CORS
+# ============================================================================
+[env.dev]
+name = "dt-api-v2-dev"
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "timeandtimepro-full"
+database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+migrations_dir = "migrations"
+
+[env.dev.vars]
+API_VERSION = "2.0.0-dev"
+API_NAME = "dt-api-v2-dev"
+LOG_LEVEL = "debug"
+ALLOWED_ORIGINS = "*"
+
+# ============================================================================
+# Secrets (NEVER commit these — set with `wrangler secret put NAME`)
+# ============================================================================
+# ADMIN_API_KEY    — required for /api/v1/admin/* endpoints
+# RATE_LIMIT_TOKEN — (optional) for distributed rate limiting

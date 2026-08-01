@@ -1,0 +1,39 @@
+# dateandtime-api-v2 — docker compose for local dev
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml up
+#   → API at http://localhost:8787
+#   → D1 SQLite persisted in .wrangler/state/v3/d1/ (mounted volume)
+#
+# Edit code on host → wrangler detects changes → hot reload.
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: dt-api-v2-dev
+    ports:
+      - "8787:8787"
+    volumes:
+      # Source code (hot reload)
+      - ../src:/app/src:ro
+      - ../wrangler.toml:/app/wrangler.toml:ro
+      - ../tsconfig.json:/app/tsconfig.json:ro
+      - ../package.json:/app/package.json:ro
+      # D1 local state (persisted between restarts)
+      - dt-d1-state:/app/.wrangler/state
+      # Dev vars (CORS, log level, etc.)
+      - ../.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  dt-d1-state:
+    driver: local
