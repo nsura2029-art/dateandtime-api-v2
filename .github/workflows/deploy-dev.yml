@@ -143,6 +143,32 @@ jobs:
         # E.g. Pensacola, FL: America/New_York → America/Chicago (panhandle is Central)
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/116_fix_us_timezones_from_geonames.sql
 
+      - name: Apply migration 117 (US timezone truth list)
+        # 40 critical US cities with their authoritative IANA timezones
+        # (Florida panhandle, IN/KY/TN split, ND/SD/NE/KS, AZ Navajo, AK, etc.)
+        # Overrides any prior wrong value.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/117_us_timezone_truth.sql
+
+      - name: Apply migration 119 (timezonefinder polygon fix)
+        # ~400 US cities fixed via official IANA timezone polygons
+        # (timezone-boundary-builder data via timezonefinder).
+        # Migration 118 (state-level) is deprecated — 119 supersedes it.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/119_comprehensive_us_tz.sql
+
+      - name: Apply migration 120 (additional timezone fixes)
+        # Stragglers from 119 — populated cities that 119 missed.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/120_timezone_polygon_fix.sql
+
+      - name: Apply migration 121 (fix NULL US populations)
+        # 4,614 US cities with NULL population, matched by (name, state_code).
+        # Migration 112 had a 1:1 matching bug — this fixes the gaps.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/121_fix_us_population.sql
+
+      - name: Apply migration 122 (overwrite WRONG US populations)
+        # Migration 112 gave Miami FL the wrong population (589 from Miami TX).
+        # This migration overwrites wrong values with correct (name, state) matches.
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/122_fix_wrong_us_population.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
