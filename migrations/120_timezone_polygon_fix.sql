@@ -1,0 +1,89 @@
+-- Migration 120: US timezone fix using timezonefinder polygons
+-- For 400 US cities, sets timezone using official IANA timezone polygons
+-- (timezonefinder library, which uses timezone-boundary-builder data).
+--
+-- This is the CORRECT way to handle US split timezones:
+--   - Florida panhandle (longitude-based split)
+--   - Indiana, Michigan, Kentucky, Tennessee (county-based splits)
+--   - North/South Dakota, Nebraska, Kansas, Texas, Idaho, Oregon, Nevada
+--   - Alaska (Aleutians, SE panhandle, Metlakatla)
+--   - Arizona (Navajo Nation vs. rest)
+--
+-- Idempotent: sets explicit value.
+
+-- America/Chicago (80 cities)
+UPDATE cities SET timezone = 'America/Chicago' WHERE id IN (111102,111168,112621,113059,113075,113089,113141,113909,114464,114844,114856,114979,115542,115645,115881,115999,116321,116526,117103,117106,117668,117732,117739,117913,118396,118497,118751,119120,119122,119256,119461,119613,119777,119979,119984,120649,120728,120736,121760,121966,121967,121982,122012,122018,122118,122323,122478,122479,122693,122787,123370,123480,123889,124178,124199,124543,124551,124614,125412,125540,125635,125909,126130,126538,126666,126810,126823,126961,127291,127668,127714,127777,128133,128450,128535,128632,129079,129156,129196,129299);
+
+-- America/Denver (11 cities)
+UPDATE cities SET timezone = 'America/Denver' WHERE id IN (113967,115338,116704,117048,118688,120874,121164,122459,125699,127864,129376);
+
+-- America/Detroit (18 cities)
+UPDATE cities SET timezone = 'America/Detroit' WHERE id IN (111809,115388,115610,116181,117237,117820,117949,118113,118689,119020,119347,119734,120211,121292,122617,123489,127840,128902);
+
+-- America/Indiana/Indianapolis (22 cities)
+UPDATE cities SET timezone = 'America/Indiana/Indianapolis' WHERE id IN (111609,112703,113593,114268,114740,116359,116405,116794,119137,120589,122840,123114,123642,123682,125321,126126,126264,127182,127520,128161,128989,129280);
+
+-- America/Indiana/Knox (4 cities)
+UPDATE cities SET timezone = 'America/Indiana/Knox' WHERE id IN (111880,119682,119706,123044);
+
+-- America/Indiana/Marengo (1 cities)
+UPDATE cities SET timezone = 'America/Indiana/Marengo' WHERE id IN (116135);
+
+-- America/Indiana/Petersburg (1 cities)
+UPDATE cities SET timezone = 'America/Indiana/Petersburg' WHERE id IN (124103);
+
+-- America/Indiana/Tell_City (2 cities)
+UPDATE cities SET timezone = 'America/Indiana/Tell_City' WHERE id IN (113330,127488);
+
+-- America/Indiana/Vevay (1 cities)
+UPDATE cities SET timezone = 'America/Indiana/Vevay' WHERE id IN (128213);
+
+-- America/Indiana/Vincennes (9 cities)
+UPDATE cities SET timezone = 'America/Indiana/Vincennes' WHERE id IN (112311,116477,118794,119141,120764,123362,126364,128263,128538);
+
+-- America/Indiana/Winamac (1 cities)
+UPDATE cities SET timezone = 'America/Indiana/Winamac' WHERE id IN (129350);
+
+-- America/Juneau (5 cities)
+UPDATE cities SET timezone = 'America/Juneau' WHERE id IN (117843,117844,118632,119338,126475);
+
+-- America/Kentucky/Louisville (11 cities)
+UPDATE cities SET timezone = 'America/Kentucky/Louisville' WHERE id IN (113770,114153,114681,117021,118308,119208,122654,123254,124389,126135,128116);
+
+-- America/Kentucky/Monticello (1 cities)
+UPDATE cities SET timezone = 'America/Kentucky/Monticello' WHERE id IN (122162);
+
+-- America/Los_Angeles (21 cities)
+UPDATE cities SET timezone = 'America/Los_Angeles' WHERE id IN (111908,113399,116008,116150,117490,119057,119318,119371,120137,120428,120430,122300,122879,123572,123596,124397,125685,126854,128398,128783,129411);
+
+-- America/Menominee (1 cities)
+UPDATE cities SET timezone = 'America/Menominee' WHERE id IN (121662);
+
+-- America/New_York (174 cities)
+UPDATE cities SET timezone = 'America/New_York' WHERE id IN (111149,111356,111526,111648,111656,111818,111820,111984,112019,112109,112213,112433,112563,112686,112785,112837,112881,112891,112989,113067,113241,113305,113310,113402,113466,113572,114159,114332,114385,114631,114736,114797,114808,114809,114824,114906,114952,115033,115091,115345,115383,115483,115858,115978,115986,115996,116071,116099,116172,116386,116557,116561,116578,116721,116731,116754,116765,116815,116818,116933,117157,117561,117626,117677,118015,118078,118200,118232,118240,118379,118406,118470,118478,118508,118770,118854,118890,118931,118998,119003,119062,119206,119214,119333,119749,119826,120035,120080,120108,120240,120241,120285,120296,120439,120456,120459,120721,120804,120869,121091);
+UPDATE cities SET timezone = 'America/New_York' WHERE id IN (121450,121517,121572,121776,121814,122225,122371,122391,122397,122406,122685,122841,122889,123010,123268,123440,123533,123667,123670,123728,123831,123849,124116,124123,124198,124232,124259,124275,124532,124661,124715,124812,124815,125085,125169,125534,125565,125776,125883,126282,126312,126425,126451,126523,126580,126728,126774,126892,126953,126966,127004,127460,127463,127971,128097,128134,128142,128200,128209,128242,128268,128434,128515,128916,129083,129185,129199,129231,129266,129285,129327,129353,129597,129618);
+
+-- America/Nome (10 cities)
+UPDATE cities SET timezone = 'America/Nome' WHERE id IN (111081,111143,113917,115578,118634,119583,119712,122934,122935,127966);
+
+-- America/North_Dakota/Beulah (3 cities)
+UPDATE cities SET timezone = 'America/North_Dakota/Beulah' WHERE id IN (112296,118210,126970);
+
+-- America/North_Dakota/Center (1 cities)
+UPDATE cities SET timezone = 'America/North_Dakota/Center' WHERE id IN (113639);
+
+-- America/North_Dakota/New_Salem (1 cities)
+UPDATE cities SET timezone = 'America/North_Dakota/New_Salem' WHERE id IN (121106);
+
+-- America/Phoenix (11 cities)
+UPDATE cities SET timezone = 'America/Phoenix' WHERE id IN (112002,113635,114454,115386,116523,116898,117452,121573,123717,123958,125999);
+
+-- America/Sitka (9 cities)
+UPDATE cities SET timezone = 'America/Sitka' WHERE id IN (114045,114756,119523,119524,124108,124110,126470,126471,129601);
+
+-- America/Yakutat (1 cities)
+UPDATE cities SET timezone = 'America/Yakutat' WHERE id IN (129652);
+
+-- Asia/Magadan (1 cities)
+UPDATE cities SET timezone = 'Asia/Magadan' WHERE id IN (153919);
+

@@ -1,0 +1,835 @@
+{
+  "info": {
+    "name": "dateandtime-api-v2 (2.0.0)",
+    "_postman_id": "dt-api-v2-2026-08-02",
+    "description": "dateandtime.live API v2 \u2014 Hono + Cloudflare D1 + Zod.\n\n**Coverage:** 152,970 cities, 250 countries, 462 IANA timezones, 844K postcodes, 2.97M translations (19 langs).\n\nSee https://github.com/nsura2029-art/dateandtime-api-v2 for source. Read `/docs/timezone-core-logic.md` for how timezones are assigned.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Meta",
+      "description": "API health, status, and docs",
+      "item": [
+        {
+          "name": "API root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "Welcome page with links to docs and health."
+          },
+          "response": []
+        },
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "description": "Returns DB stats (city count, etc.) and latency. Use for monitoring."
+          },
+          "response": []
+        },
+        {
+          "name": "API status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "status"
+              ]
+            },
+            "description": "Comprehensive service info: build, runtime, DB, features, endpoints."
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI spec",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "Machine-readable OpenAPI 3.1 spec. Auto-generated from Zod schemas."
+          },
+          "response": []
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
+            },
+            "description": "Interactive API documentation. Try endpoints from the browser."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cities",
+      "description": "dr5hn cities (152,970 rows) with full timezone + dr5hn enrichment",
+      "item": [
+        {
+          "name": "Search cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q={{q}}&country={{country}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "country",
+                  "value": "{{country}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "FTS5 search over 152,970 cities. Returns ranked results with country, admin region, timezone, and (if provided) distance from user. Supports ?state=, ?lang=, ?country=, ?lat/lon, ?limit. When ?lang= is provided and query is in that language, searches the translations table as fallback."
+          },
+          "response": []
+        },
+        {
+          "name": "Search cities with state filter (disambiguation)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q={{q}}&country={{country}}&state={{state}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "country",
+                  "value": "{{country}}",
+                  "disabled": false
+                },
+                {
+                  "key": "state",
+                  "value": "{{state}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "When multiple cities share a name (Phoenix, Monterrey, Perth), ?state= gives a strong +1000 boost to disambiguate."
+          },
+          "response": []
+        },
+        {
+          "name": "Cross-language search (ja)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q={{q}}&lang={{lang}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "{{lang}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Search in a non-English language via ?lang= and ?q=."
+          },
+          "response": []
+        },
+        {
+          "name": "Search near user (lat/lon)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/search?q={{q}}&lat={{lat}}&lon={{lon}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lon",
+                  "value": "{{lon}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Use ?lat and ?lon to add proximity boost to ranking."
+          },
+          "response": []
+        },
+        {
+          "name": "Get city detail by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/64500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "64500"
+              ]
+            },
+            "description": "Returns full record for a city: name, country, admin region, timezone, capital status, tier, dr5hn enrichment, place names, postcodes, translations count, data quality."
+          },
+          "response": []
+        },
+        {
+          "name": "Get city postcodes (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/115731/postcodes?page={{page}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "115731",
+                "postcodes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Returns postcodes in the same state as the city, paginated. State-scoped because dr5hn postcodes have NULL city_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Get city translations (all 19 langs)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/64500/translations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "64500",
+                "translations"
+              ]
+            },
+            "description": "Returns city name translated into all 19 supported languages (ar, br, de, es, fa, fr, hi, hr, it, ja, ko, nl, pl, pt, pt-BR, ru, tr, uk, zh-CN)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get city translation (single language)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/64500/translations/ja",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "64500",
+                "translations",
+                "ja"
+              ]
+            },
+            "description": "Returns the city name in a single language. Case-insensitive."
+          },
+          "response": []
+        },
+        {
+          "name": "Get city airports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/64500/airports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "64500",
+                "airports"
+              ]
+            },
+            "description": "Returns airports with city_id matching the given city. Data import pending (cron task 426125193814084)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Translations",
+      "description": "19-language cross-language search (2.97M rows)",
+      "item": [
+        {
+          "name": "Search by translated name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/translations/search?q={{q}}&lang={{lang}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "translations",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "{{lang}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Find cities by their name in a non-English language. Example: ?q=\u6771\u4eac&lang=ja finds Tokyo. ?q=\u5317\u4eac&lang=zh-CN finds Beijing."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Spanish name (Madrid)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/translations/search?q={{q}}&lang={{lang}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "translations",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{q}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "{{lang}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Find cities with name in Spanish."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Postcodes",
+      "description": "Postal/ZIP codes (844,248 rows, 14 countries)",
+      "item": [
+        {
+          "name": "Find cities by postcode",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/postcodes/search?code={{code}}&country={{country}}&exact={{exact}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "postcodes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{code}}",
+                  "disabled": false
+                },
+                {
+                  "key": "country",
+                  "value": "{{country}}",
+                  "disabled": false
+                },
+                {
+                  "key": "exact",
+                  "value": "{{exact}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Find cities by postal code. ?exact=true for exact match, ?exact=false for prefix. Returns postcode + associated cities (state_capital first, then by population)."
+          },
+          "response": []
+        },
+        {
+          "name": "Find cities by postcode (prefix)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/postcodes/search?code={{code}}&country={{country}}&exact={{exact}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "postcodes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{code}}",
+                  "disabled": false
+                },
+                {
+                  "key": "country",
+                  "value": "{{country}}",
+                  "disabled": false
+                },
+                {
+                  "key": "exact",
+                  "value": "{{exact}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Prefix match. code=32 finds 32003, 32008, etc."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Airports",
+      "description": "Airports near a point (data import pending)",
+      "item": [
+        {
+          "name": "Find airports near coordinates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/airports/near?lat={{lat}}&lon={{lon}}&radius={{radius}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "airports",
+                "near"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lon",
+                  "value": "{{lon}}",
+                  "disabled": false
+                },
+                {
+                  "key": "radius",
+                  "value": "{{radius}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Returns airports within ?radius= (default 100 km, max 500 km) of a lat/lon. Sorted by scheduled service then distance. Data pending (OurAirports.com import via cron task)."
+          },
+          "response": []
+        },
+        {
+          "name": "Find airports in NYC (JFK area)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/airports/near?lat={{lat}}&lon={{lon}}&radius={{radius}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "airports",
+                "near"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "disabled": false
+                },
+                {
+                  "key": "lon",
+                  "value": "{{lon}}",
+                  "disabled": false
+                },
+                {
+                  "key": "radius",
+                  "value": "{{radius}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "JFK is at 40.6413, -73.7781."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Data Quality",
+      "description": "Timezone confidence, sources, audit",
+      "item": [
+        {
+          "name": "Data quality summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality"
+              ]
+            },
+            "description": "Returns overall data quality metrics: timezone confidence distribution, data sources, applied migrations."
+          },
+          "response": []
+        },
+        {
+          "name": "List all data quality issues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality/issues?limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality",
+                "issues"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "List all cities with quality concerns (Null Island, missing population, low confidence, etc.) Sorted by severity."
+          },
+          "response": []
+        },
+        {
+          "name": "List Null Island cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality/issues?type={{type}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality",
+                "issues"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "22 cities have lat=0, lon=0 (bad data). Per spec \u00a714.1, they're flagged 'unresolved' rather than silently defaulted."
+          },
+          "response": []
+        },
+        {
+          "name": "List manual overrides",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality/issues?type={{type}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality",
+                "issues"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "13 cities with manually-overridden timezones (spec \u00a728). Includes Atikokan ON, Creston BC, Lakshadweep, etc."
+          },
+          "response": []
+        },
+        {
+          "name": "List low-confidence cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality/issues?type={{type}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality",
+                "issues"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "13 manual override + 22 unresolved = 35 total."
+          },
+          "response": []
+        },
+        {
+          "name": "List cities using banned Etc/GMT* (spec \u00a78.2)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/data-quality/issues?type={{type}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-quality",
+                "issues"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Should always return 0 \u2014 migration 125 banned all Etc/GMT*."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
