@@ -74,18 +74,20 @@ describe("SR2: /api/v1/sources/:key", () => {
 });
 
 describe("SR3: /api/v1/sources/:key/releases", () => {
-  it("SR3.1: returns empty list for source with no releases yet", async () => {
+  it("SR3.1: returns the GeoNames cities5000 release", async () => {
     const r = await fetch(`${API}/api/v1/sources/geonames/releases`);
     const body = await r.json();
-    expect(body.data.count).toBe(0);
-    expect(body.data.releases).toEqual([]);
+    expect(body.data.count).toBeGreaterThanOrEqual(1);
+    const release = body.data.releases[0];
+    expect(release.releaseId).toBe("geonames-cities5000-2026-08-02");
+    expect(release.status).toBe("raw-stored");
   });
 
   it("SR3.2: filters by status", async () => {
-    const r = await fetch(`${API}/api/v1/sources/geonames/releases?status=published`);
+    const r = await fetch(`${API}/api/v1/sources/geonames/releases?status=raw-stored`);
     const body = await r.json();
-    expect(body.data.filter.status).toBe("published");
-    expect(body.data.releases).toEqual([]);
+    expect(body.data.filter.status).toBe("raw-stored");
+    expect(body.data.releases.length).toBeGreaterThanOrEqual(1);
   });
 
   it("SR3.3: limits results", async () => {
