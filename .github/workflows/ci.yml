@@ -60,3 +60,13 @@ jobs:
             exit 1
           fi
           echo "README is in sync."
+
+      - name: Doc framework check (PRs to develop only)
+        if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+        run: |
+          # On PRs targeting develop, ensure doc framework is up to date.
+          # This enforces the contract: every merge to develop must update
+          # STATUS.md, CHANGELOG.md, TODO.md, and reports/.
+          chmod +x scripts/pre-merge-to-develop.sh
+          bash scripts/pre-merge-to-develop.sh
+
