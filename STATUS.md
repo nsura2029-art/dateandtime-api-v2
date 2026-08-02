@@ -2,34 +2,33 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-02 09:45 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-02 11:00 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. MVP + data platform foundation complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.5 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M10+ |
-| `feature/data-platform-geonames` | M11.0/M11.1 work | **8+ commits, ready to merge to develop** |
-| `feature/global-timezone-polygon` | M0-M10+ work (now in develop) | stale (merged) |
+| `develop` | Integration | up to date with M0-M11.5 |
+| `feature/search-layer-ranking` | M11.1+ search + M11.1.5 altNames | **merged to develop** |
 
 ## Last 5 commits
 
 ```
-HEAD: M11.1 layer merge applied — 11 new city fields, 170K cities
-HEAD~1: M11.0 data platform foundation — 5 endpoints, source registry
-HEAD~2: docs: M11.1 layer design + reconciliation report
-HEAD~3: M11.0 reconcile GeoNames — 100% match, validated
-HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
+HEAD: merge: M11.1+ search_name strategy + M11.1.5 altNames
+HEAD~1: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 matches
+HEAD~2: WIP: alt_names_staging + Wikidata staging + HTTP API loader
+HEAD~3: M11.1+ search: add cities.search_name LIKE strategy + index
+HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 ```
 
 ## Test status
 
-**343 / 344 pass** (1 pre-existing `tests/env.test.ts` failure, unrelated to recent work)
+**353 / 354 pass** (1 pre-existing `tests/env.test.ts` failure, unrelated to recent work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -40,6 +39,7 @@ HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
 | `tests/sources.test.ts` | 13 | M11.0 source registry |
 | `tests/cities-staging.test.ts` | 5 | M11.0 staging |
 | `tests/m11.1-layer.test.ts` | 15 | M11.1 layer fields |
+| `tests/search-name-strategy.test.ts` | 10 | M11.1+ search ranking |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
@@ -50,18 +50,22 @@ HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
 
 ## Next 3 things (priority order)
 
-1. **Merge `feature/data-platform-geonames` → `develop`** (15 min)
-   - Run `bash scripts/sync-status.sh` to refresh this file
-   - Open PR, run CI, merge
-   - After merge: `develop` is the new "live" branch
+1. **M11.2: Wikidata ingestion** (1-2 days)
+   - Source already in `source_registry`
+   - Brings: Wikipedia URLs, official alt names, populations
+   - Uses the parallel HTTP API loader pattern from M11.1.5
+   - 148K cities have a `wiki_data_id` to query
 
-2. **M11.2: Wikidata ingestion** (1-2 days)
-   - Additional alt names, Wikipedia URLs, official languages
-   - Source already registered in source_registry
+2. **Use alt names in search ranking** (4-6 hours)
+   - Add new strategy to `/cities/search` that joins `alt_names_staging`
+     on `alternate_name LIKE ?` and returns the city_id
+   - Lets users search "Bombay" → Mumbai, "Chimkent" → Shymkent
+   - Expected: 10-20% more matches for cross-language / historic queries
 
-3. **M11.3: Unicode CLDR** (1 day)
-   - Territory-language official-status mapping
-   - Source already registered in source_registry
+3. **Add alt_name display in /cities/{id}** (2 hours)
+   - Show all known alt names grouped by language
+   - Flag historic ones with "(historic)" label
+   - 4-5 API response fields added
 
 ## Future (deferred)
 
@@ -69,11 +73,15 @@ HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
 |---|---:|---|
 | Time-calc endpoint (DST + date-line math) | 1-2 days | Separate scope |
 | polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
-| Load GeoNames `alternateNames` for historical_alias | 1 day | Would unlock Mumbai↔Bombay, Edo↔Tokyo merges |
-| Update /cities/search to use `search_name` field | 2 hours | FTS5 already works; cosmetic |
+| M11.3 Unicode CLDR (territory-language) | 1 day | Pattern proven, just need data |
+| M11.4 UN WPP 2024 (country pop) | 1-2 days | Per-country, low complexity |
+| M11.5 US Census (state/city pop) | 2-3 days | Vintage tracking adds complexity |
+| M11.6 Eurostat (City vs FUA) | 2-3 days | EU-only |
+| M11.7 Census of India | 1-2 days | 2011 still official |
+| M11.8 World Bank Indicators | 1 day | Easy API |
+| M11.9 India population projections | 1 day | Already have data from M11.7 |
 | "World time" feature (per user brainstorm) | TBD | Per product PRD |
 | Production deployment | when ready | User said "not ready for production" |
-| UN WPP, US Census, Eurostat, Census of India | TBD | Sources registered, not yet ingested |
 
 ## Known issues
 
@@ -99,30 +107,31 @@ HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
 | data_sources | 8 | M8 |
 | data_quality_checks | 10 | M8 |
 | **source_registry** | **10** | **M11.0 (1 active = GeoNames)** |
-| **source_releases** | **1** | **M11.0 (geonames-cities5000-2026-08-02, validated)** |
+| **source_releases** | **2** | **M11.0 + M11.1.5 (both validated)** |
 | **cities_staging** | **69,561** | **M11.0 (raw, validated)** |
-| **city_layer_log** | **69,563** | **M11.1 (merge audit log)** |
+| **alt_names_staging** | **767,572** | **M11.1.5 (GeoNames alt names, validated)** |
+| **city_layer_log** | **0** | **M11.1 (table created, audit inserts skipped)** |
 
 ## M11.1 layer field coverage
 
 | Field | Populated | Notes |
 |---|---:|---|
-| display_name | 67,999 | "Saint Petersburg" not "St. Petersburg" |
-| short_name | 67,999 | Strips qualifiers (City of, Greater, The) |
-| search_name | 67,999 | Normalized: lowercase, no diacritics |
-| geonames_id | 67,999 | Cross-reference to GeoNames raw id |
+| display_name | 68,098 | "Saint Petersburg" not "St. Petersburg" |
+| short_name | 68,098 | Strips qualifiers (City of, Greater, The) |
+| search_name | 68,098 | Normalized: lowercase, no diacritics |
+| geonames_id | 68,098 | Cross-reference to GeoNames raw id |
 | elevation_m | 0 | NULL (cities5000 has no elevation) |
-| source_primary | 67,999 | 'dr5hn' (50,768) or 'geonames' (17,231) |
-| source_merged_with | 50,768 | 'geonames' for dr5hn-primary |
-| merge_method | 67,999 | 'exact' (47,815), 'fuzzy' (1,643), 'historical_alias' (1,310), 'geonames_only' (17,231) |
-| merge_run_id | 67,999 | UUID of M11.1 run |
-| merged_at | 67,999 | Unix timestamp |
+| source_primary | 68,098 | 'dr5hn' (50,815) or 'geonames' (17,283) |
+| source_merged_with | 50,815 | 'geonames' for dr5hn-primary |
+| merge_method | 68,098 | 'exact' (47,859), 'fuzzy' (1,638), 'historical_alias' (1,306), 'historical_alias_v2' (12), 'geonames_only' (17,283) |
+| merge_run_id | 68,098 | UUID of M11.1 run |
+| merged_at | 68,098 | Unix timestamp |
 
 ## Deployment
 
 | Env | Worker | URL | Last deploy |
 |---|---|---|---|
-| dev | `dt-api-v2-dev` | https://dt-api-v2-dev.nsura2029.workers.dev | 2026-08-02 09:38 UTC (version 1ef42791) |
+| dev | `dt-api-v2-dev` | https://dt-api-v2-dev.nsura2029.workers.dev | 2026-08-02 10:10 UTC (version 9f24ae9b) |
 | prod | `dateandtime-api` (planned) | TBD | not deployed |
 
 ## R2 bucket (`dt-data-raw`)
@@ -130,13 +139,14 @@ HEAD~4: M11.0 R2 upload — 5.6MB GeoNames cities5000 zip
 | Path | Size | Notes |
 |---|---|---|
 | `raw/geonames/cities5000/2026-08-02/` | 5.6 MB | Cities5000.zip + manifest.json + SHA-256 |
+| `raw/geonames/alternateNamesV2/2026-08-02/` | 30 MB | Filtered alt names for cities5000 |
 
 ## How to resume work
 
 ```bash
 cd /workspace/dateandtime-api-v2
-git checkout feature/data-platform-geonames
-git pull origin feature/data-platform-geonames
+git checkout develop
+git pull origin develop
 TEST_API_URL=https://dt-api-v2-dev.nsura2029.workers.dev npx vitest run
 bash scripts/sync-status.sh     # refresh this file
 ```
@@ -149,5 +159,5 @@ bash scripts/sync-status.sh     # refresh this file
 - `docs/timezone-core-logic.md` — how TZ is determined
 - `docs/timezone-data-audit.md` — M1-M8 metrics
 - `docs/timezone-test-plan.md` — test plan + status
-- `reports/` — per-milestone audits (M0-M11.1)
+- `reports/` — per-milestone audits (M0-M11.5)
 - `KNOWN_ISSUES.md` (planned) — bug log
