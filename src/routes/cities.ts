@@ -85,7 +85,8 @@ const ErrorResponse = z.object({
 const searchQuery = z.object({
   q: z.string().min(1).max(100).describe("Search query (city name)"),
   country: z.string().length(2).optional().describe("User country (ISO cca2) — boosts matches in this country"),
-  lang: z.string().length(2).optional().describe("User language (ISO 639-1) — boosts matches in this language"),
+  state: z.string().min(1).max(10).optional().describe("User state code (e.g. 'AZ', 'FL', 'NSW') — strong boost for matches in this state"),
+  lang: z.string().min(2).max(10).optional().describe("User language (ISO 639-1) — boosts matches translated into this language (e.g. 'ja', 'zh-CN', 'pt-BR')"),
   lat: z.coerce.number().min(-90).max(90).optional().describe("User latitude — proximity boost"),
   lon: z.coerce.number().min(-180).max(180).optional().describe("User longitude — proximity boost"),
   limit: z.coerce.number().int().min(1).max(50).default(10).describe("Max results (default 10)"),
@@ -229,7 +230,7 @@ function scoreResult(
   q: string,
   qLower: string,
   qNorm: string,
-  ctx: { userCountry?: string; userLang?: string; userLat?: number; userLon?: number }
+  ctx: { userCountry?: string; userState?: string; userLang?: string; userLat?: number; userLon?: number }
 ): { score: number; distanceKm: number | null } {
   let s = 0;
   const name = r.city_name.toLowerCase();
@@ -245,7 +246,7 @@ function scoreResult(
 
   // Capital status
   if (r.is_country_capital) s += 500;
-  if (r.is_state_capital) s += 50;
+  if (r.is_state_capital) s += 50; // kept at 50; same-name country boost (below) handles disambiguation
 
   // Tier
   if (r.tier === "tier1") s += 200;
@@ -263,9 +264,15 @@ function scoreResult(
     s += 300;
   }
 
-  // User language boost
+  // User state boost (M6) — strong boost when user specifies state.
+  // This makes Phoenix AZ rank first when user asks for state=AZ.
+  if (ctx.userState && r.state_code && r.state_code.toUpperCase() === ctx.userState.toUpperCase()) {
+    s += 1000; // very strong: user explicitly asked for this state
+  }
+
+  // User language boost (M6) — small boost for matches translated into user's language
   if (ctx.userLang) {
-    s += 50; // small boost, language is fuzzy
+    s += 50;
   }
 
   // Proximity (only if user lat/lon provided)
@@ -289,7 +296,10 @@ const searchRoute = createRoute({
     "FTS5 search over 152,970 cities. Returns ranked results with country, " +
     "admin region, timezone, and (if provided) distance from user. " +
     "Ranking factors: exact/prefix/fuzzy text match, capital status, tier, " +
-    "user country/language context, and proximity.",
+    "user country/state/language context, and proximity. " +
+    "When ?lang= is provided and the query is in that language (e.g. 'ja' + '東京'), " +
+    "searches the translations table as fallback. " +
+    "When ?state= is provided, gives a strong boost to cities in that state.",
   tags: ["Cities"],
   request: {
     query: searchQuery,
@@ -302,7 +312,7 @@ const searchRoute = createRoute({
 
 cities.openapi(searchRoute, async (c) => {
   const start = Date.now();
-  const { q, country, lang, lat, lon, limit } = c.req.valid("query");
+  const { q, country, state, lang, lat, lon, limit } = c.req.valid("query");
 
   // Normalize query for matching
   const qLower = q.toLowerCase().trim();
@@ -363,6 +373,42 @@ cities.openapi(searchRoute, async (c) => {
     );
   }
 
+  // Cross-language search (M6): if FTS5 returns nothing AND user is searching in a
+  // non-English language, fall back to searching the translations table.
+  if (ftsResults.length === 0 && lang) {
+    const langLower = lang.toLowerCase();
+    const translationSql = `
+      SELECT
+        ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.native,
+        ci.state_code, ci.type, ci.wiki_data_id,
+        ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
+        ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
+        co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
+        co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
+        ar.id as admin_id, ar.name as admin_name,
+        tz.id as timezone_id, tz.current_offset as utc_offset,
+        tz.current_abbreviation as tz_abbrev, tz.is_dst,
+        -10.0 as fts_rank
+      FROM translations t
+      JOIN cities ci ON ci.id = t.place_id
+      JOIN countries co ON co.id = ci.country_id
+      LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+      LEFT JOIN time_zones tz ON tz.id = ci.timezone
+      WHERE LOWER(t.language) = ?
+        AND t.place_type = 'city'
+        AND t.translation LIKE ?
+        AND ci.is_active = 1
+      ORDER BY LENGTH(t.translation) ASC
+      LIMIT 50
+    `;
+    try {
+      const tr = await c.env.DB.prepare(translationSql).bind(langLower, `${qLower}%`).all<RawResult>();
+      ftsResults = tr.results || [];
+    } catch {
+      // Ignore translation search errors
+    }
+  }
+
   // Fuzzy fallback: if FTS5 returns nothing (e.g. typo, transliteration mismatch),
   // try a LIKE-based search on normalized_name.
   if (ftsResults.length === 0 && qNorm.length >= 3) {
@@ -417,27 +463,61 @@ cities.openapi(searchRoute, async (c) => {
   }
 
   // Score and rank
-  const ctx = { userCountry: country, userLang: lang, userLat: lat, userLon: lon };
+  const ctx = { userCountry: country, userState: state, userLang: lang, userLat: lat, userLon: lon };
   const scored = unique.map((r) => {
     const { score, distanceKm } = scoreResult(r, q, qLower, qNorm, ctx);
     return { ...r, score, distanceKm };
   });
 
-  // Same-name handling: if multiple cities share the same name (e.g. Hyderabad),
-  //   - Boost the one in user's country (if known)
-  //   - Penalize the others
-  // Without user country, all same-name cities stay at base score.
+  // Same-name handling: when multiple cities share the same name (e.g. Phoenix,
+  // Monterrey, Perth, Hyderabad), apply these rules IN ORDER:
+  //   1. If user's state is provided: state match wins (handled by scoreResult state boost)
+  //   2. If user's country is provided:
+  //      a. Among same-name same-country cities: prefer the one with HIGHER population
+  //         (e.g. Phoenix AZ 1.65M beats Phoenix OR 4.5K — even if OR is flagged as
+  //         a state capital in dr5hn data, AZ is the "real" Phoenix)
+  //      b. If populations are equal/missing, fall back to capital status
+  //      c. Strong boost for user-country match, penalty for non-user-country
+  //   3. If no user country: all same-name cities are equal (base score)
   const nameCounts = new Map<string, number>();
   for (const r of scored) nameCounts.set(r.city_name, (nameCounts.get(r.city_name) || 0) + 1);
+
+  // Group by (name, country) for same-name same-country analysis
+  const groups = new Map<string, typeof scored>();
+  for (const r of scored) {
+    if ((nameCounts.get(r.city_name) || 0) > 1) {
+      const key = `${r.city_name}|${r.country_cca2}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    }
+  }
+
+  // For each same-name same-country group, find max population and apply bonus
+  for (const [, group] of groups) {
+    const maxPop = Math.max(0, ...group.map((r) => r.population || 0));
+    for (const r of group) {
+      // Population-based ranking within group: the city with max pop gets +600,
+      // others get proportional share. Cities with no pop get 0.
+      if (r.population && r.population > 0) {
+        const ratio = r.population / maxPop;
+        r.score += Math.round(600 * ratio);
+      }
+      // Capital status as a smaller tiebreaker: +100 (was dominant at 800, demoted
+      // because dr5hn data has some is_state_capital errors)
+      if (r.is_country_capital) r.score += 100;
+      if (r.is_state_capital) r.score += 50;
+    }
+  }
+
+  // Cross-country same-name boost (only for user country)
   for (const r of scored) {
     const cnt = nameCounts.get(r.city_name) || 1;
-    if (cnt > 1) {
-      if (country && r.country_cca2 === country) {
-        r.score += 500; // strong boost for user's country
-      } else if (country) {
-        r.score -= 400; // penalty for non-user country
+    if (cnt > 1 && country) {
+      if (r.country_cca2 === country) {
+        r.score += 200; // user-country match
+      } else {
+        r.score -= 150; // non-user-country same-name
       }
-      // If no user country, all same-name cities are equal (base score)
     }
   }
 

@@ -242,6 +242,9 @@ jobs:
             npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file="migrations/131_parts/131_translations_pt${i}.sql"
           done
 
+      - name: Apply migration 132 (known city populations + re-tier)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/132_known_city_populations.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)
