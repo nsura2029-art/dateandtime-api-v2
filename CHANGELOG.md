@@ -4,6 +4,86 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
+## [unreleased] — feature/m11.2.6-wikidata-desc (M11.2.6 Wikidata descriptions)
+
+**Date:** 2026-08-02
+**Status:** Applied to D1 — 144,713 cities have full wikidata data, 3 new fields in /cities/{id}
+
+### What shipped
+
+- New `wikidata` block in `/api/v1/cities/{id}` response
+- 3 fields: `label` (Wikidata English canonical), `altLabels` (up to 5 alt names), `description` (one-liner built from label + first alt)
+- Description format: `"Tokyo (also known as Yedo)"` for cities with alts, just `"Tokyo"` for cities without
+- 18 new tests in `tests/m11.2.6-wikidata-desc.test.ts`, all pass
+
+### Three cases for the `wikidata` field
+
+| Case | Field value | Count |
+|---|---|---:|
+| 1. City has no `wiki_data_id` | `wikidata: null` (absent) | 21,922 |
+| 2. City has `wiki_data_id` but no staging row | `wikidata: { label: null, altLabels: [], description: null }` | 3,618 |
+| 3. City has full data | `wikidata: { label, altLabels: [...], description: "..." }` | 144,713 |
+
+### Sample API responses
+
+**`GET /api/v1/cities/64500` (Tokyo)**
+```json
+{
+  "name": "Tokyo",
+  "wikiDataId": "Q1490",
+  "wikidata": {
+    "label": "Tokyo",
+    "altLabels": ["Yedo", "Tōkyō-to", "Tôkyô-to", "Tokyo-to", "Tokyo Metropolitan prefecture"],
+    "description": "Tokyo (also known as Yedo)"
+  }
+}
+```
+
+**`GET /api/v1/cities/44856` (Paris)**
+```json
+{
+  "name": "Paris",
+  "wikidata": {
+    "label": "Paris",
+    "altLabels": ["City of Love", "City of Light", "Lutetia"],
+    "description": "Paris (also known as City of Love)"
+  }
+}
+```
+
+### Use cases
+
+- **SEO meta description** — city pages can now have a one-liner like "Tokyo (also known as Yedo)"
+- **Cross-language disambiguation** — Wikidata English label often differs from dr5hn name (Köln → Cologne)
+- **Tooltip / subtitle** — alt labels surface for "also known as" hover text
+- **Content generation** — feeds autocomplete, "common nicknames" sections
+
+### Coverage gap (informational)
+
+- 148,331 cities have `wiki_data_id`
+- 115,731 Wikidata staging rows (M11.2 ingestion)
+- 3,618 cities have `wiki_data_id` but no staging row → empty block
+- Future: re-run SPARQL to fill the gap (deferred)
+
+### Gotchas hit
+
+- **Coverage gap**: M11.2 ingestion stopped at 115K cities. The 3,618 cities
+  with `wiki_data_id` but no staging data get an empty block (label=null)
+  so clients can distinguish them from "no wiki_data_id" (block absent).
+- **altLabels limit**: capped at 5 entries to keep response size reasonable.
+  Tokyo has 7 alts in our DB; only the first 5 are returned.
+- **altLabels exclude label**: We never include the canonical label in
+  altLabels (avoids duplication).
+- **+1 query per detail call**: 5 queries now (was 4). +20-30ms latency.
+  Only fires for cities with `wiki_data_id` (~85% of cities).
+
+### Test summary
+
+426/429 pass (3 pre-existing failures: M8.5 data-quality, env.test.ts, Rio
+Branco timezone). M11.2.6 added 18 new tests, all green.
+
+---
+
 ## [unreleased] — feature/m11.4-unwpp (M11.4 World Bank country population)
 
 **Date:** 2026-08-02

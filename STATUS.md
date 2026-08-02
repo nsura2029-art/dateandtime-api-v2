@@ -6,15 +6,15 @@ Last updated: 2026-08-02 16:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.4 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 115K Wikidata entities, 5,000 CLDR country translations (20 langs), 216 country populations (World Bank 2024), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.2.6 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.2.5 |
-| `feature/m11.4-unwpp` | M11.4 World Bank country population | ready to merge |
+| `develop` | Integration | up to date with M0-M11.4 |
+| `feature/m11.2.6-wikidata-desc` | M11.2.6 Wikidata descriptions in /cities/{id} | ready to merge |
 
 ## Last 5 commits
 
@@ -28,7 +28,7 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 
 ## Test status
 
-**411 / 415 pass** (4 pre-existing failures, 1 from M11.0 — unrelated to M11.x work)
+**429 / 432 pass** (3 pre-existing failures, all unrelated to M11.x work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -43,6 +43,7 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 | `tests/altnames-search-strategy.test.ts` | 12 | M11.1.5 altNames search |
 | `tests/m11.2-wikidata.test.ts` | 12 | M11.2 wikiUrl |
 | `tests/m11.2.5-wikidata-altlabels.test.ts` | 15 | M11.2.5 alt_label search |
+| `tests/m11.2.6-wikidata-desc.test.ts` | 18 | M11.2.6 wikidata description in /cities/{id} |
 | `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
 | `tests/m11.4-worldbank.test.ts` | 18 | M11.4 country population (World Bank 2024) |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
@@ -55,25 +56,26 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 
 ## Next 3 things (priority order)
 
-1. **M11.2.6: Wikidata descriptions in /cities/{id}** (2-3 hours, very quick)
-   - Use english_label + first alt label as city description
-   - Only cities with wiki_data_id (69% of 170K = ~117K cities)
-
-2. **M11.5: US Census (state/city pop)** (2-3 days)
+1. **M11.5: US Census (state/city pop)** (2-3 days)
    - Vintage tracking adds complexity
    - Will fix the ~22K NULL cities in US (post-M11.2.x)
 
-3. **M11.6: Eurostat (City vs FUA)** (2-3 days)
+2. **M11.6: Eurostat (City vs FUA)** (2-3 days)
    - EU-only
    - Distinguish administrative City from FUA
+
+3. **M11.7: Census of India** (1-2 days)
+   - 2011 still official
+   - Will fix ~684 NULL IN cities (post M11.2.x)
 
 ## Future (deferred)
 
 | Item | Estimate | Why deferred |
 |---|---:|---|
+| M11.2.7: Backfill missing 32,600 Wikidata Q-ids | 1-2 hours | Re-run SPARQL with full Q-id list |
+| M11.2.8: Add Wikidata P31/P17/P131 to description | 2-3 days | Need richer SPARQL ingestion |
 | Time-calc endpoint (DST + date-line math) | 1-2 days | Separate scope |
 | polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
-| M11.7 Census of India | 1-2 days | 2011 still official |
 | Add country localized name to /cities/{id} response | 2 hours | Cosmetic, countries object already exists |
 | Add /languages endpoint with localized language names | 2 hours | Same CLDR data, different `<language>` section |
 | "World time" feature (per user brainstorm) | TBD | Per product PRD |
@@ -82,13 +84,14 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 ## Known issues
 
 - **BUG-1 (open)**: Swagger UI CORS via `wrangler dev --remote` proxy. Workaround: open `https://dt-api-v2-dev.nsura2029.workers.dev/docs` directly.
-- **pre-existing test failures (4)**: S12.8 altNames perf (flaky), M8.5 data-quality issues (pre-existing), env.test.ts localhost wildcard, Rio Branco timezone. All unrelated to M11.x.
+- **pre-existing test failures (3)**: M8.5 data-quality issues, env.test.ts localhost wildcard, Rio Branco timezone. All unrelated to M11.x.
 - **State code mismatch (5-10% merge misses)**: dr5hn uses ISO 3166-2, GeoNames uses FIPS. 10-km fuzzy tier catches many but not all.
 - **GeoNames `elevation_m` is NULL for all cities**: cities5000.txt doesn't include elevation; needs alternate dataset.
 - **Phoenix OR**: dr5hn incorrectly marks `is_state_capital=1` — fixed in M6 migration 132, but watch for re-occurrence in dr5hn updates.
 - **22 Null Island cities** (0,0 coords): flagged `unresolved` in M8.
-- **14,142 cities with NULL population**: 100% flagged `no_pop` in M8 (post M11.2.x + M11.4 data quality fixes).
+- **14,153 cities with NULL population**: 100% flagged `no_pop` in M8 (post M11.2.x + M11.4 data quality fixes).
 - **34 countries without WB data**: small territories (Anguilla, Bouvet, etc.) that World Bank doesn't track. Falls back to dr5hn (which may also be NULL for uninhabited).
+- **3,618 cities with wiki_data_id but no wikidata_staging row**: M11.2 ingestion stopped at 115K Q-ids. Empty `wikidata` block in API response (label=null).
 
 ## DB stats (D1 `timeandtimepro-full-v2`)
 

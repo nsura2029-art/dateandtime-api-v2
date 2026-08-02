@@ -150,6 +150,12 @@ const CityDetail = z.object({
     timezoneSource: z.string().nullable().describe("Where the timezone was set: 'polygon:timezonefinder', 'dr5hn:default', 'manual:override', etc."),
     flags: z.array(z.string()).describe("Data quality flags: 'null_island', 'no_pop', 'no_wiki', etc."),
   }).describe("Data quality metadata (M8: spec §1, §14, §15, §28)"),
+  // M11.2.6: Wikidata description block
+  wikidata: z.object({
+    label: z.string().nullable().describe("Wikidata canonical English label (may differ from city name for non-English cities)"),
+    altLabels: z.array(z.string()).describe("Wikidata alt labels (alternative names, misspellings, common variants)"),
+    description: z.string().nullable().describe("One-line description: 'Wikidata label (also known as first alt label)' — useful for SEO meta tags, tooltips, and city page subtitles"),
+  }).nullable().describe("Wikidata enrichment (M11.2.6) — null if city has no wiki_data_id or no Wikidata staging row"),
 });
 
 const CityDetailResponse = z.object({
@@ -1190,6 +1196,66 @@ cities.openapi(cityDetailRoute, async (c) => {
   };
 
   // --------------------------------------------------------------------------
+  // STEP 4.5: Fetch Wikidata description (M11.2.6)
+  // --------------------------------------------------------------------------
+  // For cities with a wiki_data_id, look up the Wikidata staging row to get:
+  //   - english_label: canonical Wikidata English name (may differ from dr5hn name)
+  //   - alt_labels_json: JSON array of alt labels (alternative names, misspellings)
+  //
+  // The "description" field combines these for SEO/tooltip use:
+  //   "Wikidata label" if no alts
+  //   "Wikidata label (also known as first alt)" if alts exist
+  //
+  // Only fires for ~85% of cities (those with wiki_data_id). The query is O(1)
+  // because wiki_data_id is unique per city in our join.
+  //
+  // We do NOT add wikidata to the search endpoint — that would add latency
+  // to every search query. Description is for the detail page only.
+  // --------------------------------------------------------------------------
+  let wikidataBlock: {
+    label: string | null;
+    altLabels: string[];
+    description: string | null;
+  } | null = null;
+  if (row.wiki_data_id) {
+    const wikiRow = await c.env.DB.prepare(
+      `SELECT english_label, alt_labels_json FROM wikidata_staging WHERE qid = ? LIMIT 1`
+    ).bind(row.wiki_data_id).first<{ english_label: string | null; alt_labels_json: string | null }>();
+    if (wikiRow) {
+      let altLabels: string[] = [];
+      if (wikiRow.alt_labels_json && wikiRow.alt_labels_json !== "[]") {
+        try {
+          const parsed = JSON.parse(wikiRow.alt_labels_json);
+          if (Array.isArray(parsed)) {
+            // Limit to first 5 alt labels to keep response size reasonable
+            altLabels = parsed.slice(0, 5).map((s: any) => String(s));
+          }
+        } catch {
+          // Malformed JSON, ignore
+        }
+      }
+      const label = wikiRow.english_label ?? row.name;
+      const firstAlt = altLabels[0];
+      // Build description: "Label" or "Label (also known as First Alt)"
+      const description = firstAlt ? `${label} (also known as ${firstAlt})` : label;
+      wikidataBlock = {
+        label: wikiRow.english_label,
+        altLabels,
+        description,
+      };
+    } else {
+      // City has wiki_data_id but no wikidata_staging row (3,618 cases —
+      // wikidata ingestion didn't fetch every QID). Return an empty block
+      // with label=NULL so the client can tell this apart from "no wiki data".
+      wikidataBlock = {
+        label: null,
+        altLabels: [],
+        description: null,
+      };
+    }
+  }
+
+  // --------------------------------------------------------------------------
   // STEP 5: Build the response
   // --------------------------------------------------------------------------
   // Field mapping notes:
@@ -1271,6 +1337,8 @@ cities.openapi(cityDetailRoute, async (c) => {
         wikiUrl: row.wiki_url ?? null,
         mergeRunId: row.merge_run_id ?? null,
         mergedAt: row.merged_at ?? null,
+        // M11.2.6 Wikidata description
+        wikidata: wikidataBlock,
       },
     },
     200
