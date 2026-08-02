@@ -4,11 +4,30 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — feature/global-timezone-polygon → develop
+## [unreleased] — feature/data-platform-geonames
 
 **Date:** 2026-08-02
-**Commits:** 15 (M0-M10+)
-**Status:** ready to merge
+**Source:** GeoNames
+**Status:** in progress
+
+### Planned
+
+- source_registry table (10 sources, 1 active)
+- source_releases table (every known release, versioned)
+- R2 bucket: dt-data-raw, dt-data-normalized, dt-data-reports
+- GeoNames Cities5000 raw → R2 (~700MB compressed)
+- Two-phase commit: cities_staging → cities_live (atomic swap)
+- /api/v1/sources and /api/v1/sources/{key} endpoints
+- Reconciliation report endpoint
+
+---
+
+## [released] — develop @ a737959 (merge: M0-M10+)
+
+**Date:** 2026-08-02
+**Commits:** 32 (M0-M10+)
+**Notes:** M0-M10+ complete. 152,970 cities, 462 IANA timezones, 19-language
+translations, 844K postcodes, 8 data sources. 310/311 tests pass.
 
 ### What changed
 
