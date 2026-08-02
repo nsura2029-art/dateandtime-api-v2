@@ -2,33 +2,33 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-02 11:00 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-02 15:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.5 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.3 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 115K Wikidata entities, 5,000 CLDR country translations (20 langs), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.5 |
-| `feature/search-layer-ranking` | M11.1+ search + M11.1.5 altNames | **merged to develop** |
+| `develop` | Integration | up to date with M0-M11.2.x |
+| `feature/m11.3-cldr` | M11.3 Unicode CLDR countries | ready to merge |
 
 ## Last 5 commits
 
 ```
-HEAD: merge: M11.1+ search_name strategy + M11.1.5 altNames
-HEAD~1: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 matches
-HEAD~2: WIP: alt_names_staging + Wikidata staging + HTTP API loader
-HEAD~3: M11.1+ search: add cities.search_name LIKE strategy + index
-HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
+HEAD: M11.3: Unicode CLDR localized country names (5,000 rows, 20 langs, 2 new endpoints)
+HEAD~1: M11.2.x: apply Wikidata population values to cities (21,461 filled)
+HEAD~2: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
+HEAD~3: merge: M11.1+ search_name strategy + M11.1.5 altNames
+HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 matches
 ```
 
 ## Test status
 
-**353 / 354 pass** (1 pre-existing `tests/env.test.ts` failure, unrelated to recent work)
+**395 / 396 pass** (1 pre-existing `tests/env.test.ts` failure, unrelated to recent work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -40,6 +40,9 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 | `tests/cities-staging.test.ts` | 5 | M11.0 staging |
 | `tests/m11.1-layer.test.ts` | 15 | M11.1 layer fields |
 | `tests/search-name-strategy.test.ts` | 10 | M11.1+ search ranking |
+| `tests/altnames-search-strategy.test.ts` | 12 | M11.1.5 altNames search |
+| `tests/m11.2-wikidata.test.ts` | 12 | M11.2 wikiUrl |
+| `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
@@ -50,22 +53,18 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 
 ## Next 3 things (priority order)
 
-1. **M11.2: Wikidata ingestion** (1-2 days)
-   - Source already in `source_registry`
-   - Brings: Wikipedia URLs, official alt names, populations
-   - Uses the parallel HTTP API loader pattern from M11.1.5
-   - 148K cities have a `wiki_data_id` to query
+1. **M11.2.5: Wikidata alt_labels to search** (4-6 hours)
+   - Data already in `wikidata_staging.alt_labels_json`
+   - Add new strategy to /cities/search
+   - Catches: alternate official names, common misspellings
 
-2. **Use alt names in search ranking** (4-6 hours)
-   - Add new strategy to `/cities/search` that joins `alt_names_staging`
-     on `alternate_name LIKE ?` and returns the city_id
-   - Lets users search "Bombay" → Mumbai, "Chimkent" → Shymkent
-   - Expected: 10-20% more matches for cross-language / historic queries
+2. **M11.4: UN WPP 2024** (1-2 days)
+   - Country-level population as fallback
+   - ~250 rows only, simple schema
 
-3. **Add alt_name display in /cities/{id}** (2 hours)
-   - Show all known alt names grouped by language
-   - Flag historic ones with "(historic)" label
-   - 4-5 API response fields added
+3. **M11.5: US Census (state/city pop)** (2-3 days)
+   - Vintage tracking adds complexity
+   - Will fix the ~22K NULL cities in US
 
 ## Future (deferred)
 
@@ -73,11 +72,10 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 |---|---:|---|
 | Time-calc endpoint (DST + date-line math) | 1-2 days | Separate scope |
 | polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
-| M11.3 Unicode CLDR (territory-language) | 1 day | Pattern proven, just need data |
-| M11.4 UN WPP 2024 (country pop) | 1-2 days | Per-country, low complexity |
-| M11.5 US Census (state/city pop) | 2-3 days | Vintage tracking adds complexity |
 | M11.6 Eurostat (City vs FUA) | 2-3 days | EU-only |
 | M11.7 Census of India | 1-2 days | 2011 still official |
+| Add country localized name to /cities/{id} response | 2 hours | Cosmetic, countries object already exists |
+| Add /languages endpoint with localized language names | 2 hours | Same CLDR data, different `<language>` section |
 | M11.8 World Bank Indicators | 1 day | Easy API |
 | M11.9 India population projections | 1 day | Already have data from M11.7 |
 | "World time" feature (per user brainstorm) | TBD | Per product PRD |
@@ -98,6 +96,8 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 | Table | Count | Source |
 |---|---:|---|
 | **cities** | **170,253** | dr5hn (152,970) + GeoNames merge (17,283 new) |
+| **cities with population** | **156,111 (92%)** | **+21,461 from M11.2.x Wikidata** |
+| **cities with `wiki_url`** | **117,711 (69%)** | **M11.2 Wikidata** |
 | countries | 250 | dr5hn |
 | administrative_regions | 5,308 | dr5hn |
 | time_zones | 462 | IANA + 71 dr5hn extras |
@@ -107,9 +107,11 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 | data_sources | 8 | M8 |
 | data_quality_checks | 10 | M8 |
 | **source_registry** | **10** | **M11.0 (1 active = GeoNames)** |
-| **source_releases** | **2** | **M11.0 + M11.1.5 (both validated)** |
+| **source_releases** | **4** | **M11.0 + M11.1.5 + M11.2 + M11.3** |
 | **cities_staging** | **69,561** | **M11.0 (raw, validated)** |
 | **alt_names_staging** | **767,572** | **M11.1.5 (GeoNames alt names, validated)** |
+| **wikidata_staging** | **115,731** | **M11.2 (Wikidata entities, raw-stored)** |
+| **country_names** | **5,000** | **M11.3 (CLDR 48.2 country names, 20 langs × 250 countries)** |
 | **city_layer_log** | **0** | **M11.1 (table created, audit inserts skipped)** |
 
 ## M11.1 layer field coverage
@@ -140,6 +142,7 @@ HEAD~4: merge: M11.0 data platform + M11.1 layer merge (dr5hn + GeoNames)
 |---|---|---|
 | `raw/geonames/cities5000/2026-08-02/` | 5.6 MB | Cities5000.zip + manifest.json + SHA-256 |
 | `raw/geonames/alternateNamesV2/2026-08-02/` | 30 MB | Filtered alt names for cities5000 |
+| `raw/cldr/territories-48.2/2026-08-02/` | 8.6 MB | CLDR 48.2: 20 lang XMLs + tarball + manifest |
 
 ## How to resume work
 

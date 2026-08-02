@@ -4,7 +4,67 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — feature/data-platform-geonames (M11.1 layer merge)
+## [unreleased] — feature/m11.3-cldr (M11.3 Unicode CLDR)
+
+**Date:** 2026-08-02
+**Status:** Applied to D1 — 5,000 country translations, 2 new endpoints live
+
+### What shipped
+
+- Migration 145: `country_names (country_id, language, name, short_name, source, release_id)` + 3 indexes
+- `scripts/seed/cldr_to_d1.py` — downloads CLDR 48.2 (35MB zip), extracts 20 target language XMLs, parses `<territory>` elements, loads via D1 HTTP API
+- `scripts/seed/cldr_publish.sh` — bundles 20 XMLs into a tarball, uploads to R2 with manifest, registers `cldr-territories-2026-08-02` in source_releases
+- 2 new API endpoints:
+  - `GET /api/v1/countries?lang=xx&region=yy&limit=N` — list with localized names
+  - `GET /api/v1/countries/{cca2}?lang=xx` — single country with localized name
+- `src/routes/countries.ts` — full OpenAPI schemas, visible in `/docs`
+- 18 new tests in `tests/m11.3-cldr.test.ts`, all pass
+- E10 tests updated to reflect post-M11.2.x population numbers (14,142 NULL, was 35,546)
+
+### Languages & coverage
+
+20 target languages, all 250 countries = 5,000 rows:
+
+| Group | Languages |
+|---|---|
+| Top Western | en, es, fr, de, pt, it, nl |
+| Asia | zh, ja, ko, hi, th |
+| Eastern Europe / CIS | ru, uk, pl |
+| Middle East | ar, he, fa, tr |
+| Nordic | sv |
+
+### Sample API responses
+
+**`GET /api/v1/countries/US?lang=ja`**
+```json
+{"cca2": "US", "name": "United States", "localized": {
+  "language": "ja", "name": "アメリカ合衆国", "shortName": "アメリカ",
+  "languageFallback": false
+}}
+```
+
+**`GET /api/v1/countries?lang=es&region=Europe&limit=10`** — 10 European countries with Spanish names
+
+**Graceful fallback** (e.g. `?lang=sw` for Swahili — not in our set): returns English name with `languageFallback: true`
+
+### Gotchas hit
+
+- **D1 SQL bind limit**: `cca2 IN (?, ?, ...)` with 100+ values + 1 language param = 101 vars, exceeds the ~100-var limit. Fix: chunk the lookup into batches of 95 cca2 codes per query.
+- **CLDR mixed types**: `<territory type="US">` (alpha-2) and `<territory type="142">` (UN M.49 region code) coexist. Filter `len(type)==2 and type.isalpha()` to get only countries.
+- **CLDR variants**: 3 types — main entry, `alt="short"` (e.g. "UK"), `alt="variant"` (e.g. "Hong Kong SAR China"). Skip variant; keep short.
+- **D1 source_releases naming**: the release_id in the loader must match the release_id in the R2 publisher. If they diverge, the R2 archive points to a release with 0 rows.
+
+### Test count
+
+377 → 395 (+18 M11.3 tests)
+
+### See also
+
+- `reports/m11.3-cldr-result.md` — full audit
+
+---
+
+## [released] — develop (M11.2.x Wikidata population merge)
 
 **Date:** 2026-08-02
 **Status:** Applied to D1 — 170,253 cities live, layer fields exposed in API
