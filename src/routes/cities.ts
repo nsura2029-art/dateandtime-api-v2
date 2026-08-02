@@ -511,6 +511,57 @@ cities.openapi(searchRoute, async (c) => {
 
   if (ftsResults.length === 0 && qNorm.length >= 3) {
     // ------------------------------------------------------------------------
+    // Strategy A2: alt_names_staging (GeoNames altNames) (M11.1.5)
+    // ------------------------------------------------------------------------
+    // Joins alt_names_staging on cities.geonames_id. Catches:
+    //   - Cross-language: "Москва" → Moscow, "東京" → Tokyo
+    //   - Historic renames: "Bombay" → Mumbai, "Chimkent" → Shymkent
+    //   - Colloquial: "Big Apple" → New York
+    //   - Short names: "St. Pete" → Saint Petersburg
+    //
+    // Filtered to English/agnostic only (we don't want to match every
+    // language in the same query — that's what ?lang= is for).
+    //
+    // The release_id is hardcoded to the latest GeoNames altnames release
+    // we ingested. Future re-ingestions will increment the date suffix.
+    // ------------------------------------------------------------------------
+    const altNamesSql = `
+      SELECT
+        ci.id as city_id, ci.name as city_name, ci.ascii_name,
+        ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
+        ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
+        co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
+        co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
+        ar.id as admin_id, ar.name as admin_name,
+        tz.id as timezone_id, tz.current_offset as utc_offset,
+        tz.current_abbreviation as tz_abbrev, tz.is_dst,
+        0.0 as fts_rank,
+        ci.display_name, ci.short_name, ci.geonames_id,
+        ci.source_primary, ci.merge_method
+      FROM alt_names_staging ans
+      JOIN cities ci ON ci.geonames_id = ans.geonameid
+      JOIN countries co ON co.id = ci.country_id
+      LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+      LEFT JOIN time_zones tz ON tz.id = ci.timezone
+      WHERE LOWER(ans.alternate_name) LIKE LOWER(?)
+        AND ans.isolanguage IN ('', 'en')
+        AND ans.release_id = ?
+        AND ci.is_active = 1
+      ORDER BY LENGTH(ans.alternate_name) ASC
+      LIMIT 30
+    `;
+    try {
+      const altNamesResult = await c.env.DB.prepare(altNamesSql)
+        .bind(`${qNorm}%`, "geonames-altnames-2026-08-02")
+        .all<RawResult>();
+      ftsResults = altNamesResult.results || [];
+    } catch {
+      // Ignore errors — fallback to place_names next
+    }
+  }
+
+  if (ftsResults.length === 0 && qNorm.length >= 3) {
+    // ------------------------------------------------------------------------
     // Strategy B: place_names.normalized_name (legacy fallback)
     // ------------------------------------------------------------------------
     // Joins to the place_names table for alt-name matching. Slower than
