@@ -13,6 +13,8 @@ import health from "@/routes/health";
 import status from "@/routes/status";
 import cities from "@/routes/cities";
 import translations from "@/routes/translations";
+import postcodes from "@/routes/postcodes";
+import airports from "@/routes/airports";
 import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
@@ -39,6 +41,8 @@ app.route("/", health); // GET / and GET /api/v1/health
 app.route("/", status); // GET /api/v1/status
 app.route("/", cities); // GET /api/v1/cities/search and /api/v1/cities/:id
 app.route("/", translations); // GET /api/v1/cities/:id/translations[/:lang] + /api/v1/translations/search
+app.route("/", postcodes); // GET /api/v1/cities/:id/postcodes + /api/v1/postcodes/search
+app.route("/", airports); // GET /api/v1/airports/near + /api/v1/cities/:id/airports
 
 // OpenAPI + Swagger UI
 registerDocs(app);
