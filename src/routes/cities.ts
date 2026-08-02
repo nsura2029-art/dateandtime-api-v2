@@ -61,7 +61,7 @@ const CitySearchResult = z.object({
   timezone: TimezoneRef,
   distanceKm: z.number().nullable().describe("Distance from user (if lat/lon provided)"),
   score: z.number().describe("Internal ranking score (higher = better)"),
-  matchType: z.enum(["exact", "prefix", "fuzzy"]),
+  matchType: z.enum(["exact", "prefix", "fuzzy", "alt_label"]),
 });
 
 const SearchResponse = z.object({
@@ -227,8 +227,9 @@ type RawResult = {
   utc_offset: number | null;
   tz_abbrev: string | null;
   is_dst: number | null;
-  match_type: "exact" | "prefix" | "fuzzy";
+  match_type: "exact" | "prefix" | "fuzzy" | "alt_label";
   fts_rank: number;
+  from_wikidata_alt?: number;  // 1 if matched via wikidata_staging.alt_labels_json (M11.2.5)
 };
 
 function scoreResult(
@@ -565,6 +566,74 @@ cities.openapi(searchRoute, async (c) => {
 
   if (ftsResults.length === 0 && qNorm.length >= 3) {
     // ------------------------------------------------------------------------
+    // Strategy A3: wikidata_staging.alt_labels_json (M11.2.5)
+    // ------------------------------------------------------------------------
+    // Joins wikidata_staging on cities.wiki_data_id. Catches alt labels
+    // that dr5hn place_names and GeoNames altNames don't have:
+    //   - Historic names: "Yedo" / "Jedo" / "Edo" → Tokyo, "Lundenwic" → London
+    //   - Colloquial: "Big Smoke" / "The Smoke" → London, "Beantown" → Boston
+    //   - Cross-language transliterations: "Peking" → Beijing, "Tokei" → Tokyo
+    //   - Variant spellings: "Bombay" → Mumbai, "Calcutta" → Kolkata
+    //   - Disambiguators: "London, UK", "Tokyo (Japan)"
+    //
+    // The alt_labels_json column is a JSON array of strings. We do an exact
+    // quoted-substring match (`%"yedo"%`) to avoid matching substrings of
+    // longer alt names (e.g. "Tokyo" should match "Tokyo" but not "Tokyo-to").
+    //
+    // For multi-word queries (e.g. "big smoke"), use the full qLower string
+    // (with spaces) so we match multi-word alt labels as phrases. For
+    // single-word queries, both qNorm and qLower are equivalent.
+    //
+    // Notes:
+    //   - 45,517 of 115,731 entities have non-empty alt_labels
+    //   - 91,500+ alt labels total across the dataset
+    //   - Case-insensitive (LOWER on both sides)
+    //   - The release_id is hardcoded to the latest Wikidata release
+    // ------------------------------------------------------------------------
+    // For multi-word queries, match the full phrase. For single-word, the
+    // existing strategies already handle those; this strategy is for what
+    // they miss. qLower retains spaces, qNorm does not.
+    const wikidataPattern = qLower.includes(" ")
+      ? `%"${qLower}"%`
+      : `%"${qNorm}"%`;
+    const wikidataAltSql = `
+      SELECT
+        ci.id as city_id, ci.name as city_name, ci.ascii_name,
+        ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
+        ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
+        co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
+        co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
+        ar.id as admin_id, ar.name as admin_name,
+        tz.id as timezone_id, tz.current_offset as utc_offset,
+        tz.current_abbreviation as tz_abbrev, tz.is_dst,
+        0.0 as fts_rank,
+        ci.wiki_url,
+        ci.display_name, ci.short_name, ci.geonames_id,
+        ci.source_primary, ci.merge_method,
+        1 as from_wikidata_alt
+      FROM wikidata_staging ws
+      JOIN cities ci ON ci.wiki_data_id = ws.qid
+      JOIN countries co ON co.id = ci.country_id
+      LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+      LEFT JOIN time_zones tz ON tz.id = ci.timezone
+      WHERE LOWER(ws.alt_labels_json) LIKE LOWER(?)
+        AND ws.release_id = ?
+        AND ci.is_active = 1
+      ORDER BY LENGTH(ci.name) ASC
+      LIMIT 30
+    `;
+    try {
+      const wikidataAltResult = await c.env.DB.prepare(wikidataAltSql)
+        .bind(wikidataPattern, "wikidata-entities-2026-08-02")
+        .all<RawResult>();
+      ftsResults = wikidataAltResult.results || [];
+    } catch {
+      // Ignore errors — fallback to place_names next
+    }
+  }
+
+  if (ftsResults.length === 0 && qNorm.length >= 3) {
+    // ------------------------------------------------------------------------
     // Strategy B: place_names.normalized_name (legacy fallback)
     // ------------------------------------------------------------------------
     // Joins to the place_names table for alt-name matching. Slower than
@@ -619,6 +688,7 @@ cities.openapi(searchRoute, async (c) => {
     const ascii = (r.ascii_name || "").toLowerCase();
     if (name === qLower || ascii === qLower) r.match_type = "exact";
     else if (name.startsWith(qLower) || ascii.startsWith(qLower)) r.match_type = "prefix";
+    else if ((r as any).from_wikidata_alt) r.match_type = "alt_label";
     else r.match_type = "fuzzy";
   }
 
