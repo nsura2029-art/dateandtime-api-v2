@@ -100,7 +100,15 @@ postcodes.openapi(cityPostcodesRoute, async (c) => {
   const { id } = c.req.valid("param");
   const { page, limit } = c.req.valid("query");
 
-  // Verify city exists and get its country/state
+  // --------------------------------------------------------------------------
+  // STEP 1: Verify city exists and get its country/state
+  // --------------------------------------------------------------------------
+  // We need country_id + state_id to scope the postcode query.
+  // Cities without a state (state_id NULL) can't have postcodes returned.
+  //
+  // Edge case: cities in special territories or Vatican-like entities
+  // (state_id NULL) return 400 with explicit "NO_STATE" code.
+  // --------------------------------------------------------------------------
   const city = await c.env.DB.prepare(
     `SELECT ci.id, ci.country_id, ci.state_id
      FROM cities ci WHERE ci.id = ?`
@@ -118,10 +126,25 @@ postcodes.openapi(cityPostcodesRoute, async (c) => {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // STEP 2: Get total count for pagination metadata
+  // --------------------------------------------------------------------------
+  // Single COUNT(*) query for the total. For most states this is fast (indexed
+  // on country_id, state_id). Florida = ~1K, New York = ~1.7K, Tokyo = ~4K.
+  // --------------------------------------------------------------------------
   const totalResult = await c.env.DB.prepare(
     `SELECT COUNT(*) as n FROM postcodes WHERE country_id = ? AND state_id = ?`
   ).bind(city.country_id, city.state_id).first<{ n: number }>();
 
+  // --------------------------------------------------------------------------
+  // STEP 3: Fetch the page of postcodes
+  // --------------------------------------------------------------------------
+  // SQL OFFSET/LIMIT pagination. For large states (e.g. California with 2.5K
+  // postcodes), page 5+ is still fast because of the (country_id, state_id)
+  // index. ORDER BY id for stable pagination (not random access).
+  //
+  // .all() returns up to `limit` rows. If page > total/limit, returns empty.
+  // --------------------------------------------------------------------------
   const offset = (page - 1) * limit;
   const results = await c.env.DB.prepare(
     `SELECT code, locality_name, type, latitude, longitude, source
@@ -138,6 +161,15 @@ postcodes.openapi(cityPostcodesRoute, async (c) => {
     source: string | null;
   }>();
 
+  // --------------------------------------------------------------------------
+  // STEP 4: Build response
+  // --------------------------------------------------------------------------
+  // Return:
+  //   - cityId: input
+  //   - total: total count (for client to know how many pages)
+  //   - page, limit: echo back for clarity
+  //   - results: array of postcodes with snake_case → camelCase translation
+  // --------------------------------------------------------------------------
   return c.json(
     {
       success: true as const,
@@ -176,7 +208,10 @@ const searchPostcodesRoute = createRoute({
     query: z.object({
       code: z.string().min(1).max(20).describe("Postal code (exact or prefix)"),
       country: z.string().length(2).describe("ISO cca2 country code"),
-      exact: z.coerce.boolean().default(false).describe("If true, exact match; otherwise prefix"),
+      // Note: z.coerce.boolean() coerces any non-empty string to true (including "false"!).
+      // Use enum + transform for proper string-to-boolean conversion.
+      exact: z.enum(["true", "false"]).default("false").transform((v) => v === "true")
+        .describe("If true, exact match; otherwise prefix match"),
       limit: z.coerce.number().int().min(1).max(20).default(5),
     }),
   },
@@ -188,7 +223,12 @@ const searchPostcodesRoute = createRoute({
 postcodes.openapi(searchPostcodesRoute, async (c) => {
   const { code, country, exact, limit } = c.req.valid("query");
 
-  // Find country
+  // --------------------------------------------------------------------------
+  // STEP 1: Resolve country cca2 → internal id
+  // --------------------------------------------------------------------------
+  // cca2 is normalized to uppercase (US, GB, etc.).
+  // Unknown countries return 400 with INVALID_COUNTRY (avoids silent empty result).
+  // --------------------------------------------------------------------------
   const countryRow = await c.env.DB.prepare(
     `SELECT id FROM countries WHERE cca2 = ?`
   ).bind(country.toUpperCase()).first<{ id: number }>();
@@ -199,7 +239,17 @@ postcodes.openapi(searchPostcodesRoute, async (c) => {
     );
   }
 
-  // Find matching postcodes
+  // --------------------------------------------------------------------------
+  // STEP 2: Find matching postcodes
+  // --------------------------------------------------------------------------
+  // Two modes:
+  //   - exact=true:    `code = '32501'`        (one postcode only)
+  //   - exact=false:   `code LIKE '325%'`      (prefix, partial typing)
+  //
+  // D1 note: the `${matchOp}` is inlined (not bound) because `=` and `LIKE`
+  // are SQL operators, not values. Safe because we control the operator string
+  // via a boolean, not user input.
+  // --------------------------------------------------------------------------
   const matchOp = exact ? "=" : "LIKE";
   const matchVal = exact ? code : `${code}%`;
   const pcResults = await c.env.DB.prepare(
@@ -219,7 +269,18 @@ postcodes.openapi(searchPostcodesRoute, async (c) => {
     source: string | null;
   }>();
 
-  // For each postcode, find cities in the same state
+  // --------------------------------------------------------------------------
+  // STEP 3: For each postcode, find associated cities
+  // --------------------------------------------------------------------------
+  // Since dr5hn postcodes have NULL city_id, we associate via state.
+  // Returns up to 3 cities per postcode, sorted by:
+  //   1. State capitals first (so Tallahassee wins for FL)
+  //   2. Higher population next
+  //   3. Tier (tier1 > tier2 > tier3) as final tiebreaker
+  //
+  // Trade-off: this is N+1 queries (one per postcode). For 5 postcodes = 5
+  // extra queries, ~50ms total. Acceptable for the use case (max 20 postcodes).
+  // --------------------------------------------------------------------------
   const results = [];
   for (const pc of pcResults.results || []) {
     const cities = await c.env.DB.prepare(

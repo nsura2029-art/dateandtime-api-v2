@@ -320,30 +320,54 @@ cities.openapi(searchRoute, async (c) => {
   const start = Date.now();
   const { q, country, state, lang, lat, lon, limit } = c.req.valid("query");
 
-  // Normalize query for matching
+  // --------------------------------------------------------------------------
+  // STEP 1: Normalize the query
+  // --------------------------------------------------------------------------
+  // Two forms:
+  //   - qLower: original case lowered (for exact "starts with" matching)
+  //   - qNorm:  ASCII-normalized (lowercase + diacritics stripped + alphanum
+  //             only) for fuzzy / FTS5 matching
+  //
+  // For non-ASCII (Hindi, Arabic, Chinese, etc.), we keep the original — we
+  // can't transliterate, and FTS5 has the original Unicode strings in
+  // place_names, so direct Unicode search works.
+  // --------------------------------------------------------------------------
   const qLower = q.toLowerCase().trim();
-  // For ASCII queries, build a normalized form (lowercase, no diacritics, alphanum only)
-  // For non-ASCII queries (Hindi, Arabic, Chinese, etc.), keep the original — we can't
-  // transliterate, and FTS5 has the original Unicode strings in place_names.
   const isAscii = /^[\x00-\x7f]+$/.test(qLower);
   const qNorm = isAscii
     ? qLower.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")
     : qLower;
 
-  // FTS5 query: use prefix match for partial typing
-  // NOTE: D1 binds parameters as strings, so the FTS5 MATCH operator needs
-  // the raw query string inlined, not parameterized. (The FTS5 `?` binding
-  // does NOT correctly pass MATCH operators like `*`.)
+  // --------------------------------------------------------------------------
+  // STEP 2: Build the FTS5 query
+  // --------------------------------------------------------------------------
+  // For queries >= 2 chars, append * for prefix match (partial typing support).
+  // FTS5 prefix search uses the `*` suffix, e.g. "tok*" matches "tokyo".
+  //
+  // D1 LIMITATION: D1 binds parameters as strings, so the FTS5 MATCH operator
+  // (the `*` suffix) needs the raw query inlined, not parameterized.
+  // We sanitize the query to remove SQL-breaking chars before inlining.
+  //
+  // Edge case: single-char queries don't get `*` (FTS5 needs ≥2 chars for prefix
+  //   to be useful; otherwise we'd return too many false matches).
+  // --------------------------------------------------------------------------
   const ftsQuery = qNorm.length >= 2 ? `${qNorm}*` : qNorm;
-  // Sanitize: keep ASCII alphanumeric + *, or pass Unicode through as-is for non-ASCII
-  // The FTS5 tokenizer handles Unicode, so we just need to remove SQL-breaking chars
   const safeFts = ftsQuery
-    .replace(/[\\'"`;]/g, '')  // strip SQL-breaking chars
-    .replace(/^\*+|\*+$/g, '');  // strip leading/trailing stars
+    .replace(/[\\'"`;]/g, '')        // strip SQL-breaking chars
+    .replace(/^\*+|\*+$/g, '');     // strip leading/trailing stars
 
-  // Query: FTS5 → place_names → cities → country → admin → timezone
-  // NOTE: FTS5 MATCH is inlined (not bound) because D1's parameter binding
-  // escapes the * wildcard. The query is already sanitized above.
+  // --------------------------------------------------------------------------
+  // STEP 3: Run the primary FTS5 query
+  // --------------------------------------------------------------------------
+  // Joins:
+  //   place_names_fts (FTS5 index) → place_names (canonical mapping) → cities
+  //   → countries → administrative_regions → time_zones
+  //
+  // Returns up to 200 candidates for the application-level ranking.
+  // ORDER BY fts.rank uses BM25 (negative = better) for initial sort.
+  //
+  // The `ci.is_active = 1` filter excludes deprecated cities (flag=0 in M3).
+  // --------------------------------------------------------------------------
   const sql = `
     SELECT
       ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.native,
@@ -373,14 +397,26 @@ cities.openapi(searchRoute, async (c) => {
     const result = await c.env.DB.prepare(sql).all<RawResult>();
     ftsResults = result.results || [];
   } catch (err) {
+    // FTS5 may throw on malformed queries (rare since we sanitize).
+    // Surface as 400 with the FTS5 error message for debugging.
     return c.json(
       { success: false as const, error: { code: "SEARCH_FAILED", message: String(err) } },
       400
     );
   }
 
-  // Cross-language search (M6): if FTS5 returns nothing AND user is searching in a
-  // non-English language, fall back to searching the translations table.
+  // --------------------------------------------------------------------------
+  // STEP 4: Cross-language fallback (M6)
+  // --------------------------------------------------------------------------
+  // If FTS5 returns 0 results AND the user provided a language, search the
+  // translations table for the city's name in that language.
+  //
+  // Example: ?q=東京&lang=ja → FTS5 has no match → translations table has
+  // Tokyo's Japanese name → return Tokyo.
+  //
+  // Note: language code is normalized to lowercase for matching (dr5hn uses
+  // mixed case 'zh-CN', 'pt-BR').
+  // --------------------------------------------------------------------------
   if (ftsResults.length === 0 && lang) {
     const langLower = lang.toLowerCase();
     const translationSql = `
@@ -408,15 +444,26 @@ cities.openapi(searchRoute, async (c) => {
       LIMIT 50
     `;
     try {
+      // Prefix match (`%` after qLower) to support partial typing.
+      // Ordered by translation length to prefer shorter (more canonical) names.
       const tr = await c.env.DB.prepare(translationSql).bind(langLower, `${qLower}%`).all<RawResult>();
       ftsResults = tr.results || [];
     } catch {
-      // Ignore translation search errors
+      // Translation search errors are non-fatal — we just return empty.
     }
   }
 
-  // Fuzzy fallback: if FTS5 returns nothing (e.g. typo, transliteration mismatch),
-  // try a LIKE-based search on normalized_name.
+  // --------------------------------------------------------------------------
+  // STEP 5: Fuzzy fallback (LIKE-based)
+  // --------------------------------------------------------------------------
+  // If FTS5 + translations both return nothing, fall back to a LIKE search
+  // on place_names.normalized_name. This handles:
+  //   - Typos that FTS5 BM25 doesn't catch
+  //   - Transliteration mismatches
+  //   - Edge cases where FTS5 tokenization fails
+  //
+  // Only runs for queries ≥3 chars (shorter queries are too noisy).
+  // --------------------------------------------------------------------------
   if (ftsResults.length === 0 && qNorm.length >= 3) {
     const fuzzySql = `
       SELECT
@@ -611,6 +658,19 @@ const cityDetailRoute = createRoute({
 cities.openapi(cityDetailRoute, async (c) => {
   const { id } = c.req.valid("param");
 
+  // --------------------------------------------------------------------------
+  // STEP 1: Fetch the main city row + joined country, admin region, timezone
+  // --------------------------------------------------------------------------
+  // Single query that pulls everything we need for the city record:
+  //   - cities.* (dr5hn enrichment: native, type, state_code, wiki_data_id, etc.)
+  //   - countries.* (name, flag, capital, ISO codes)
+  //   - administrative_regions.* (state/province) — LEFT JOIN because some
+  //     cities (e.g. Vatican City, dependencies) don't have an admin region
+  //   - time_zones.* (current offset, abbreviation, DST) — LEFT JOIN for safety
+  //   - data quality fields (M8): timezone_confidence, source, flags
+  //
+  // .first() returns undefined if no row matches → we 404 below.
+  // --------------------------------------------------------------------------
   const sql = `
     SELECT
       ci.id, ci.name, ci.ascii_name, ci.native, ci.state_code, ci.type, ci.level,
@@ -631,6 +691,8 @@ cities.openapi(cityDetailRoute, async (c) => {
     WHERE ci.id = ?
   `;
 
+  // CityRow type: all columns the SQL returns. Used for type-safe access below.
+  // The `?` makes it nullable; .first() returns CityRow | null.
   type CityRow = {
     id: number;
     name: string;
@@ -673,13 +735,25 @@ cities.openapi(cityDetailRoute, async (c) => {
   };
   const row = await c.env.DB.prepare(sql).bind(id).first<CityRow>();
   if (!row) {
+    // City not found — return 404 with the requested ID for debugging.
     return c.json(
       { success: false as const, error: { code: "NOT_FOUND", message: `City ${id} not found` } },
       404
     );
   }
 
-  // Get all place_names for this city
+  // --------------------------------------------------------------------------
+  // STEP 2: Fetch place_names (English + alt names, no translations)
+  // --------------------------------------------------------------------------
+  // place_names is the canonical name index populated in migrations 110/111
+  // (~451K rows from GeoNames). For each city, we get all known names:
+  //   - Official name, ASCII transliteration, alt spellings
+  //   - Language code (e.g. 'en', 'ru', 'ja')
+  //   - name_type: 'official' | 'ascii' | 'alias' | etc.
+  //
+  // NOTE: For 19-language translations, use /cities/{id}/translations (M5).
+  // This endpoint only shows historical/English-canonical names.
+  // --------------------------------------------------------------------------
   const namesResult = await c.env.DB.prepare(
     `SELECT name, language_code, name_type FROM place_names WHERE canonical_place_id = ? ORDER BY is_preferred DESC, name_type ASC`
   ).bind(id).all<{ name: string; language_code: string | null; name_type: string }>();
@@ -689,8 +763,16 @@ cities.openapi(cityDetailRoute, async (c) => {
     type: n.name_type,
   }));
 
-  // Get postcodes (M4) — scoped to country + state for accuracy
-  // (dr5hn postcodes have NULL city_id, so we use state as the proxy)
+  // --------------------------------------------------------------------------
+  // STEP 3: Fetch postcodes (M4) — state-scoped
+  // --------------------------------------------------------------------------
+  // Postcodes are joined to state (not city) because dr5hn postcodes have
+  // NULL city_id. We return:
+  //   - total: count of postcodes in the same state (1-50K depending on country)
+  //   - sample: first 5 (full list via /cities/{id}/postcodes?page=N)
+  //
+  // Cities without a state (state_id IS NULL) get null postcodes.
+  // --------------------------------------------------------------------------
   let postcodesData: { total: number; sample: Array<{ code: string; localityName: string | null; type: string | null; latitude: number | null; longitude: number | null }> } | null = null;
   if (row.ar_id && row.co_id) {
     const totalResult = await c.env.DB.prepare(
@@ -715,7 +797,13 @@ cities.openapi(cityDetailRoute, async (c) => {
     };
   }
 
-  // Get translations count + languages (M5)
+  // --------------------------------------------------------------------------
+  // STEP 4: Fetch translations count + language list (M5)
+  // --------------------------------------------------------------------------
+  // Lightweight query: just the language codes, not the translations themselves.
+  // For full translations, use /cities/{id}/translations (returns the actual text).
+  // Ordered alphabetically for consistent client display.
+  // --------------------------------------------------------------------------
   const translationsResult = await c.env.DB.prepare(
     `SELECT language FROM translations WHERE place_id = ? AND place_type = 'city' ORDER BY language`
   ).bind(id).all<{ language: string }>();
@@ -724,6 +812,22 @@ cities.openapi(cityDetailRoute, async (c) => {
     languages: (translationsResult.results || []).map((t) => t.language),
   };
 
+  // --------------------------------------------------------------------------
+  // STEP 5: Build the response
+  // --------------------------------------------------------------------------
+  // Field mapping notes:
+  //   - flag is stored as INTEGER (0/1), converted to boolean here
+  //   - is_country_capital and is_state_capital same
+  //   - claimedBy is stored as comma-separated string → split to array
+  //   - dataQuality flags is comma-separated string → split to array
+  //   - country, adminRegion, timezone are nested objects for cleaner client code
+  //
+  // Edge cases handled:
+  //   - adminRegion can be null (some cities don't have a state) → null
+  //   - timezone is non-null (every city has a TZ per M1)
+  //   - population can be null (some dr5hn cities have no pop)
+  //   - claimedBy only included for disputed cities
+  // --------------------------------------------------------------------------
   return c.json(
     {
       success: true as const,

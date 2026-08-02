@@ -79,7 +79,12 @@ const cityTranslationsRoute = createRoute({
 translations.openapi(cityTranslationsRoute, async (c) => {
   const { id } = c.req.valid("param");
 
-  // Verify city exists
+  // --------------------------------------------------------------------------
+  // STEP 1: Verify city exists (404 if not)
+  // --------------------------------------------------------------------------
+  // Single SELECT for existence + name (we only need id but name is nice for
+  // debugging if the FK ever breaks). Lightweight query.
+  // --------------------------------------------------------------------------
   const city = await c.env.DB.prepare(
     `SELECT id, name FROM cities WHERE id = ?`
   ).bind(id).first<{ id: number; name: string }>();
@@ -90,12 +95,32 @@ translations.openapi(cityTranslationsRoute, async (c) => {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // STEP 2: Fetch all translations for the city
+  // --------------------------------------------------------------------------
+  // translations table has composite PK (place_id, place_type, language),
+  // so WHERE place_id=? AND place_type='city' is a single index seek.
+  //
+  // Most cities have 19 translations (one per supported language).
+  // Some cities (small towns) may have fewer — dr5hn coverage varies.
+  //
+  // ORDER BY language for stable client display.
+  // --------------------------------------------------------------------------
   const result = await c.env.DB.prepare(
     `SELECT language, translation FROM translations
      WHERE place_id = ? AND place_type = 'city'
      ORDER BY language`
   ).bind(id).all<{ language: string; translation: string }>();
 
+  // --------------------------------------------------------------------------
+  // STEP 3: Build response
+  // --------------------------------------------------------------------------
+  // Returns:
+  //   - cityId: input
+  //   - placeType: 'city' (constant for now; future: 'state', 'country')
+  //   - count: number of translations (typically 19)
+  //   - translations: array of { language, translation }
+  // --------------------------------------------------------------------------
   return c.json(
     {
       success: true as const,
