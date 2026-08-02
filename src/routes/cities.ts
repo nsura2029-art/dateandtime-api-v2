@@ -383,7 +383,8 @@ cities.openapi(searchRoute, async (c) => {
       tz.current_abbreviation as tz_abbrev, tz.is_dst,
       fts.rank as fts_rank,
       ci.display_name, ci.short_name, ci.geonames_id,
-      ci.source_primary, ci.merge_method
+      ci.source_primary, ci.merge_method,
+      ci.wiki_url
     FROM place_names_fts fts
     JOIN place_names pn ON pn.id = fts.rowid
     JOIN cities ci ON ci.id = pn.canonical_place_id
@@ -436,6 +437,7 @@ cities.openapi(searchRoute, async (c) => {
         tz.current_abbreviation as tz_abbrev, tz.is_dst,
         -10.0 as fts_rank,
         ci.display_name, ci.short_name, ci.geonames_id,
+        ci.wiki_url,
         ci.source_primary, ci.merge_method
       FROM translations t
       JOIN cities ci ON ci.id = t.place_id
@@ -490,6 +492,7 @@ cities.openapi(searchRoute, async (c) => {
         tz.id as timezone_id, tz.current_offset as utc_offset,
         tz.current_abbreviation as tz_abbrev, tz.is_dst,
         0.0 as fts_rank,
+        ci.wiki_url,
         ci.display_name, ci.short_name, ci.geonames_id,
         ci.source_primary, ci.merge_method
       FROM cities ci
@@ -728,6 +731,8 @@ cities.openapi(searchRoute, async (c) => {
     geonamesId: r.geonames_id ?? null,
     sourcePrimary: r.source_primary ?? null,
     mergeMethod: r.merge_method ?? null,
+    // M11.2 Wikidata
+    wikiUrl: r.wiki_url ?? null,
   }));
 
   // --------------------------------------------------------------------------
@@ -979,7 +984,7 @@ cities.openapi(cityDetailRoute, async (c) => {
       ci.disputed, ci.claimed_by, ci.source_id, ci.source_version,
       ci.timezone_confidence, ci.timezone_source, ci.data_quality_flags,
       ci.display_name, ci.short_name, ci.search_name,
-      ci.geonames_id, ci.elevation_m,
+      ci.geonames_id, ci.elevation_m, ci.wiki_url,
       ci.source_primary, ci.source_merged_with, ci.merge_method, ci.merge_run_id, ci.merged_at,
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
@@ -1192,6 +1197,8 @@ cities.openapi(cityDetailRoute, async (c) => {
         sourcePrimary: row.source_primary ?? null,
         sourceMergedWith: row.source_merged_with ?? null,
         mergeMethod: row.merge_method ?? null,
+        // M11.2 Wikidata
+        wikiUrl: row.wiki_url ?? null,
         mergeRunId: row.merge_run_id ?? null,
         mergedAt: row.merged_at ?? null,
       },
