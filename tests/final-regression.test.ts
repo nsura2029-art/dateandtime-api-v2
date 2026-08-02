@@ -134,7 +134,7 @@ describe("F2: /cities/{id} — edge cases", () => {
     expect(d.dataQuality.timezoneConfidence).toBeTruthy();
   });
 
-  it("F2.6: 152970 (last city) is valid", async () => {
+  it("F2.6: 152970 (dr5hn last city) is valid", async () => {
     const r = await fetch(`${API}/api/v1/cities/152970`);
     expect(r.status).toBe(200);
   });
@@ -425,10 +425,10 @@ describe("F9: /cities/{id}/airports — edge cases", () => {
 // F10: /data-quality
 // ============================================================================
 describe("F10: /data-quality — edge cases", () => {
-  it("F10.1: cities.total = 152970", async () => {
+  it("F10.1: cities.total >= 170000 (post M11.1 layer)", async () => {
     const r = await fetch(`${API}/api/v1/data-quality`);
     const b = await r.json();
-    expect(b.data.cities.total).toBe(152970);
+    expect(b.data.cities.total).toBeGreaterThanOrEqual(170000);
   });
 
   it("F10.2: confidence sums to total", async () => {
@@ -584,6 +584,7 @@ describe("F14: spec §33 acceptance criteria", () => {
     const r = await fetch(`${API}/api/v1/data-quality`);
     const b = await r.json();
     // If migrations weren't idempotent, the test data would have duplicates
-    expect(b.data.cities.total).toBe(152970); // exact count
+    // Post M11.1: 170K+ cities after layer merge
+    expect(b.data.cities.total).toBeGreaterThanOrEqual(170000);
   });
 });

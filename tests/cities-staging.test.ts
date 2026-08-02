@@ -22,7 +22,8 @@ describe("CS1: cities_staging is queryable", () => {
     const body = await r.json();
     const release = body.data.releases.find((x: { releaseId: string }) => x.releaseId === RELEASE_ID);
     expect(release).toBeTruthy();
-    expect(release.status).toBe("raw-stored");
+    // status moves through: raw-stored -> validated -> published
+    expect(["raw-stored", "validated", "published"]).toContain(release.status);
   });
 
   it("CS1.2: raw-stored release has SHA-256 and R2 key", async () => {
@@ -36,12 +37,12 @@ describe("CS1: cities_staging is queryable", () => {
 });
 
 describe("CS2: source registry reflects status", () => {
-  it("CS2.1: source_releases row for geonames exists with status=raw-stored", async () => {
+  it("CS2.1: source_releases row for geonames exists with status=validated+", async () => {
     const r = await fetch(`${API}/api/v1/sources/geonames`);
     const body = await r.json();
     expect(body.data.recentReleases.length).toBeGreaterThan(0);
     const status = body.data.recentReleases[0].status;
-    expect(["raw-stored", "parsing", "normalized", "staging", "published"]).toContain(status);
+    expect(["raw-stored", "validated", "published"]).toContain(status);
   });
 });
 

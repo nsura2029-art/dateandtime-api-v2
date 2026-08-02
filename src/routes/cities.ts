@@ -381,7 +381,9 @@ cities.openapi(searchRoute, async (c) => {
       ar.id as admin_id, ar.name as admin_name,
       tz.id as timezone_id, tz.current_offset as utc_offset,
       tz.current_abbreviation as tz_abbrev, tz.is_dst,
-      fts.rank as fts_rank
+      fts.rank as fts_rank,
+      ci.display_name, ci.short_name, ci.geonames_id,
+      ci.source_primary, ci.merge_method
     FROM place_names_fts fts
     JOIN place_names pn ON pn.id = fts.rowid
     JOIN cities ci ON ci.id = pn.canonical_place_id
@@ -432,7 +434,9 @@ cities.openapi(searchRoute, async (c) => {
         ar.id as admin_id, ar.name as admin_name,
         tz.id as timezone_id, tz.current_offset as utc_offset,
         tz.current_abbreviation as tz_abbrev, tz.is_dst,
-        -10.0 as fts_rank
+        -10.0 as fts_rank,
+        ci.display_name, ci.short_name, ci.geonames_id,
+        ci.source_primary, ci.merge_method
       FROM translations t
       JOIN cities ci ON ci.id = t.place_id
       JOIN countries co ON co.id = ci.country_id
@@ -477,7 +481,9 @@ cities.openapi(searchRoute, async (c) => {
         ar.id as admin_id, ar.name as admin_name,
         tz.id as timezone_id, tz.current_offset as utc_offset,
         tz.current_abbreviation as tz_abbrev, tz.is_dst,
-        0.0 as fts_rank
+        0.0 as fts_rank,
+        ci.display_name, ci.short_name, ci.geonames_id,
+        ci.source_primary, ci.merge_method
       FROM place_names pn
       JOIN cities ci ON ci.id = pn.canonical_place_id
       JOIN countries co ON co.id = ci.country_id
@@ -620,6 +626,12 @@ cities.openapi(searchRoute, async (c) => {
     distanceKm: r.distanceKm,
     score: r.score,
     matchType: r.match_type,
+    // M11.1 layer fields
+    displayName: r.display_name ?? null,
+    shortName: r.short_name ?? null,
+    geonamesId: r.geonames_id ?? null,
+    sourcePrimary: r.source_primary ?? null,
+    mergeMethod: r.merge_method ?? null,
   }));
 
   // --------------------------------------------------------------------------
@@ -870,6 +882,9 @@ cities.openapi(cityDetailRoute, async (c) => {
       ci.latitude, ci.longitude, ci.population, ci.elevation,
       ci.disputed, ci.claimed_by, ci.source_id, ci.source_version,
       ci.timezone_confidence, ci.timezone_source, ci.data_quality_flags,
+      ci.display_name, ci.short_name, ci.search_name,
+      ci.geonames_id, ci.elevation_m,
+      ci.source_primary, ci.source_merged_with, ci.merge_method, ci.merge_run_id, ci.merged_at,
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
       ar.id as ar_id, ar.name as ar_name, ar.country_id as ar_country_id,
@@ -1072,6 +1087,17 @@ cities.openapi(cityDetailRoute, async (c) => {
           timezoneSource: row.timezone_source,
           flags: row.data_quality_flags ? row.data_quality_flags.split(",") : [],
         },
+        // M11.1 layer fields
+        displayName: row.display_name ?? null,
+        shortName: row.short_name ?? null,
+        searchName: row.search_name ?? null,
+        geonamesId: row.geonames_id ?? null,
+        elevationM: row.elevation_m ?? null,
+        sourcePrimary: row.source_primary ?? null,
+        sourceMergedWith: row.source_merged_with ?? null,
+        mergeMethod: row.merge_method ?? null,
+        mergeRunId: row.merge_run_id ?? null,
+        mergedAt: row.merged_at ?? null,
       },
     },
     200

@@ -2,18 +2,19 @@
 
 ## Active
 
-- **M11.1: Layer dr5hn + GeoNames (NOT replace)** — 2-3 day task
-  - Build merge pipeline: dr5hn base + GeoNames augmentation
-  - Add `source_id`, `release_id`, `source_population`, `source_timezone_confidence` to `cities`
-  - For each GeoNames city: if dr5hn has it (name+state), keep dr5hn (richer data); else insert
-  - Bulk update dr5hn's TZ + pop where GeoNames is more authoritative
-  - Re-validate, re-test, re-stage
-  - Then promote the layered result
-  - **Why:** swapping alone loses 451K alt_names + 2.97M translations
+- **M11.2: Wikidata ingest** — 1-2 day task
+  - Source already in source_registry
+  - Brings: alt names, Wikipedia URLs, populations, official languages
+  - Re-uses M11.0 ingestion scripts pattern (download → R2 → staging → reconcile)
+  - Then layer merge (M11.2.5) for new alt names
+
+- **Load GeoNames `alternateNames`** to enable historical_alias matches — 1 day
+  - Current: 1,310 historical_alias merges caught (dr5hn's place_names only)
+  - Goal: also catch Mumbai↔Bombay, Edo↔Tokyo, Peking↔Beijing via GeoNames's own alt names
+  - File: GeoNames alternateNamesV2.zip (40M+ rows)
 
 ## Future
 
-- M11.2: Wikidata ingest (after GeoNames layer pattern works)
 - M11.3: Unicode CLDR (territory-language, scripts, locale)
 - M11.4: UN WPP 2024 (country pop)
 - M11.5: US Census (US state/city pop, vintage tracking)
@@ -24,9 +25,12 @@
 - Time-calc endpoint (DST + date-line math)
 - polygon-based confidence (E4 multi-TZ municipality)
 - boundary_distance_km computation
+- Update /cities/search to use `search_name` field (FTS5 still works, this is cosmetic)
 - airport data import (cron 426125193814084, monthly 9 AM ET)
+- "World time" feature (per user brainstorm)
+- Long weekend finder (per user brainstorm)
 
-## Done (M0-M11.0)
+## Done (M0-M11.1)
 
 - [x] M0: Repo scaffold (Hono + D1 + Zod)
 - [x] M1: Global timezone polygon (3,018 cities verified)
@@ -49,6 +53,14 @@
   - R2 raw artifact
   - 18 new tests (13 sources + 5 staging)
   - Promote script ready (NOT run, shadow mode)
+- [x] M11.1: Layer merge (dr5hn + GeoNames) — APPLIED
+  - 11 new cities columns + city_layer_log audit table
+  - intelligent_merge.py: 3-tier (exact 1km, fuzzy 10km, historical_alias)
+  - 69,563 statements applied in 348 chunks (~12 min)
+  - 170,253 cities total (dr5hn 152,970 + GeoNames-only 17,283)
+  - 67,999 cities carry the M11.1 layer fields
+  - 15 new tests, all pass
+  - Reports: m11.1-layer-design.md, m11.1-layer-result.md
 
 ## Done (M0-M10+)
 

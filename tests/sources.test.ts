@@ -80,13 +80,14 @@ describe("SR3: /api/v1/sources/:key/releases", () => {
     expect(body.data.count).toBeGreaterThanOrEqual(1);
     const release = body.data.releases[0];
     expect(release.releaseId).toBe("geonames-cities5000-2026-08-02");
-    expect(release.status).toBe("raw-stored");
+    // status moves through the pipeline: raw-stored -> validated -> published
+    expect(["raw-stored", "validated", "published"]).toContain(release.status);
   });
 
   it("SR3.2: filters by status", async () => {
-    const r = await fetch(`${API}/api/v1/sources/geonames/releases?status=raw-stored`);
+    const r = await fetch(`${API}/api/v1/sources/geonames/releases?status=validated`);
     const body = await r.json();
-    expect(body.data.filter.status).toBe("raw-stored");
+    expect(body.data.filter.status).toBe("validated");
     expect(body.data.releases.length).toBeGreaterThanOrEqual(1);
   });
 
