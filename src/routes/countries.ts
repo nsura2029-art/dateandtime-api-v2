@@ -61,6 +61,11 @@ const CountryBase = z.object({
   independent: z.boolean().nullable(),
   startOfWeek: z.string().nullable(),
   borders: z.array(z.string()).nullable().describe("Adjacent country CCA2 codes"),
+  populationSources: z.object({
+    dr5hn: z.number().nullable().describe("Population from dr5hn (may be stale, ~2020 estimates)"),
+    worldBank2024: z.number().nullable().describe("Population from World Bank SP.POP.TOTL year=2024"),
+    primary: z.enum(["dr5hn", "worldBank2024"]).describe("Which source is preferred for this country"),
+  }).nullable().describe("Population data from multiple sources. worldBank2024 is generally fresher (2024 estimate). dr5hn may be NULL for territories WB doesn't track."),
 });
 
 const CountryWithLocale = CountryBase.extend({
@@ -141,6 +146,19 @@ countries.openapi(listRoute, async (c) => {
   const result = await c.env.DB.prepare(sql).bind(...params).all();
   const rows = result.results || [];
 
+  // Build World Bank population lookup (M11.4)
+  // Fetch all WB populations for the loaded countries; one query.
+  const wbMap = new Map<number, number>();
+  if (rows.length > 0) {
+    const wbRes = await c.env.DB.prepare(
+      `SELECT country_id, population FROM country_populations
+       WHERE year = 2024 AND source = 'world_bank'`
+    ).all();
+    for (const r of (wbRes.results || [])) {
+      wbMap.set(Number((r as any).country_id), Number((r as any).population));
+    }
+  }
+
   // Build localized lookup if lang given
   let localizedMap = new Map<number, any>();
   if (lang && rows.length > 0) {
@@ -194,6 +212,16 @@ countries.openapi(listRoute, async (c) => {
       startOfWeek: r.start_of_week,
       borders: r.borders ? JSON.parse(r.borders) : null,
     };
+    // M11.4: Add World Bank population alongside dr5hn
+    const dr5hnPop = r.population;
+    const wbPop = wbMap.get(r.id) || null;
+    base.populationSources = {
+      dr5hn: dr5hnPop,
+      worldBank2024: wbPop,
+      // World Bank 2024 is fresher, prefer it when available
+      primary: wbPop !== null ? "worldBank2024" : "dr5hn",
+    };
+
     if (lang) {
       const localized = localizedMap.get(r.id);
       if (localized) {
@@ -307,6 +335,20 @@ countries.openapi(detailRoute, async (c) => {
     independent: r.independent === 1,
     startOfWeek: r.start_of_week,
     borders: r.borders ? JSON.parse(r.borders) : null,
+    populationSources: null,  // filled below
+  };
+
+  // M11.4: World Bank population
+  const wbRow = await c.env.DB.prepare(
+    `SELECT population FROM country_populations
+     WHERE country_id = ? AND year = 2024 AND source = 'world_bank'`
+  ).bind(r.id).first();
+  const dr5hnPop = r.population;
+  const wbPop = wbRow ? Number((wbRow as any).population) : null;
+  base.populationSources = {
+    dr5hn: dr5hnPop,
+    worldBank2024: wbPop,
+    primary: wbPop !== null ? "worldBank2024" : "dr5hn",
   };
 
   if (lang) {

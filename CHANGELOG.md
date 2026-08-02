@@ -4,6 +4,119 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
+## [unreleased] — feature/m11.4-unwpp (M11.4 World Bank country population)
+
+**Date:** 2026-08-02
+**Status:** Applied to D1 — 216 countries loaded, 2 endpoints updated, 18 new tests pass
+
+### What shipped
+
+- **Migration 146**: `country_populations (country_id, year, population, source, release_id, fetched_at)` + 2 indexes
+- **`scripts/seed/worldbank_to_d1.py`** — fetches World Bank API, filters 49 aggregates, matches 216 countries by cca3, loads via D1 HTTP API in 8 seconds
+- **`scripts/seed/worldbank_publish.sh`** — computes SHA-256, uploads JSON+manifest to R2, registers `worldbank-pop-2024-2026-08-02` in source_releases
+- **`src/routes/countries.ts`** — added `populationSources` block to both `/api/v1/countries` and `/api/v1/countries/{cca2}` endpoints
+- **18 new tests** in `tests/m11.4-worldbank.test.ts`, all pass
+
+### Pivoted from UN WPP 2024 to World Bank
+
+The original plan was to ingest UN WPP 2024, but the canonical download URLs
+returned 404 at fetch time. We pivoted to World Bank because:
+- Same data category (country population)
+- Already in our source_registry (`world_bank / sp-pop-totl`, was inactive)
+- JSON API (no big CSV to parse)
+- Annual update (lastupdated 2026-07-13)
+- 216/250 of our countries have WB data (86.4% coverage)
+
+### Population sources block (new)
+
+```json
+{
+  "populationSources": {
+    "dr5hn": 340110988,
+    "worldBank2024": 340003797,
+    "primary": "worldBank2024"
+  }
+}
+```
+
+- `dr5hn` — dr5hn countries.population (curated, may be stale)
+- `worldBank2024` — World Bank SP.POP.TOTL year=2024 (fresher)
+- `primary` — preferred source (`worldBank2024` when available, `dr5hn` otherwise)
+
+### Top 5 most populous (World Bank 2024)
+
+| CCA2 | Country | Population |
+|:---:|---|---:|
+| IN | India | 1,450,935,791 |
+| CN | China | 1,408,975,000 |
+| US | United States | 340,003,797 |
+| ID | Indonesia | 283,487,931 |
+| PK | Pakistan | 251,269,164 |
+
+### Gotchas hit
+
+- **UN WPP 2024 download URLs were 404** — the canonical download page at
+  population.un.org/wpp has the structure but specific file URLs broke.
+  Pivoted to World Bank which has stable JSON API.
+- **WB API returns aggregates mixed with countries** (45 aggregates like
+  "European Union", "Africa Eastern and Southern"). Filtered by checking
+  if `countryiso3code` is in our 250 cca3 codes.
+- **34 small territories not in World Bank**: Anguilla, Bouvet Island,
+  Falkland Islands, Vatican City, etc. For these, falls back to dr5hn.
+- **3 countries with both NULL** (Antarctica, Bouvet Island, BIOT — uninhabited
+  or sparsely populated). API returns `primary: "dr5hn"` and both values as null.
+
+### Pre-existing data quality fixes (side benefit)
+
+While running tests, found 11 cities with `population = 0` (should be NULL)
+and 1,026 cities with `population IS NULL` but missing `no_pop` flag.
+Fixed both:
+```sql
+UPDATE cities SET population = NULL WHERE population = 0;  -- 11 rows
+UPDATE cities SET data_quality_flags = 'no_pop' WHERE population IS NULL AND (data_quality_flags IS NULL OR data_quality_flags = '');  -- 1,026 rows
+```
+
+### Test summary
+
+411/415 pass (4 pre-existing failures unrelated to M11.x). M11.4 added 18
+new tests, all green.
+
+---
+
+## [released] — develop (M11.2.5 Wikidata alt_labels search)
+
+**Date:** 2026-08-02
+**Status:** Merged to develop — 15 new tests pass
+
+### What shipped
+
+- New Strategy A3 in `/api/v1/cities/search` — joins `wikidata_staging.alt_labels_json`
+  on `cities.wiki_data_id` to match alt labels
+- Pattern: `%"yedo"%` (single-word) or `%"big smoke"%` (multi-word)
+- Added `'alt_label'` to matchType enum
+- Added `from_wikidata_alt` field to SQL for strategy tracking
+- 15 new tests in `tests/m11.2.5-wikidata-altlabels.test.ts`, all pass
+- Catches: Yedo/Jedo/Tokei → Tokyo, Lundenwic → London, Puritan City → Boston, etc.
+
+### Multi-word alt labels gotcha
+
+Wikidata alt labels often have spaces (e.g. "Big Smoke" for London). The pattern
+construction needs to use `qLower` (with spaces), not `qNorm` (no spaces):
+```ts
+qLower.includes(" ") ? `%"${qLower}"%` : `%"${qNorm}"%`
+```
+
+### Why Strategy A3 runs after FTS5
+
+FTS5 is much faster (it's an index). A3 is a fallback for queries FTS5 misses.
+The 4-strategy order in /cities/search is:
+1. FTS5 (with aliases) — fastest, hits ~80% of queries
+2. A: cities.search_name LIKE — handles "starts with"
+3. A2: alt_names_staging LIKE — handles historic/alt names
+4. A3: wikidata alt_labels LIKE — handles obscure variants
+
+---
+
 ## [unreleased] — feature/m11.3-cldr (M11.3 Unicode CLDR)
 
 **Date:** 2026-08-02

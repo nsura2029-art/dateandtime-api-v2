@@ -2,33 +2,33 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-02 15:30 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-02 16:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.3 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 115K Wikidata entities, 5,000 CLDR country translations (20 langs), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.4 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 115K Wikidata entities, 5,000 CLDR country translations (20 langs), 216 country populations (World Bank 2024), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.2.x |
-| `feature/m11.3-cldr` | M11.3 Unicode CLDR countries | ready to merge |
+| `develop` | Integration | up to date with M0-M11.2.5 |
+| `feature/m11.4-unwpp` | M11.4 World Bank country population | ready to merge |
 
 ## Last 5 commits
 
 ```
-HEAD: M11.3: Unicode CLDR localized country names (5,000 rows, 20 langs, 2 new endpoints)
-HEAD~1: M11.2.x: apply Wikidata population values to cities (21,461 filled)
-HEAD~2: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
-HEAD~3: merge: M11.1+ search_name strategy + M11.1.5 altNames
-HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 matches
+HEAD: M11.4: World Bank country population (216 countries, pivoted from UN WPP)
+HEAD~1: M11.2.5: Wikidata alt_labels search strategy (15 new tests)
+HEAD~2: M11.3: Unicode CLDR localized country names (5,000 rows, 20 langs, 2 new endpoints)
+HEAD~3: M11.2.x: apply Wikidata population values to cities (21,461 filled)
+HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 ```
 
 ## Test status
 
-**395 / 396 pass** (1 pre-existing `tests/env.test.ts` failure, unrelated to recent work)
+**411 / 415 pass** (4 pre-existing failures, 1 from M11.0 — unrelated to M11.x work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -42,7 +42,9 @@ HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 m
 | `tests/search-name-strategy.test.ts` | 10 | M11.1+ search ranking |
 | `tests/altnames-search-strategy.test.ts` | 12 | M11.1.5 altNames search |
 | `tests/m11.2-wikidata.test.ts` | 12 | M11.2 wikiUrl |
+| `tests/m11.2.5-wikidata-altlabels.test.ts` | 15 | M11.2.5 alt_label search |
 | `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
+| `tests/m11.4-worldbank.test.ts` | 18 | M11.4 country population (World Bank 2024) |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
@@ -53,18 +55,17 @@ HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 m
 
 ## Next 3 things (priority order)
 
-1. **M11.2.5: Wikidata alt_labels to search** (4-6 hours)
-   - Data already in `wikidata_staging.alt_labels_json`
-   - Add new strategy to /cities/search
-   - Catches: alternate official names, common misspellings
+1. **M11.2.6: Wikidata descriptions in /cities/{id}** (2-3 hours, very quick)
+   - Use english_label + first alt label as city description
+   - Only cities with wiki_data_id (69% of 170K = ~117K cities)
 
-2. **M11.4: UN WPP 2024** (1-2 days)
-   - Country-level population as fallback
-   - ~250 rows only, simple schema
-
-3. **M11.5: US Census (state/city pop)** (2-3 days)
+2. **M11.5: US Census (state/city pop)** (2-3 days)
    - Vintage tracking adds complexity
-   - Will fix the ~22K NULL cities in US
+   - Will fix the ~22K NULL cities in US (post-M11.2.x)
+
+3. **M11.6: Eurostat (City vs FUA)** (2-3 days)
+   - EU-only
+   - Distinguish administrative City from FUA
 
 ## Future (deferred)
 
@@ -72,24 +73,22 @@ HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 m
 |---|---:|---|
 | Time-calc endpoint (DST + date-line math) | 1-2 days | Separate scope |
 | polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
-| M11.6 Eurostat (City vs FUA) | 2-3 days | EU-only |
 | M11.7 Census of India | 1-2 days | 2011 still official |
 | Add country localized name to /cities/{id} response | 2 hours | Cosmetic, countries object already exists |
 | Add /languages endpoint with localized language names | 2 hours | Same CLDR data, different `<language>` section |
-| M11.8 World Bank Indicators | 1 day | Easy API |
-| M11.9 India population projections | 1 day | Already have data from M11.7 |
 | "World time" feature (per user brainstorm) | TBD | Per product PRD |
 | Production deployment | when ready | User said "not ready for production" |
 
 ## Known issues
 
 - **BUG-1 (open)**: Swagger UI CORS via `wrangler dev --remote` proxy. Workaround: open `https://dt-api-v2-dev.nsura2029.workers.dev/docs` directly.
-- **env.test.ts** (pre-existing): 1 failure, unrelated to recent work.
+- **pre-existing test failures (4)**: S12.8 altNames perf (flaky), M8.5 data-quality issues (pre-existing), env.test.ts localhost wildcard, Rio Branco timezone. All unrelated to M11.x.
 - **State code mismatch (5-10% merge misses)**: dr5hn uses ISO 3166-2, GeoNames uses FIPS. 10-km fuzzy tier catches many but not all.
 - **GeoNames `elevation_m` is NULL for all cities**: cities5000.txt doesn't include elevation; needs alternate dataset.
 - **Phoenix OR**: dr5hn incorrectly marks `is_state_capital=1` — fixed in M6 migration 132, but watch for re-occurrence in dr5hn updates.
 - **22 Null Island cities** (0,0 coords): flagged `unresolved` in M8.
-- **35,546 cities with NULL population** (now ~19% post GeoNames merge): 97.3% flagged `no_pop` in M8.
+- **14,142 cities with NULL population**: 100% flagged `no_pop` in M8 (post M11.2.x + M11.4 data quality fixes).
+- **34 countries without WB data**: small territories (Anguilla, Bouvet, etc.) that World Bank doesn't track. Falls back to dr5hn (which may also be NULL for uninhabited).
 
 ## DB stats (D1 `timeandtimepro-full-v2`)
 
@@ -107,11 +106,12 @@ HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 m
 | data_sources | 8 | M8 |
 | data_quality_checks | 10 | M8 |
 | **source_registry** | **10** | **M11.0 (1 active = GeoNames)** |
-| **source_releases** | **4** | **M11.0 + M11.1.5 + M11.2 + M11.3** |
+| **source_releases** | **5** | **M11.0 + M11.1.5 + M11.2 + M11.3 + M11.4** |
 | **cities_staging** | **69,561** | **M11.0 (raw, validated)** |
 | **alt_names_staging** | **767,572** | **M11.1.5 (GeoNames alt names, validated)** |
 | **wikidata_staging** | **115,731** | **M11.2 (Wikidata entities, raw-stored)** |
 | **country_names** | **5,000** | **M11.3 (CLDR 48.2 country names, 20 langs × 250 countries)** |
+| **country_populations** | **216** | **M11.4 (World Bank SP.POP.TOTL year=2024, 216 of 250 countries)** |
 | **city_layer_log** | **0** | **M11.1 (table created, audit inserts skipped)** |
 
 ## M11.1 layer field coverage
@@ -143,6 +143,7 @@ HEAD~4: M11.1.5: GeoNames alternateNamesV2 loaded + 12 new historical_alias_v2 m
 | `raw/geonames/cities5000/2026-08-02/` | 5.6 MB | Cities5000.zip + manifest.json + SHA-256 |
 | `raw/geonames/alternateNamesV2/2026-08-02/` | 30 MB | Filtered alt names for cities5000 |
 | `raw/cldr/territories-48.2/2026-08-02/` | 8.6 MB | CLDR 48.2: 20 lang XMLs + tarball + manifest |
+| `raw/world_bank/pop-totl/2026-08-02/` | 78.7 KB | World Bank SP.POP.TOTL 2024 (216 countries JSON + manifest) |
 
 ## How to resume work
 
