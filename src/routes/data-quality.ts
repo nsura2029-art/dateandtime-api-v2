@@ -96,15 +96,18 @@ const summaryRoute = createRoute({
 
 dq.openapi(summaryRoute, async (c) => {
   // Confidence counts
+  // Post M11.1: GeoNames-only cities (source_primary='geonames', merge_method='geonames_only')
+  // have no timezone_confidence — they default to 'medium' (we have timezone + pop + coords verified).
   const confResult = await c.env.DB.prepare(
     `SELECT
        SUM(CASE WHEN timezone_confidence = 'high' THEN 1 ELSE 0 END) as high,
-       SUM(CASE WHEN timezone_confidence = 'medium' THEN 1 ELSE 0 END) as medium,
+       SUM(CASE WHEN timezone_confidence = 'medium' OR (timezone_confidence IS NULL AND source_primary = 'geonames') THEN 1 ELSE 0 END) as medium,
        SUM(CASE WHEN timezone_confidence = 'low' THEN 1 ELSE 0 END) as low,
        SUM(CASE WHEN timezone_confidence = 'unresolved' THEN 1 ELSE 0 END) as unresolved,
+       SUM(CASE WHEN timezone_confidence IS NULL AND source_primary IS NULL THEN 1 ELSE 0 END) as unclassified,
        COUNT(*) as total
      FROM cities`
-  ).first<{ high: number; medium: number; low: number; unresolved: number; total: number }>();
+  ).first<{ high: number; medium: number; low: number; unresolved: number; unclassified: number; total: number }>();
 
   // Source counts
   const sourceResult = await c.env.DB.prepare(
@@ -155,6 +158,7 @@ dq.openapi(summaryRoute, async (c) => {
             medium: confResult?.medium || 0,
             low: confResult?.low || 0,
             unresolved: confResult?.unresolved || 0,
+            unclassified: confResult?.unclassified || 0,
             total: confResult?.total || 0,
           },
           sources: (sourceResult.results || []).map((s) => ({ source: s.source, count: s.count })),

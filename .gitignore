@@ -41,3 +41,4 @@ migrations/cities/*.sql
 # (43MB file, too large for git)
 migrations/111_seed_alt_names.sql
 tmp/
+scripts/seed/__pycache__/

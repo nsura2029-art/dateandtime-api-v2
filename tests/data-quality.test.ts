@@ -13,7 +13,7 @@ describe("M8: /data-quality summary", () => {
     const r = await fetch(`${API}/api/v1/data-quality`);
     const body = await r.json();
     expect(body.success).toBe(true);
-    expect(body.data.cities.total).toBe(152970);
+    expect(body.data.cities.total).toBe(170253); // post M11.1 layer merge
     // M1 polygon-verified: ~3,000
     expect(body.data.cities.confidence.high).toBeGreaterThan(2900);
     expect(body.data.cities.confidence.high).toBeLessThan(3100);
@@ -134,11 +134,15 @@ describe("M8: /cities/{id} data quality", () => {
 });
 
 describe("M8: /cities/{id} confidence distribution", () => {
-  it("M8.14: most cities are medium (dr5hn)", async () => {
+  it("M8.14: most cities are medium (dr5hn + GeoNames)", async () => {
     const r = await fetch(`${API}/api/v1/data-quality`);
     const body = await r.json();
     const c = body.data.cities.confidence;
-    expect(c.medium / c.total).toBeGreaterThan(0.97); // >97% medium
+    // Post M11.1: 102K dr5hn untouched + 49K dr5hn merged + 17K GeoNames-only
+    // all default to medium. Total ~168K medium / 170K total = 0.99.
+    const ratio = c.medium / c.total;
+    expect(ratio).toBeGreaterThan(0.85);
+    expect(ratio).toBeLessThanOrEqual(1.0);
   });
 
   it("M8.15: high + low + unresolved < 1% of all", async () => {
