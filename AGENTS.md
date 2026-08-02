@@ -195,3 +195,42 @@ Examples:
 - Always check `tests/AGENTS.md` BEFORE writing a new test file
 - Always check `src/AGENTS.md` BEFORE writing a new route or DAO
 - Always check `docs/AGENTS.md` BEFORE updating any docs
+
+## Doc-update framework (every merge to develop)
+
+**The contract:** every merge to `develop` must update these files:
+
+1. **`STATUS.md`** (root) — single source of truth for "where are we"
+   - Branch state, last 5 commits, test count, DB stats, next 3 things
+   - Refresh with: `bash scripts/sync-status.sh --write`
+2. **`CHANGELOG.md`** (root) — per-PR notes, newest first
+   - Add `[unreleased]` entry BEFORE merge
+   - After merge, rename to `[released] — develop @ <hash>`
+3. **`TODO.md`** (root) — milestone checklist (M0-M10+)
+   - Move completed items from Active → Done
+   - Add new Active items discovered during the milestone
+4. **`docs/`** — refresh any spec doc that changed (core logic, data audit, test plan)
+5. **`reports/m{N}-*.md`** — write a per-milestone audit for new milestones
+
+**Pre-merge check:**
+
+```bash
+bash scripts/pre-merge-to-develop.sh        # check
+bash scripts/pre-merge-to-develop.sh --fix  # auto-fix
+```
+
+If it exits non-zero, do NOT merge. Fix the warnings/errors first.
+
+**Post-merge:**
+
+```bash
+bash scripts/sync-status.sh --write
+git add STATUS.md CHANGELOG.md
+git commit -m "docs: sync status after merge to develop"
+```
+
+**Framework scripts:**
+- `scripts/sync-status.sh` — refreshes STATUS.md timestamp + commits
+- `scripts/pre-merge-to-develop.sh` — checks doc framework before merge
+- `scripts/build_postman.py` — regenerates Postman collection (M10+)
+
