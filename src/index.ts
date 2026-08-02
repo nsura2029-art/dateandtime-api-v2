@@ -18,6 +18,7 @@ import airports from "@/routes/airports";
 import dq from "@/routes/data-quality";
 import sources from "@/routes/sources";
 import staging from "@/routes/staging";
+import countries from "@/routes/countries";
 import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
@@ -49,6 +50,7 @@ app.route("/", airports); // GET /api/v1/airports/near + /api/v1/cities/:id/airp
 app.route("/", dq); // GET /api/v1/data-quality + /api/v1/data-quality/issues
 app.route("/", sources); // GET /api/v1/sources + /api/v1/sources/:key + /api/v1/sources/:key/releases
 app.route("/", staging); // GET /api/v1/staging/summary + /api/v1/staging/cities
+app.route("/", countries); // GET /api/v1/countries + /api/v1/countries/{cca2}
 
 // OpenAPI + Swagger UI
 registerDocs(app);

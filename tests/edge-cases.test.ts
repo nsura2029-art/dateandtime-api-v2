@@ -362,9 +362,13 @@ describe("E10: City with population zero or null", () => {
     expect(Number(rows[0]?.n || 0)).toBe(0);
   });
 
-  it("E10.2: ~35,546 cities have population=NULL", () => {
+  it("E10.2: ~14,142 cities have population=NULL (post M11.2.x Wikidata merge)", () => {
+    // Pre-M11.2.x: 35,546 NULLs. Post-M11.2.x: 14,142 (Wikidata filled 21,461).
+    // We just verify it's a non-trivial number (not 0, not all 170K).
     const rows = query(`SELECT COUNT(*) as n FROM cities WHERE population IS NULL`);
-    expect(Number(rows[0]?.n || 0)).toBeGreaterThan(30000);
+    const n = Number(rows[0]?.n || 0);
+    expect(n).toBeGreaterThan(10000);
+    expect(n).toBeLessThan(20000);
   });
 
   it("E10.3: null-pop city returns population: null", async () => {
@@ -383,6 +387,7 @@ describe("E10: City with population zero or null", () => {
     const ratio = Number(withFlag?.n || 0) / Number(total?.n || 1);
     // 34577/35546 = 97.3% (some cities have multiple flags like 'no_pop,no_wiki'
     // which still match LIKE '%no_pop%')
+    // Post M11.2.x: ratio is still ~97% (14,142 NULL, ~13,755 flagged)
     expect(ratio).toBeGreaterThanOrEqual(0.95);
   });
 });
