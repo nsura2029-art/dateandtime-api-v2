@@ -4,21 +4,37 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — feature/data-platform-geonames
+## [unreleased] — feature/data-platform-geonames (M11.0)
 
 **Date:** 2026-08-02
-**Source:** GeoNames
-**Status:** in progress
+**Status:** Shadow mode — GeoNames validated, NOT promoted
 
-### Planned
+### What shipped
 
-- source_registry table (10 sources, 1 active)
-- source_releases table (every known release, versioned)
-- R2 bucket: dt-data-raw, dt-data-normalized, dt-data-reports
-- GeoNames Cities5000 raw → R2 (~700MB compressed)
-- Two-phase commit: cities_staging → cities_live (atomic swap)
-- /api/v1/sources and /api/v1/sources/{key} endpoints
-- Reconciliation report endpoint
+- Migration 139: `source_registry` (10 sources, 1 active), `source_releases` (versioned), `cities_staging` (two-phase commit target)
+- 5 new API endpoints:
+  - `GET /api/v1/sources` (list 10 sources)
+  - `GET /api/v1/sources/:key` (single source + recent releases)
+  - `GET /api/v1/sources/:key/releases` (release history with ?status= filter)
+  - `GET /api/v1/staging/summary` (per-release counts)
+  - `GET /api/v1/staging/cities` (top-N by pop, with ?release_id, ?country)
+- 4 ingestion scripts:
+  - `geonames_cities5000.py` (download/verify/upload/register)
+  - `geonames_to_staging.py` (parse to local SQLite)
+  - `reconcile_geonames.py` (raw vs local vs D1 vs live)
+  - `publish_geonames.sh` (two-phase commit, asks for explicit `yes`)
+- 18 new tests, 18/18 pass
+- R2 raw artifact: 5.6MB + manifest at `r2://dt-data-raw/raw/geonames/cities5000/2026-08-02/`
+- D1 cities_staging: 69,561 rows, 0 NULL TZ, 0 NULL pop, 100% reconciliation match
+
+### Decision: shadow mode (NOT promoted)
+
+- dr5hn (152,970 cities, 451K alt_names, 2.97M translations) remains live
+- GeoNames (69,561 cities, better TZ+pop quality) is in `cities_staging`, queryable via `/api/v1/staging/*`
+- Promote script ready but not run
+- M11.1 next: layer the two sources instead of replacing
+
+See `reports/m11.0-shadow-mode-decision.md` for full analysis.
 
 ---
 
