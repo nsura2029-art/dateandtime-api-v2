@@ -277,3 +277,30 @@ The remaining 53 tests split into:
 1. **M9 (documentation)** — timezone-core-logic.md, timezone-data-audit.md, README, Swagger examples
 2. **M10 (final regression + boundary_distance)** — unblock remaining 23 tests
 3. **Time-calc endpoint** — separate work, blocks M5 time-calc tests
+
+## M10+ Edge Cases (2026-08-02)
+
+Added 46 tests in `tests/edge-cases.test.ts` covering 14 edge case groups:
+
+| Group | Tests | What it covers |
+|---|---:|---|
+| E1 Same-name different countries | 4 | Springfield, Paris cross-country |
+| E2 Same-name same state | 3 | Abbeville SC, Acheng HL, Aksu XJ |
+| E3 Same-coord suburb/duplicate | 3 | Aba/Ngawa, Datong/Pingcheng |
+| E4 Centroid outside polygon | 2 | Indiana split-state TZ |
+| E5 Multi-TZ city | 2 | US split-state detection |
+| E6 Renamed/historical | 5 | Bombay→Mumbai, Calcutta→Kolkata |
+| E7 Non-ASCII + transliteration | 5 | 東京, 北京, Москва, القاهرة |
+| E8 Disputed + overseas | 5 | RE, AS, GI, BM, KY |
+| E9 Military/research station | 1 | Antarctica (AQ) |
+| E10 Pop zero/null | 4 | 0 pop, 35,546 null, 97% flagged |
+| E11 Wrong admin region | 3 | Tokyo state_id 13 |
+| E12 Coordinate precision | 3 | 4+ decimals, no over-precise |
+| E13 Capital coords | 3 | 200+ capitals in DB |
+| E14 Duplicate IDs | 3 | 0 dupes, max=163964 |
+| **Total** | **46** | |
+
+### Coverage status
+
+- **Cumulative**: 296/297 pass (1 pre-existing env failure)
+- **M10+ delta**: 46/46 pass
