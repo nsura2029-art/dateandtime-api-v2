@@ -245,6 +245,28 @@ jobs:
       - name: Apply migration 132 (known city populations + re-tier)
         run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/132_known_city_populations.sql
 
+      - name: Apply migration 133 (data quality columns)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/133_data_quality_columns.sql
+
+      - name: Apply migration 134 (data quality metadata, 20 parts)
+        run: |
+          for i in $(seq -f "%02g" 1 20); do
+            echo "Applying 134_data_quality_pop_pt${i}.sql..."
+            npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file="migrations/134_data_quality_pop_pt${i}.sql"
+          done
+
+      - name: Apply migration 135 (fix 970 NULL confidence)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/135_fix_remaining_data_quality.sql
+
+      - name: Apply migration 136 (Null Island unresolved)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/136_null_island_resolve.sql
+
+      - name: Apply migration 137 (mark 13 manual overrides as low)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/137_mark_manual_overrides.sql
+
+      - name: Apply migration 138 (populate data_sources)
+        run: npx wrangler d1 execute "$DB_NAME" --env "$WRANGLER_ENV" --remote --file=migrations/138_populate_data_sources.sql
+
       - name: Apply cities (if any .sql files exist)
         run: |
           CITY_COUNT=$(ls migrations/cities/*.sql 2>/dev/null | wc -l)

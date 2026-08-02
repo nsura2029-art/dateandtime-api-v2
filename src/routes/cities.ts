@@ -144,6 +144,12 @@ const CityDetail = z.object({
     available: z.number().describe("Number of languages this city has been translated to (max 19)"),
     languages: z.array(z.string()).describe("List of available language codes (e.g. ['ja', 'es', 'ar'])"),
   }).describe("Available translations (M5: dr5hn translations.csv). Full text via /cities/{id}/translations"),
+  dataQuality: z.object({
+    timezoneConfidence: z.enum(["high", "medium", "low", "unresolved"]).nullable()
+      .describe("Confidence in timezone assignment: 'high' (polygon-verified), 'medium' (dr5hn), 'low' (manual override), 'unresolved' (Null Island)"),
+    timezoneSource: z.string().nullable().describe("Where the timezone was set: 'polygon:timezonefinder', 'dr5hn:default', 'manual:override', etc."),
+    flags: z.array(z.string()).describe("Data quality flags: 'null_island', 'no_pop', 'no_wiki', etc."),
+  }).describe("Data quality metadata (M8: spec §1, §14, §15, §28)"),
 });
 
 const CityDetailResponse = z.object({
@@ -612,6 +618,7 @@ cities.openapi(cityDetailRoute, async (c) => {
       ci.is_country_capital, ci.is_state_capital,
       ci.latitude, ci.longitude, ci.population, ci.elevation,
       ci.disputed, ci.claimed_by, ci.source_id, ci.source_version,
+      ci.timezone_confidence, ci.timezone_source, ci.data_quality_flags,
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
       ar.id as ar_id, ar.name as ar_name, ar.country_id as ar_country_id,
@@ -647,6 +654,9 @@ cities.openapi(cityDetailRoute, async (c) => {
     claimed_by: string | null;
     source_id: string | null;
     source_version: string | null;
+    timezone_confidence: string | null;
+    timezone_source: string | null;
+    data_quality_flags: string | null;
     co_id: number;
     co_cca2: string;
     co_cca3: string | null;
@@ -762,6 +772,11 @@ cities.openapi(cityDetailRoute, async (c) => {
         placeNames,
         postcodes: postcodesData,
         translations,
+        dataQuality: {
+          timezoneConfidence: row.timezone_confidence as "high" | "medium" | "low" | "unresolved" | null,
+          timezoneSource: row.timezone_source,
+          flags: row.data_quality_flags ? row.data_quality_flags.split(",") : [],
+        },
       },
     },
     200
