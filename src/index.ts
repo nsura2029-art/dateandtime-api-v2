@@ -16,6 +16,7 @@ import translations from "@/routes/translations";
 import postcodes from "@/routes/postcodes";
 import airports from "@/routes/airports";
 import dq from "@/routes/data-quality";
+import sources from "@/routes/sources";
 import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
@@ -45,6 +46,7 @@ app.route("/", translations); // GET /api/v1/cities/:id/translations[/:lang] + /
 app.route("/", postcodes); // GET /api/v1/cities/:id/postcodes + /api/v1/postcodes/search
 app.route("/", airports); // GET /api/v1/airports/near + /api/v1/cities/:id/airports
 app.route("/", dq); // GET /api/v1/data-quality + /api/v1/data-quality/issues
+app.route("/", sources); // GET /api/v1/sources + /api/v1/sources/:key + /api/v1/sources/:key/releases
 
 // OpenAPI + Swagger UI
 registerDocs(app);
