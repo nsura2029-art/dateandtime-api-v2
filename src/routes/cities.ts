@@ -471,6 +471,51 @@ cities.openapi(searchRoute, async (c) => {
   // Only runs for queries ≥3 chars (shorter queries are too noisy).
   // --------------------------------------------------------------------------
   if (ftsResults.length === 0 && qNorm.length >= 3) {
+    // ------------------------------------------------------------------------
+    // Strategy A: search cities.search_name (M11.1 layer column, pre-normalized)
+    // ------------------------------------------------------------------------
+    // Tries the M11.1 layer's `search_name` column directly. This is faster
+    // than joining place_names (no JOIN, single table) and uses our own
+    // normalization rules (lowercase + strip diacritics + alphanum only).
+    // Catches queries that FTS5 missed but our normalization matches.
+    // ------------------------------------------------------------------------
+    const searchNameSql = `
+      SELECT
+        ci.id as city_id, ci.name as city_name, ci.ascii_name,
+        ci.tier, ci.capital_type, ci.is_country_capital, ci.is_state_capital,
+        ci.latitude, ci.longitude, ci.population, ci.disputed, ci.claimed_by,
+        co.id as country_id, co.cca2 as country_cca2, co.cca3 as country_cca3,
+        co.name as country_name, co.flag_emoji as country_flag, co.capital as country_capital,
+        ar.id as admin_id, ar.name as admin_name,
+        tz.id as timezone_id, tz.current_offset as utc_offset,
+        tz.current_abbreviation as tz_abbrev, tz.is_dst,
+        0.0 as fts_rank,
+        ci.display_name, ci.short_name, ci.geonames_id,
+        ci.source_primary, ci.merge_method
+      FROM cities ci
+      JOIN countries co ON co.id = ci.country_id
+      LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+      LEFT JOIN time_zones tz ON tz.id = ci.timezone
+      WHERE ci.search_name LIKE ?
+        AND ci.is_active = 1
+      ORDER BY LENGTH(ci.search_name) ASC
+      LIMIT 30
+    `;
+    try {
+      const searchNameResult = await c.env.DB.prepare(searchNameSql).bind(`${qNorm}%`).all<RawResult>();
+      ftsResults = searchNameResult.results || [];
+    } catch {
+      // Ignore errors — fallback to place_names next
+    }
+  }
+
+  if (ftsResults.length === 0 && qNorm.length >= 3) {
+    // ------------------------------------------------------------------------
+    // Strategy B: place_names.normalized_name (legacy fallback)
+    // ------------------------------------------------------------------------
+    // Joins to the place_names table for alt-name matching. Slower than
+    // search_name but covers more aliases (translations, abbreviations, etc.).
+    // ------------------------------------------------------------------------
     const fuzzySql = `
       SELECT
         ci.id as city_id, ci.name as city_name, ci.ascii_name,
