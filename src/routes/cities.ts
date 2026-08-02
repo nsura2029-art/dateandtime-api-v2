@@ -305,7 +305,9 @@ const searchRoute = createRoute({
     "user country/state/language context, and proximity. " +
     "When ?lang= is provided and the query is in that language (e.g. 'ja' + '東京'), " +
     "searches the translations table as fallback. " +
-    "When ?state= is provided, gives a strong boost to cities in that state.",
+    "When ?state= is provided, gives a strong boost to cities in that state. " +
+    "When 0 results match, returns a 'suggestions' field with up to 10 substring " +
+    "matches (e.g. for misspellings or sub-threshold villages).",
   tags: ["Cities"],
   request: {
     query: searchQuery,
@@ -620,6 +622,194 @@ cities.openapi(searchRoute, async (c) => {
     matchType: r.match_type,
   }));
 
+  // --------------------------------------------------------------------------
+  // STEP 8: "Did you mean" suggestions when 0 results (M10+)
+  // --------------------------------------------------------------------------
+  // When the search returns no exact/prefix/fuzzy matches, return suggestions
+  // to help the user find what they meant. Three strategies, in order:
+  //
+  //   1. Substring match (LIKE %q%) — finds cities containing the query as
+  //      a substring (e.g. "Tok" → Tokyo, Tokat, Tokushima).
+  //   2. Trigram match — for very long or unusual queries (e.g. "vinjanam-
+  //      padu" → cities sharing 3-grams like "vin", "inj", "nja", "jan").
+  //   3. Same-country fallback — if user provided ?country=, return top
+  //      cities in that country. Useful for villages below the dataset
+  //      threshold (e.g. searching "vinjanampadu" with ?country=IN returns
+  //      nearby major Indian cities).
+  //
+  // Each suggestion is tagged with its matchType so the caller can show
+  // "did you mean" UI.
+  //
+  // Suggestions are returned in `data.suggestions` ONLY when results=0.
+  // When results>0, this field is omitted to keep the response clean.
+  // --------------------------------------------------------------------------
+  let suggestions: { query: string; count: number; results: unknown[] } | null = null;
+  if (unique.length === 0 && qNorm.length >= 2) {
+    // ----- Strategy 1: Substring match -----
+    let sugRows: any[] = [];
+    if (isAscii) {
+      const substringSql = `
+        SELECT
+          ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.latitude, ci.longitude,
+          co.id as country_id, co.cca2 as country_cca2, co.name as country_name,
+          ar.id as admin_id, ar.name as admin_name,
+          tz.id as timezone_id, tz.current_offset, tz.current_abbreviation, tz.is_dst,
+          'substring' as match_type,
+          LENGTH(ci.name) as name_len
+        FROM cities ci
+        JOIN countries co ON co.id = ci.country_id
+        LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+        LEFT JOIN time_zones tz ON tz.id = ci.timezone
+        WHERE ci.is_active = 1
+          AND (
+            LOWER(ci.name) LIKE ?1
+            OR LOWER(COALESCE(ci.ascii_name, '')) LIKE ?1
+          )
+        ORDER BY
+          CASE WHEN LOWER(ci.name) LIKE ?2 THEN 0 ELSE 1 END,
+          LENGTH(ci.name) ASC,
+          ci.population DESC NULLS LAST
+        LIMIT 5
+      `;
+      try {
+        const sugResult = await c.env.DB.prepare(substringSql)
+          .bind(`%${qLower}%`, `${qLower}%`)
+          .all();
+        sugRows = sugResult.results || [];
+      } catch {
+        // Ignore
+      }
+    }
+
+    // ----- Strategy 2: Trigram match (for long/unique queries) -----
+    // For queries >= 6 chars that got 0 substring matches, use 4-grams from
+    // the start of the query to find cities sharing that prefix chunk.
+    // We use 4-grams (not 3) for higher precision and only the first 2
+    // trigrams to avoid noise.
+    //
+    // Example: "vinjanampadu" → trigrams ["vinj", "anja"] → cities starting
+    // with "vinj" (Vinja, Vinjani) or containing "anja" (Anjan, Anja).
+    //
+    // This catches sub-threshold villages that share a chunk with a known
+    // city, and misspellings.
+    //
+    // We append these as additional suggestions rather than replacing the
+    // country fallback, so a query like "vinjanampadu" with ?country=IN
+    // returns BOTH "Vinjani" (similar name) AND "Mumbai/Delhi" (country top
+    // cities). Order: substring → trigram → country-fallback.
+    if (isAscii && qNorm.length >= 6) {
+      // Take 2 trigrams: from start (most distinguishing) and from middle
+      const trigrams: string[] = [];
+      if (qNorm.length >= 4) trigrams.push(qNorm.substring(0, 4));
+      if (qNorm.length >= 8) trigrams.push(qNorm.substring(4, 8));
+      // Filter to trigrams that contain at least one vowel (skip consonant-only)
+      // This eliminates noise like "xyz" matching "xyzzy"
+      const meaningfulTrigrams = trigrams.filter((t) => /[aeiouy]/.test(t));
+      if (meaningfulTrigrams.length > 0) {
+        const triConditions = meaningfulTrigrams.map(() => `LOWER(ci.name) LIKE ?`).join(" OR ");
+        const triParams = meaningfulTrigrams.map((t) => `%${t}%`);
+        const trigramSql = `
+          SELECT
+            ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.latitude, ci.longitude,
+            co.id as country_id, co.cca2 as country_cca2, co.name as country_name,
+            ar.id as admin_id, ar.name as admin_name,
+            tz.id as timezone_id, tz.current_offset, tz.current_abbreviation, tz.is_dst,
+            'trigram' as match_type,
+            LENGTH(ci.name) as name_len
+          FROM cities ci
+          JOIN countries co ON co.id = ci.country_id
+          LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+          LEFT JOIN time_zones tz ON tz.id = ci.timezone
+          WHERE ci.is_active = 1
+            AND (${triConditions})
+          ORDER BY
+            LENGTH(ci.name) ASC,
+            ci.population DESC NULLS LAST
+          LIMIT 2
+        `;
+        try {
+          const sugResult = await c.env.DB.prepare(trigramSql).bind(...triParams).all();
+          // Append trigram results (limit 2 so country fallback still runs)
+          sugRows = [...sugRows, ...((sugResult.results || []) as any[])];
+        } catch {
+          // Ignore
+        }
+      }
+    }
+
+    // ----- Strategy 3: Same-country fallback (always run if ?country=) -----
+    // If user provided ?country=, ALWAYS append the top cities in that
+    // country (deduped). This ensures "no exact match for your village"
+    // still gives the user something useful — the major cities in their
+    // country. We dedupe by city_id so the trigram + country-fallback
+    // never returns the same city twice.
+    if (country) {
+      // Dedupe by city_id
+      const seenIds = new Set(sugRows.map((r: any) => r.city_id));
+      const countryFallbackSql = `
+        SELECT
+          ci.id as city_id, ci.name as city_name, ci.ascii_name, ci.latitude, ci.longitude,
+          co.id as country_id, co.cca2 as country_cca2, co.name as country_name,
+          ar.id as admin_id, ar.name as admin_name,
+          tz.id as timezone_id, tz.current_offset, tz.current_abbreviation, tz.is_dst,
+          'country-fallback' as match_type,
+          ci.population
+        FROM cities ci
+        JOIN countries co ON co.id = ci.country_id
+        LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+        LEFT JOIN time_zones tz ON tz.id = ci.timezone
+        WHERE ci.is_active = 1
+          AND co.cca2 = ?
+          AND ci.tier IN ('tier1', 'tier2', 'tier3')
+        ORDER BY
+          ci.is_country_capital DESC,
+          ci.is_state_capital DESC,
+          ci.population DESC NULLS LAST
+        LIMIT 5
+      `;
+      try {
+        const sugResult = await c.env.DB.prepare(countryFallbackSql).bind(country.toUpperCase()).all();
+        for (const r of (sugResult.results || []) as any[]) {
+          if (!seenIds.has(r.city_id)) {
+            sugRows.push(r);
+            seenIds.add(r.city_id);
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (sugRows.length > 0) {
+      suggestions = {
+        query: q,
+        count: sugRows.length,
+        results: sugRows.map((r: any) => ({
+          id: r.city_id,
+          name: r.city_name,
+          asciiName: r.ascii_name,
+          latitude: r.latitude,
+          longitude: r.longitude,
+          matchType: r.match_type,
+          country: {
+            id: r.country_id,
+            cca2: r.country_cca2,
+            name: r.country_name,
+          },
+          adminRegion: r.admin_id
+            ? { id: r.admin_id, name: r.admin_name }
+            : null,
+          timezone: {
+            id: r.timezone_id,
+            utc_offset_minutes: r.current_offset,
+            current_abbreviation: r.current_abbreviation,
+            is_dst: r.is_dst,
+          },
+        })),
+      };
+    }
+  }
+
   return c.json(
     {
       success: true as const,
@@ -628,6 +818,7 @@ cities.openapi(searchRoute, async (c) => {
         results,
         total: unique.length,
         tookMs: Date.now() - start,
+        ...(suggestions ? { suggestions } : {}),
       },
     },
     200
