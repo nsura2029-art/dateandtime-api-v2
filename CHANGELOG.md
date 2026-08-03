@@ -4,7 +4,45 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — develop (M11.2.8 + M11.8 merged)
+## [unreleased] — develop (M12 merged)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 627/630 tests pass (3 pre-existing failures: env, M8.5, Rio Branco).
+
+### What shipped
+
+- **M12: Global admin-2 (counties, districts, communes)** — 47,549 admin-2 regions across 189 countries, 56,293 cities mapped (33% of our 170K)
+
+### Files
+
+- `migrations/155_admin2_global.sql` (2 ALTER + 4 indexes)
+- `scripts/seed/admin2_global_to_d1.py` (parser + SQL builder)
+- `scripts/seed/admin2_map_cities.py` (city → admin-2 mapper)
+- `src/routes/subregions.ts` (new — 2 endpoints)
+- `tests/m12-admin2-global.test.ts` (11 new tests)
+
+### API changes
+
+- New field `subRegion` in `/cities/{id}` (id, name, code, type, level, geonameId)
+- New endpoint `GET /api/v1/countries/{cca2}/admin2?admin1=XX` (list counties/districts with city counts)
+- New endpoint `GET /api/v1/admin2/{id}` (admin-2 detail)
+
+### Data added
+
+- `administrative_regions` level=2: 47,549 rows (new)
+- `cities.admin2_id`: 56,293 populated (new)
+- `administrative_regions.geoname_id`: indexed (new)
+
+### Gotchas
+
+- GeoNames admin-2 file has no population/area/lat-lon (just name + code)
+- GeoNames admin-1 codes are ISO 3166-2 numeric, our admin-1 codes are dr5hn — parent link can't be auto-set
+- D1 100-var limit: 8-col INSERT batch of 12 = 96 vars
+- 3 territories (CK, MP, SJ) missing from our admin-1 — their admin-2 gets dropped
+
+---
+
+## [M11.2.8 + M11.8] — develop (Wikidata P-codes + NCEI climate)
 
 **Date:** 2026-08-03
 **Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 611/614 tests pass (3 pre-existing: env, M8.5, Rio Branco).
