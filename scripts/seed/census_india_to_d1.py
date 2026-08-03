@@ -165,8 +165,12 @@ def download_pca_ua() -> Path:
     return xlsx_path
 
 
-def get_in_cities_by_state() -> dict:
-    """Fetch all our IN cities grouped by state name for fast matching."""
+def get_in_cities_by_state() -> tuple:
+    """Fetch all our IN cities grouped by state name for fast matching.
+    Returns (by_state, by_country) where:
+      - by_state: {(state_lower, name_lower) -> city_id} for cities with state
+      - by_country: {name_lower -> [city_id, ...]} fallback for cities without state
+    """
     print("  Fetching our IN cities (with state name) ...")
     res = http_query("""
       SELECT c.id, c.name, s.name as state_name
@@ -177,16 +181,24 @@ def get_in_cities_by_state() -> dict:
     """)
     if not res["ok"]:
         raise RuntimeError(f"IN cities fetch failed: {res['error']}")
-    # Group by (state_name, normalized_name) → city_id
     by_state = {}
+    by_country = {}  # name_lower -> [city_id, ...] for fallback
+    n_with_state = 0
+    n_without_state = 0
     for row in res["data"]:
         key_state = (row.get("state_name") or "").strip()
         key_norm = normalize_name(row["name"])
-        if key_state and key_norm:
-            by_state[(key_state.lower(), key_norm)] = row["id"]
+        if key_norm:
+            # Add to country fallback (every city, even those with state)
+            by_country.setdefault(key_norm, []).append(row["id"])
+            if key_state:
+                by_state[(key_state.lower(), key_norm)] = row["id"]
+                n_with_state += 1
+            else:
+                n_without_state += 1
     total = len(res["data"])
-    print(f"  {total:,} IN cities")
-    return by_state
+    print(f"  {total:,} IN cities ({n_with_state:,} with state, {n_without_state:,} without)")
+    return by_state, by_country
 
 
 def parse_pca_ua(xlsx_path: Path) -> list:
@@ -310,7 +322,7 @@ def main():
     cities = parse_pca_ua(xlsx_path)
 
     print("\nStep 3: Fetch our IN cities ...")
-    our_cities_by_state = get_in_cities_by_state()
+    our_cities_by_state, our_cities_by_country = get_in_cities_by_state()
 
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
 
@@ -319,6 +331,7 @@ def main():
     unmatched_samples = []
     # Group candidates by (state, normalized_name) so we can prefer Level 1
     by_key = {}  # (state, norm_name) -> list of (rec, level)
+    by_name_only = {}  # norm_name -> list of (rec, level) for country-level fallback
     for rec in cities:
         state_name = INDIAN_STATE_NAMES.get(rec["state_code"], "")
         if not state_name:
@@ -356,6 +369,10 @@ def main():
             if key not in by_key:
                 by_key[key] = []
             by_key[key].append(rec)
+            # Also add to country-level (for cities without state)
+            if c not in by_name_only:
+                by_name_only[c] = []
+            by_name_only[c].append(rec)
 
     # Build a "by_state" lookup of all keys per state for prefix matching
     by_state_keys = {}  # state_lower → [(full_key, list_of_recs)]
@@ -367,35 +384,65 @@ def main():
     # Prefer Level 1 (city proper) over Level 0 (metro) — Level 1 is more specific
     updates_to_run = []
     matched_keys = set()
+
+    def pick_best(recs):
+        return sorted(recs, key=lambda r: (r["level"] != 1, r["level"]))[0]
+
+    # Pass 1: state-level matching (most specific)
     for key, our_city_id in our_cities_by_state.items():
         state_lower, name_lower = key
         if key in by_key:
-            # Direct match — prefer Level 1 over Level 0
-            candidates = sorted(by_key[key], key=lambda r: (r["level"] != 1, r["level"]))
-            best = candidates[0]
+            best = pick_best(by_key[key])
             census_code = best["town_code"] or best["ua_code"]
             updates_to_run.append((best, our_city_id, census_code))
             matched_keys.add(key)
-        else:
-            # Try prefix match: "Bruhat Bangalore" should match "Bangalore" in our DB
-            matched_prefix = False
-            for full_key, recs in by_state_keys.get(state_lower, []):
-                if full_key == key:
-                    continue
-                if full_key[1].endswith(" " + name_lower) or full_key[1].endswith(name_lower):
-                    candidates = sorted(recs, key=lambda r: (r["level"] != 1, r["level"]))
-                    best = candidates[0]
+            continue
+        # Try prefix match: "Bruhat Bangalore" should match "Bangalore" in our DB
+        matched_prefix = False
+        for full_key, recs in by_state_keys.get(state_lower, []):
+            if full_key == key:
+                continue
+            if full_key[1].endswith(" " + name_lower) or full_key[1].endswith(name_lower):
+                best = pick_best(recs)
+                census_code = best["town_code"] or best["ua_code"]
+                updates_to_run.append((best, our_city_id, census_code))
+                matched_keys.add(key)
+                matched_prefix = True
+                break
+        if not matched_prefix and len(unmatched_samples) < 5:
+            unmatched_samples.append(f"{key[0]} | {key[1]}")
+
+    # Pass 2: country-level fallback for cities WITHOUT state
+    # (Cities with state already in pass 1 won't appear in by_country iteration
+    #  since we only check cities that aren't in our_cities_by_state)
+    n_country_fallback = 0
+    for name_lower, city_ids in our_cities_by_country.items():
+        for our_city_id in city_ids:
+            # Skip if this city is already matched via state
+            # (we check by city_id in matched city_ids)
+            if any(u_id == our_city_id for _, u_id, _ in updates_to_run):
+                continue
+            if name_lower in by_name_only:
+                recs = by_name_only[name_lower]
+                # Only do country fallback if there's exactly 1 candidate state
+                # to avoid wrong-state matches (e.g. "Springfield" exists in many states)
+                unique_states = set(r["state_code"] for r in recs)
+                if len(unique_states) == 1:
+                    best = pick_best(recs)
                     census_code = best["town_code"] or best["ua_code"]
                     updates_to_run.append((best, our_city_id, census_code))
-                    matched_keys.add(key)
-                    matched_prefix = True
-                    break
-            if not matched_prefix and len(unmatched_samples) < 5:
-                unmatched_samples.append(f"{key[0]} | {key[1]}")
+                    n_country_fallback += 1
+                # If multiple states have a city with same name, skip (ambiguous)
 
     matched = len(updates_to_run)
-    print(f"  Matched {matched:,} unique cities (out of {len(our_cities_by_state):,} IN cities)")
-    print(f"  Unmatched: {len(our_cities_by_state) - matched}")
+    n_in_state_db = len(our_cities_by_state)
+    n_in_country_db = len(our_cities_by_country)
+    n_total_in_db = sum(len(v) for v in our_cities_by_country.values())
+    print(f"  Matched {matched:,} unique cities")
+    print(f"    Pass 1 (state match): {matched - n_country_fallback:,}")
+    print(f"    Pass 2 (country fallback): {n_country_fallback:,}")
+    print(f"  Total IN cities in DB: {n_total_in_db:,} ({n_in_state_db:,} with state, {n_total_in_db - n_in_state_db:,} without)")
+    print(f"  Unmatched: {n_total_in_db - matched:,}")
     for u in unmatched_samples:
         print(f"    Unmatched: {u}")
 
