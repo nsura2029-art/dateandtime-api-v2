@@ -222,6 +222,22 @@ const CityDetail = z.object({
     nonWorkers: z.number().int().nullable().describe("Non-workers (NON_WORK_P)"),
     censusYear: z.number().int().nullable().describe("Census year (2011)"),
   }).nullable().describe("Census of India 2011 enrichment (M11.7) — null for non-Indian cities or cities not in Census"),
+  // M11.5.1: ACS 5-year estimates (Sex by Age, B01001)
+  acs: z.object({
+    fipsGeoid: z.string().nullable().describe("7-digit FIPS GEOID (state+place)"),
+    totalPopulation: z.number().int().nullable().describe("ACS 5-year total population (2018-2022)"),
+    malePopulation: z.number().int().nullable().describe("ACS 5-year male population"),
+    femalePopulation: z.number().int().nullable().describe("ACS 5-year female population"),
+    ageBreakdown: z.object({
+      under5: z.number().int().nullable().describe("Population under 5 years"),
+      age5to17: z.number().int().nullable().describe("Population 5-17 years (school age)"),
+      age18to24: z.number().int().nullable().describe("Population 18-24 years (college age)"),
+      age25to44: z.number().int().nullable().describe("Population 25-44 years (young adult)"),
+      age45to64: z.number().int().nullable().describe("Population 45-64 years (middle age)"),
+      age65plus: z.number().int().nullable().describe("Population 65+ years (senior)"),
+    }).nullable().describe("Population broken down by major age buckets"),
+    acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022 for 2018-2022)"),
+  }).nullable().describe("US Census ACS 5-year enrichment (M11.5.1) — null for non-US cities"),
 });
 
 const CityDetailResponse = z.object({
@@ -1564,6 +1580,61 @@ cities.openapi(cityDetailRoute, async (c) => {
   }
 
   // --------------------------------------------------------------------------
+  // STEP 4.9: Fetch ACS 5-year estimates (M11.5.1)
+  // --------------------------------------------------------------------------
+  // For US cities with a FIPS GEOID, look up the 2018-2022 ACS 5-year
+  // Sex by Age data (B01001):
+  //   - total population, male, female
+  //   - age breakdown: under 5, 5-17, 18-24, 25-44, 45-64, 65+
+  //
+  // This block is only populated for US cities matched to the ACS Summary File
+  // (~14,450 of our 17,055 US cities).
+  // For non-US cities or unmatched US cities, this block is null.
+  // --------------------------------------------------------------------------
+  let acsBlock: {
+    fipsGeoid: string | null;
+    totalPopulation: number | null;
+    malePopulation: number | null;
+    femalePopulation: number | null;
+    ageBreakdown: {
+      under5: number | null;
+      age5to17: number | null;
+      age18to24: number | null;
+      age25to44: number | null;
+      age45to64: number | null;
+      age65plus: number | null;
+    } | null;
+    acsYear: number | null;
+  } | null = null;
+  if (row.fips_geoid) {
+    const acsRow = await c.env.DB.prepare(
+      `SELECT fips_geoid, total_population, male_population, female_population,
+              under_5, age_5_to_17, age_18_to_24, age_25_to_44, age_45_to_64, age_65_plus,
+              acs_year
+       FROM us_acs_attributes
+       WHERE city_id = ? LIMIT 1`
+    ).bind(id).first<any>();
+
+    if (acsRow) {
+      acsBlock = {
+        fipsGeoid: acsRow.fips_geoid,
+        totalPopulation: acsRow.total_population as number | null,
+        malePopulation: acsRow.male_population as number | null,
+        femalePopulation: acsRow.female_population as number | null,
+        ageBreakdown: {
+          under5: acsRow.under_5 as number | null,
+          age5to17: acsRow.age_5_to_17 as number | null,
+          age18to24: acsRow.age_18_to_24 as number | null,
+          age25to44: acsRow.age_25_to_44 as number | null,
+          age45to64: acsRow.age_45_to_64 as number | null,
+          age65plus: acsRow.age_65_plus as number | null,
+        },
+        acsYear: acsRow.acs_year as number | null,
+      };
+    }
+  }
+
+  // --------------------------------------------------------------------------
   // STEP 5: Build the response
   // --------------------------------------------------------------------------
   // Field mapping notes:
@@ -1653,6 +1724,8 @@ cities.openapi(cityDetailRoute, async (c) => {
         eurostat: eurostatBlock,
         // M11.7 Census of India
         censusIndia: censusIndiaBlock,
+        // M11.5.1 ACS 5-year
+        acs: acsBlock,
       },
     },
     200
