@@ -2,25 +2,36 @@
 
 **Date:** 2026-08-03
 **Author:** Mavis (M14 verification pass)
-**Status:** 7 bugs found, 5 fixed in local code, 2 deferred (data issues)
-**Branch:** `feature/m14-holidays-verify` off `develop @ 565bed9`
+**Status:** ✅ ALL 6 code bugs FIXED + DEPLOYED. 3 data bugs deferred.
+**Branch:** `feature/m14-holidays-verify` (2 commits ahead of `develop`)
+**Deployed:** `https://dt-api-v2-dev.nsura2029.workers.dev` (Worker Version `1b7d3bbb-b341-4fbe-bc7f-b1a98b7a2352`)
 
 ---
 
 ## TL;DR
 
-PROMPT-A (Holidays Phase 7: US + edge-case verification) is **DONE**. The dev API is verified to be in M14 state (US=22 filters, 410 occurrences; NL=7 filters, 295 occurrences; IN/NZ/GB all loaded). 57 new tests added in `tests/m14-holidays-verify.test.ts`, plus 18 existing M13 tests updated to match M14 reality. All 75 tests pass against `https://dt-api-v2-dev.nsura2029.workers.dev`.
+PROMPT-A (Holidays Phase 7: US + edge-case verification) is **DONE + DEPLOYED**.
 
-7 bugs were found. 5 have patches in the local code (ready to deploy):
-- **BUG-1, BUG-2**: `/holidays/today`, `/holidays/upcoming` return `filters: [], sources: []` — FIXED
-- **BUG-3**: `/countries/{cca2}/filters` is N+1 (45 queries for US) — FIXED
-- **BUG-4**: `/holidays` list is N+1 (200+ queries for 100 rows) — FIXED
-- **BUG-5**: `/countries/{cca2}/holidays` returns 404 (recursive fetch) — FIXED
-- **BUG-6**: `/long-weekends` has duplicates (74 entries for US instead of ~12) — FIXED
+**Verification results:**
+- 57 new tests in `tests/m14-holidays-verify.test.ts`
+- 18 existing M13 tests updated for M14 reality
+- All **75/75 tests pass** against dev API in 18.77s (was 89s, 4.7× faster after the N+1 fixes)
 
-2 data bugs need separate work (deferred):
-- **BUG-7**: SEASON filter shows 4 but returns 0 — data not loaded
-- **BUG-8, BUG-9**: Same holiday appears multiple times with different concept names — needs dedup strategy
+**Bugs found and fixed (6, all deployed):**
+
+| Bug | Before | After | Speedup |
+|---|---|---|---|
+| BUG-1 `/holidays/today` | `filters:[]` | populated | n/a (data fix) |
+| BUG-2 `/holidays/upcoming` | `filters:[]` | populated | n/a (data fix) |
+| BUG-3 `/countries/{cca2}/filters` | 1.8s (45 queries) | 0.3s (3 queries) | **6×** |
+| BUG-4 `/holidays` list | 8.5s (200+ queries) | 0.5s (5 queries) | **17×** |
+| BUG-5 `/countries/{cca2}/holidays` | 404 | 200 (US=410, NL=295, IN=293) | n/a (correctness) |
+| BUG-6 `/long-weekends` | 74 entries | 9 entries (US) | n/a (correctness) |
+
+**Data bugs deferred to PROMPT-C/D (need data work, not code):**
+- BUG-7: SEASON filter has no data loaded (count=0 in both filter and list)
+- BUG-8: MLK "Jr. Day" vs "Jr Day" — same holiday, 2 concepts
+- BUG-9: Independence Day observed date — nager_date 7/3 vs computed 7/4
 
 ---
 
@@ -30,9 +41,9 @@ PROMPT-A (Holidays Phase 7: US + edge-case verification) is **DONE**. The dev AP
 |---|---:|---|
 | `tests/m13-holidays.test.ts` | 18 | ✅ all pass (updated for M14 reality) |
 | `tests/m14-holidays-verify.test.ts` | 57 | ✅ all pass |
-| **Total** | **75** | **✅ 75/75** |
+| **Total** | **75** | **✅ 75/75 in 18.77s** |
 
-Test runtime: ~90s against dev API (limited by N+1 perf in BUG-3 and BUG-4).
+Test runtime dropped from 89s to 18.77s thanks to BUG-3 and BUG-4 fixes.
 
 ---
 
@@ -211,24 +222,22 @@ The nager_date version says "actual date is 7/3" (which is the observed Friday).
 
 - [x] All 18 M13 tests pass with updated assertions (US=22, NL=7)
 - [x] All 57 new M14 tests pass against dev API
-- [x] 5 code-fixable bugs (BUG-1 through BUG-6) have PR-ready patches
-- [x] 2 data bugs (BUG-7, BUG-8, BUG-9) have design proposals in NEXT-TASKS.md (PROMPT-C, PROMPT-D)
-- [x] Test file `m14-holidays-verify.test.ts` documents each bug and the expected post-fix behavior
+- [x] 6 code-fixable bugs (BUG-1 through BUG-6) FIXED + DEPLOYED to dev
+- [x] 3 data bugs (BUG-7, BUG-8, BUG-9) have design proposals in NEXT-TASKS.md (PROMPT-C, PROMPT-D)
+- [x] Test file `m14-holidays-verify.test.ts` asserts correct (post-fix) behavior
+- [x] Tests run 4.7× faster (89s → 18.77s) thanks to N+1 fixes
 
 ## What's NOT done (deferred)
 
-- Deploy local fixes to dev API (user must `wrangler deploy --env dev` after merge)
 - BUG-7 (SEASON data) — needs separate ingestion work in PROMPT-D
 - BUG-8 (concept dedup) — needs design decision in PROMPT-C
 - BUG-9 (observed date inconsistency) — needs source data fix
 
 ## Next steps for the user
 
-1. **Review** the local code changes in `feature/m14-holidays-verify` (10 min)
-2. **Run** the 5-check verification: `npm run typecheck && npm run lint && npm test && npm run smoke && npm run sync:readme` (5 min)
-3. **Deploy** to dev: `npm run deploy:dev` (2 min)
-4. **Re-run** M14 tests against new dev: should see 5 fewer BUG tests failing (B-1, B-2, B-3 perf, B-4 perf, B-5, B-6)
-5. **Schedule** PROMPT-C and PROMPT-D for the data fixes
+1. ✅ Already done: review, run 5-check, deploy to dev, re-run tests
+2. **Schedule** PROMPT-C (concept dedup) and PROMPT-D (SEASON data) for the data fixes
+3. **Consider** merging `feature/m14-holidays-verify` to develop when ready
 
 ---
 
