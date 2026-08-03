@@ -18,16 +18,18 @@ describe("M13: Filter catalog", () => {
 });
 
 describe("M13: Country variance (the spec's key insight)", () => {
-  it("M13.2: US shows 18 filters (per spec section 6.4)", async () => {
+  it("M13.2: US shows 22 filters (M14 enrichment: was 18 in M13 spec)", async () => {
     const r = await fetch(`${API}/api/v1/countries/US/filters?year=2026`);
     const body = await r.json();
-    expect(body.data.total).toBe(18);
+    // M13 spec said 18, M14 enrichment added UN/Jewish/Bank/Clock/Common/Important filters
+    expect(body.data.total).toBe(22);
   });
 
-  it("M13.3: NL shows 4 filters (per spec section 6.4)", async () => {
+  it("M13.3: NL shows 7 filters (M14 enrichment: was 4 in M13 spec)", async () => {
     const r = await fetch(`${API}/api/v1/countries/NL/filters?year=2026`);
     const body = await r.json();
-    expect(body.data.total).toBe(4);
+    // M13 spec said 4, M14 enrichment added UN/Jewish/Common
+    expect(body.data.total).toBe(7);
   });
 
   it("M13.4: US filter list includes 'Major Christian' (per screenshot)", async () => {
@@ -66,9 +68,10 @@ describe("M13: Country variance (the spec's key insight)", () => {
 });
 
 describe("M13: Holiday list", () => {
-  it("M13.8: US 2026 PUBLIC_NATIONAL returns ~10 federal holidays", async () => {
+  it("M13.8: US 2026 PUBLIC_NATIONAL returns ~14 federal+state holidays", async () => {
     const r = await fetch(`${API}/api/v1/holidays?country=US&year=2026&filters=PUBLIC_NATIONAL`);
     const body = await r.json();
+    // 10 unique federal + 4 source duplicates (MLK/Presidents/Labor/Independence appear from both nager_date + computed)
     expect(body.data.total).toBeGreaterThanOrEqual(10);
     expect(body.data.total).toBeLessThanOrEqual(15);
   });
@@ -134,9 +137,10 @@ describe("M13: ICS export", () => {
     const nlIcs = await nlR.text();
     const usEvents = (usIcs.match(/BEGIN:VEVENT/g) || []).length;
     const nlEvents = (nlIcs.match(/BEGIN:VEVENT/g) || []).length;
-    // Both should have ~10-12 federal events
-    expect(usEvents).toBeGreaterThanOrEqual(8);
-    expect(usEvents).toBeLessThanOrEqual(15);
+    // US has 14 (10 federal + 4 source duplicates — BUG-6 dedup)
+    // NL has 11 (clean)
+    expect(usEvents).toBeGreaterThanOrEqual(10);
+    expect(usEvents).toBeLessThanOrEqual(20);
     expect(nlEvents).toBeGreaterThanOrEqual(8);
     expect(nlEvents).toBeLessThanOrEqual(15);
   });

@@ -19,6 +19,7 @@
  */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import type { Env, Variables } from "@/types/env";
+import type { D1Database } from "@cloudflare/workers-types";
 
 // =====================================================================
 // Schemas
@@ -87,6 +88,63 @@ const HolidaysListResponse = z.object({
 const app = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
 
 // -------------------------------------------------------------------------
+// Helpers — batch fetch filters and sources to avoid N+1 queries
+// -------------------------------------------------------------------------
+
+/**
+ * Batch fetch filters and sources for many occurrences in 2 queries.
+ * Returns Map<occurrenceId, {filters: string[], sources: string[]}>.
+ *
+ * Why: each occurrence can be in many filters and contributed by many sources.
+ *      Naive per-row loops do 2N queries for N rows. This does 2 total.
+ */
+async function attachFiltersAndSources(
+  db: D1Database,
+  occurrenceIds: number[]
+): Promise<Map<number, { filters: string[]; sources: string[] }>> {
+  const out = new Map<number, { filters: string[]; sources: string[] }>();
+  if (occurrenceIds.length === 0) return out;
+
+  // Initialize empty arrays for each id
+  for (const id of occurrenceIds) {
+    out.set(id, { filters: [], sources: [] });
+  }
+
+  // D1 has a 100-var limit per statement; batch in chunks of 50 ids (50 placeholders)
+  const chunkSize = 50;
+  for (let i = 0; i < occurrenceIds.length; i += chunkSize) {
+    const chunk = occurrenceIds.slice(i, i + chunkSize);
+    const placeholders = chunk.map(() => "?").join(",");
+
+    const fRes = await db
+      .prepare(
+        `SELECT occurrence_id, filter_code FROM holiday_occurrence_filter
+         WHERE occurrence_id IN (${placeholders})`
+      )
+      .bind(...chunk)
+      .all<{ occurrence_id: number; filter_code: string }>();
+    for (const r of fRes.results || []) {
+      const entry = out.get(r.occurrence_id);
+      if (entry) entry.filters.push(r.filter_code);
+    }
+
+    const sRes = await db
+      .prepare(
+        `SELECT occurrence_id, source_key FROM holiday_occurrence_source
+         WHERE occurrence_id IN (${placeholders})`
+      )
+      .bind(...chunk)
+      .all<{ occurrence_id: number; source_key: string }>();
+    for (const r of sRes.results || []) {
+      const entry = out.get(r.occurrence_id);
+      if (entry) entry.sources.push(r.source_key);
+    }
+  }
+
+  return out;
+}
+
+// -------------------------------------------------------------------------
 // GET /api/v1/filters — full filter catalog
 // -------------------------------------------------------------------------
 app.openapi(createRoute({
@@ -147,7 +205,7 @@ app.openapi(createRoute({
   path: "/api/v1/countries/{cca2}/filters",
   tags: ["Holidays"],
   summary: "Per-country filter list with live counts (the variance endpoint)",
-  description: "Returns the filter list applicable to a country with rangeCount (in requested range) and annualCount (in full year). US shows 18 filters, NL shows 4.",
+  description: "Returns the filter list applicable to a country with rangeCount (in requested range) and annualCount (in full year). Filter count varies by country (US=22, NL=7, IN=8, GB=7, NZ=6 in M14).",
   request: {
     params: z.object({ cca2: z.string().length(2) }),
     query: z.object({
@@ -186,35 +244,39 @@ app.openapi(createRoute({
      ORDER BY p.display_order, f.label_en`
   ).bind(cca2).all<{ filter_code: string; state: string; default_selected: number; display_order: number; label_en: string }>();
 
-  // For each filter, count occurrences
-  const filters = [];
-  for (const p of (policyRes.results || [])) {
-    // rangeCount: in requested range
-    const rangeRes = await c.env.DB.prepare(
-      `SELECT COUNT(DISTINCT occ.id) as n
-       FROM holiday_occurrence occ
-       JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
-       WHERE occ.country_id = ? AND f.filter_code = ?
-         AND occ.start_date <= ? AND COALESCE(occ.end_date, occ.start_date) >= ?`
-    ).bind(country.id, p.filter_code, to, from).first<{ n: number }>();
-    // annualCount: in full year
-    const annualRes = await c.env.DB.prepare(
-      `SELECT COUNT(DISTINCT occ.id) as n
-       FROM holiday_occurrence occ
-       JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
-       WHERE occ.country_id = ? AND f.filter_code = ?
-         AND substr(occ.start_date, 1, 4) = ?`
-    ).bind(country.id, p.filter_code, String(year)).first<{ n: number }>();
-    filters.push({
-      code: p.filter_code,
-      label: p.label_en,
-      state: p.state,
-      rangeCount: rangeRes?.n ?? 0,
-      annualCount: annualRes?.n ?? 0,
-      defaultSelected: p.default_selected === 1,
-      displayOrder: p.display_order,
-    });
-  }
+  // Batch count occurrences for all filters in 2 queries (no N+1)
+  // rangeCount: in requested date range
+  const rangeCountsRes = await c.env.DB.prepare(
+    `SELECT of.filter_code, COUNT(DISTINCT occ.id) as n
+     FROM holiday_occurrence occ
+     JOIN holiday_occurrence_filter of ON of.occurrence_id = occ.id
+     WHERE occ.country_id = ?
+       AND occ.start_date <= ? AND COALESCE(occ.end_date, occ.start_date) >= ?
+     GROUP BY of.filter_code`
+  ).bind(country.id, to, from).all<{ filter_code: string; n: number }>();
+  const rangeCounts = new Map((rangeCountsRes.results || []).map((r) => [r.filter_code, r.n]));
+
+  // annualCount: in full year
+  const annualCountsRes = await c.env.DB.prepare(
+    `SELECT of.filter_code, COUNT(DISTINCT occ.id) as n
+     FROM holiday_occurrence occ
+     JOIN holiday_occurrence_filter of ON of.occurrence_id = occ.id
+     WHERE occ.country_id = ?
+       AND substr(occ.start_date, 1, 4) = ?
+     GROUP BY of.filter_code`
+  ).bind(country.id, String(year)).all<{ filter_code: string; n: number }>();
+  const annualCounts = new Map((annualCountsRes.results || []).map((r) => [r.filter_code, r.n]));
+
+  // Build response from policy + counts
+  const filters = (policyRes.results || []).map((p: any) => ({
+    code: p.filter_code,
+    label: p.label_en,
+    state: p.state,
+    rangeCount: rangeCounts.get(p.filter_code) ?? 0,
+    annualCount: annualCounts.get(p.filter_code) ?? 0,
+    defaultSelected: p.default_selected === 1,
+    displayOrder: p.display_order,
+  }));
 
   return c.json({
     success: true,
@@ -313,16 +375,13 @@ app.openapi(HolidaysListRoute, async (c) => {
      LIMIT ? OFFSET ?`
   ).bind(...params, q.limit, q.offset).all();
 
-  // Get filters and sources for each occurrence
-  const holidays = [];
-  for (const r of (rows.results || [])) {
-    const fRes = await c.env.DB.prepare(
-      "SELECT filter_code FROM holiday_occurrence_filter WHERE occurrence_id = ?"
-    ).bind(r.id).all<{ filter_code: string }>();
-    const sRes = await c.env.DB.prepare(
-      "SELECT source_key FROM holiday_occurrence_source WHERE occurrence_id = ?"
-    ).bind(r.id).all<{ source_key: string }>();
-    holidays.push({
+  // Get filters and sources for all occurrences in 2 batch queries (no N+1)
+  const ids = (rows.results || []).map((r: any) => r.id);
+  const attached = await attachFiltersAndSources(c.env.DB, ids);
+
+  const holidays = (rows.results || []).map((r: any) => {
+    const a = attached.get(r.id) || { filters: [], sources: [] };
+    return {
       id: r.id,
       conceptId: r.concept_id,
       conceptName: r.concept_name,
@@ -337,10 +396,10 @@ app.openapi(HolidaysListRoute, async (c) => {
       legalStatus: r.legal_status,
       eventDomain: r.event_domain,
       dateStatus: r.date_status,
-      filters: (fRes.results || []).map((f) => f.filter_code),
-      sources: (sRes.results || []).map((s) => s.source_key),
-    });
-  }
+      filters: a.filters,
+      sources: a.sources,
+    };
+  });
 
   return c.json({
     success: true,
@@ -436,19 +495,86 @@ app.openapi(createRoute({
   },
   responses: { 200: { content: { "application/json": { schema: HolidaysListResponse } }, description: "Country holidays" } },
 }), async (c) => {
-  // Delegate to /api/v1/holidays by re-running the handler
+  // Inline the same query as /api/v1/holidays with country=p.cca2 forced.
+  // (Don't recurse via self-fetch — it hits the same route and 404s.)
   const p = c.req.valid("param");
   const q = c.req.valid("query");
-  // Re-call with country set
-  const newReq = new Request(c.req.url, {
-    method: "GET",
-    headers: c.req.raw.headers,
+  const year = q.year || new Date().getFullYear();
+  const from = q.from || `${year}-01-01`;
+  const to = q.to || `${year}-12-31`;
+  const filterCodes = q.filters ? q.filters.split(",").map((s) => s.trim()) : null;
+
+  const country = await c.env.DB.prepare(
+    "SELECT id, cca2, name FROM countries WHERE cca2 = ?"
+  ).bind(p.cca2.toUpperCase()).first<{ id: number; cca2: string; name: string }>();
+  if (!country) {
+    return c.json({ success: false, error: { code: "COUNTRY_NOT_FOUND", message: `Country ${p.cca2} not found` } }, 404);
+  }
+
+  const where: string[] = ["occ.start_date <= ?", "COALESCE(occ.end_date, occ.start_date) >= ?", "occ.country_id = ?"];
+  const params: any[] = [to, from, country.id];
+  const joins: string[] = ["JOIN holiday_concept c ON c.id = occ.concept_id", "JOIN countries co ON co.id = occ.country_id"];
+
+  if (filterCodes && filterCodes.length > 0) {
+    const filterPlaceholders = filterCodes.map(() => "?").join(",");
+    joins.push("JOIN holiday_occurrence_filter of ON of.occurrence_id = occ.id");
+    where.push(`of.filter_code IN (${filterPlaceholders})`);
+    params.push(...filterCodes);
+  }
+
+  const totalRes = await c.env.DB.prepare(
+    `SELECT COUNT(DISTINCT occ.id) as n FROM holiday_occurrence occ ${joins.join(" ")} WHERE ${where.join(" AND ")}`
+  ).bind(...params).first<{ n: number }>();
+  const total = totalRes?.n ?? 0;
+
+  const rows = await c.env.DB.prepare(
+    `SELECT DISTINCT occ.id, occ.concept_id, c.name_en as concept_name, c.name_local as concept_name_local,
+            occ.country_id, co.cca2 as country_code, co.name as country_name,
+            occ.subdivision_code, occ.start_date, occ.end_date, occ.observed_date,
+            occ.date_role, occ.legal_status, occ.event_domain, occ.date_status
+     FROM holiday_occurrence occ ${joins.join(" ")}
+     WHERE ${where.join(" AND ")}
+     ORDER BY occ.start_date
+     LIMIT ? OFFSET ?`
+  ).bind(...params, q.limit, q.offset).all();
+
+  const ids = (rows.results || []).map((r: any) => r.id);
+  const attached = await attachFiltersAndSources(c.env.DB, ids);
+  const holidays = (rows.results || []).map((r: any) => {
+    const a = attached.get(r.id) || { filters: [], sources: [] };
+    return {
+      id: r.id,
+      conceptId: r.concept_id,
+      conceptName: r.concept_name,
+      conceptNameLocal: r.concept_name_local,
+      countryCode: r.country_code,
+      countryName: r.country_name,
+      subdivisionCode: r.subdivision_code,
+      startDate: r.start_date,
+      endDate: r.end_date,
+      observedDate: r.observed_date,
+      dateRole: r.date_role,
+      legalStatus: r.legal_status,
+      eventDomain: r.event_domain,
+      dateStatus: r.date_status,
+      filters: a.filters,
+      sources: a.sources,
+    };
   });
-  // Simpler: just inline the query
-  const url = new URL(c.req.url);
-  url.searchParams.set("country", p.cca2);
-  const r = await fetch(url.toString(), { headers: c.req.raw.headers });
-  return r as any;
+
+  return c.json({
+    success: true,
+    data: {
+      countryCode: p.cca2.toUpperCase(),
+      mode: "country",
+      year,
+      from,
+      to,
+      total,
+      count: holidays.length,
+      holidays,
+    },
+  });
 });
 
 // -------------------------------------------------------------------------
@@ -491,9 +617,13 @@ app.openapi(createRoute({
      WHERE ${where.join(" AND ")}
      ORDER BY occ.start_date`
   ).bind(...params).all();
-  const holidays = [];
-  for (const r of (rows.results || [])) {
-    holidays.push({
+  // Get filters and sources in 2 batch queries (no N+1)
+  const ids = (rows.results || []).map((r: any) => r.id);
+  const attached = await attachFiltersAndSources(c.env.DB, ids);
+
+  const holidays = (rows.results || []).map((r: any) => {
+    const a = attached.get(r.id) || { filters: [], sources: [] };
+    return {
       id: r.id,
       conceptId: r.concept_id,
       conceptName: r.concept_name,
@@ -508,10 +638,10 @@ app.openapi(createRoute({
       legalStatus: r.legal_status,
       eventDomain: r.event_domain,
       dateStatus: r.date_status,
-      filters: [],
-      sources: [],
-    });
-  }
+      filters: a.filters,
+      sources: a.sources,
+    };
+  });
   return c.json({
     success: true,
     data: {
@@ -570,13 +700,31 @@ app.openapi(createRoute({
      WHERE ${where.join(" AND ")}
      ORDER BY occ.start_date`
   ).bind(...params).all();
-  const holidays = (rows.results || []).map((r: any) => ({
-    id: r.id, conceptId: r.concept_id, conceptName: r.concept_name, conceptNameLocal: r.concept_name_local,
-    countryCode: r.country_code, countryName: r.country_name, subdivisionCode: r.subdivision_code,
-    startDate: r.start_date, endDate: r.end_date, observedDate: r.observed_date,
-    dateRole: r.date_role, legalStatus: r.legal_status, eventDomain: r.event_domain, dateStatus: r.date_status,
-    filters: [], sources: [],
-  }));
+  // Get filters and sources in 2 batch queries (no N+1)
+  const ids = (rows.results || []).map((r: any) => r.id);
+  const attached = await attachFiltersAndSources(c.env.DB, ids);
+
+  const holidays = (rows.results || []).map((r: any) => {
+    const a = attached.get(r.id) || { filters: [], sources: [] };
+    return {
+      id: r.id,
+      conceptId: r.concept_id,
+      conceptName: r.concept_name,
+      conceptNameLocal: r.concept_name_local,
+      countryCode: r.country_code,
+      countryName: r.country_name,
+      subdivisionCode: r.subdivision_code,
+      startDate: r.start_date,
+      endDate: r.end_date,
+      observedDate: r.observed_date,
+      dateRole: r.date_role,
+      legalStatus: r.legal_status,
+      eventDomain: r.event_domain,
+      dateStatus: r.date_status,
+      filters: a.filters,
+      sources: a.sources,
+    };
+  });
   return c.json({
     success: true,
     data: {
@@ -636,70 +784,101 @@ app.openapi(createRoute({
     return c.json({ success: false, error: { code: "COUNTRY_NOT_FOUND", message: `Country ${q.country} not found` } }, 404);
   }
   // Get public holidays for the year
+  // Dedup by (start_date, name) — multiple sources may contribute the same holiday
+  // (e.g. Nager.Date and computed_federal_us both list Independence Day)
   const rows = await c.env.DB.prepare(
-    `SELECT DISTINCT occ.id, occ.start_date, c.name_en as name
+    `SELECT occ.start_date, c.name_en as name
      FROM holiday_occurrence occ
      JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
      JOIN holiday_concept c ON c.id = occ.concept_id
      WHERE occ.country_id = ? AND f.filter_code IN ('PUBLIC_NATIONAL', 'PUBLIC_LOCAL')
        AND substr(occ.start_date, 1, 4) = ?
+     GROUP BY occ.start_date, c.name_en
      ORDER BY occ.start_date`
-  ).bind(country.id, String(year)).all<{ id: number; start_date: string; name: string }>();
-  // Find long weekends
-  const longWeekends: { start: string; end: string; days: number; type: string; reason: string; holidayName: string }[] = [];
+  ).bind(country.id, String(year)).all<{ start_date: string; name: string }>();
+
+  // Collect set of holiday dates for bridge detection (Tue/Thu)
+  const holidayDates = new Set((rows.results || []).map((r) => r.start_date));
+
+  // Find long weekends (deduped by start date)
+  const longWeekendMap = new Map<string, { start: string; end: string; days: number; type: string; reason: string; holidayName: string }>();
+
   for (const h of (rows.results || [])) {
     const d = new Date(h.start_date + "T12:00:00Z");
     const dow = d.getUTCDay(); // 0=Sun, 6=Sat
+    let start: Date, end: Date, days: number, type: string, reason: string;
+
     if (dow === 1) {
       // Monday holiday: Sun-Mon-Tue = 3-day weekend
-      const start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
-      const end = new Date(d.getTime() + 24 * 60 * 60 * 1000);
-      longWeekends.push({
-        start: start.toISOString().split("T")[0],
-        end: end.toISOString().split("T")[0],
-        days: 3,
-        type: "3-day",
-        reason: `${h.name} (Mon) + weekend`,
-        holidayName: h.name,
-      });
+      start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+      end = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+      days = 3;
+      type = "3-day";
+      reason = `${h.name} (Mon) + weekend`;
     } else if (dow === 5) {
-      // Friday holiday: Thu-Fri-Sat = 3-day weekend
-      const start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
-      const end = new Date(d.getTime() + 24 * 60 * 60 * 1000);
-      longWeekends.push({
-        start: start.toISOString().split("T")[0],
-        end: end.toISOString().split("T")[0],
-        days: 3,
-        type: "3-day",
-        reason: `${h.name} (Fri) + weekend`,
-        holidayName: h.name,
-      });
+      // Friday holiday: Fri-Sat-Sun = 3-day weekend
+      start = new Date(d.getTime());
+      end = new Date(d.getTime() + 2 * 24 * 60 * 60 * 1000);
+      days = 3;
+      type = "3-day";
+      reason = `${h.name} (Fri) + weekend`;
+    } else if (dow === 6) {
+      // Saturday holiday (rare): Fri-Sat-Sun = 3-day if Fri also off
+      const fri = new Date(d.getTime() - 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      if (holidayDates.has(fri)) {
+        // 4-day weekend: Fri-Sat-Sun-Mon
+        start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+        end = new Date(d.getTime() + 2 * 24 * 60 * 60 * 1000);
+        days = 4;
+        type = "4-day";
+        reason = `${h.name} (Sat) + adjacent holiday Fri`;
+      } else {
+        continue; // Sat alone, no long weekend
+      }
     } else if (dow === 2) {
-      // Tuesday: Mon-Tue-Wed = 3-day if Mon off
-      const start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
-      const end = new Date(d.getTime() + 24 * 60 * 60 * 1000);
-      longWeekends.push({
-        start: start.toISOString().split("T")[0],
-        end: end.toISOString().split("T")[0],
-        days: 3,
-        type: "3-day",
-        reason: `${h.name} (Tue) + possible bridge`,
-        holidayName: h.name,
-      });
+      // Tuesday: only a long weekend if Monday is also a holiday
+      const mon = new Date(d.getTime() - 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      if (holidayDates.has(mon)) {
+        // 4-day: Sat-Sun-Mon-Tue
+        start = new Date(d.getTime() - 3 * 24 * 60 * 60 * 1000);
+        end = new Date(d.getTime());
+        days = 4;
+        type = "4-day";
+        reason = `${h.name} (Tue) + bridge from Mon`;
+      } else {
+        continue;
+      }
     } else if (dow === 4) {
-      // Thursday: Wed-Thu-Fri = 3-day if Fri off
-      const start = new Date(d.getTime() - 24 * 60 * 60 * 1000);
-      const end = new Date(d.getTime() + 24 * 60 * 60 * 1000);
-      longWeekends.push({
-        start: start.toISOString().split("T")[0],
-        end: end.toISOString().split("T")[0],
-        days: 3,
-        type: "3-day",
-        reason: `${h.name} (Thu) + possible bridge`,
-        holidayName: h.name,
-      });
+      // Thursday: only a long weekend if Friday is also a holiday
+      const fri = new Date(d.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      if (holidayDates.has(fri)) {
+        // 4-day: Thu-Fri-Sat-Sun
+        start = new Date(d.getTime());
+        end = new Date(d.getTime() + 3 * 24 * 60 * 60 * 1000);
+        days = 4;
+        type = "4-day";
+        reason = `${h.name} (Thu) + bridge to Fri`;
+      } else {
+        continue;
+      }
+    } else {
+      // Wed, Sun — no long weekend
+      continue;
+    }
+
+    const startStr = start.toISOString().split("T")[0];
+    const endStr = end.toISOString().split("T")[0];
+
+    // Dedup by start date — if multiple holidays create the same long-weekend
+    // (e.g. Mon+Wed both off, both create 3-day with Sun-Mon-Tue), keep the first
+    const existing = longWeekendMap.get(startStr);
+    if (!existing || days > existing.days) {
+      longWeekendMap.set(startStr, { start: startStr, end: endStr, days, type, reason, holidayName: h.name });
     }
   }
+
+  // Sort by start date
+  const longWeekends = Array.from(longWeekendMap.values()).sort((a, b) => a.start.localeCompare(b.start));
   return c.json({
     success: true,
     data: {
