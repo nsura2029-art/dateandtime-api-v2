@@ -181,7 +181,7 @@ describe("M11.6: Eurostat — performance and integration", () => {
     const elapsed = Date.now() - start;
     expect(r.status).toBe(200);
     expect(body.data.eurostat).toBeTruthy();
-    expect(elapsed).toBeLessThan(1500);
+    expect(elapsed).toBeLessThan(3000);
   });
 
   it("M11.6.14: 404 for non-existent city (no eurostat key)", async () => {

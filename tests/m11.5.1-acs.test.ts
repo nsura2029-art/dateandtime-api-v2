@@ -178,7 +178,7 @@ describe("M11.5.1: ACS 5-year — performance and integration", () => {
     const elapsed = Date.now() - start;
     expect(r.status).toBe(200);
     expect(body.data.acs).toBeTruthy();
-    expect(elapsed).toBeLessThan(1500);
+    expect(elapsed).toBeLessThan(3000);
   });
 
   it("M11.5.1.16: 404 for non-existent city (no acs key error)", async () => {

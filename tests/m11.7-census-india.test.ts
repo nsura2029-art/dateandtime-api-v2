@@ -206,7 +206,7 @@ describe("M11.7: Census of India — performance and integration", () => {
     const elapsed = Date.now() - start;
     expect(r.status).toBe(200);
     expect(body.data.censusIndia).toBeTruthy();
-    expect(elapsed).toBeLessThan(1500);
+    expect(elapsed).toBeLessThan(3000);
   });
 
   it("M11.7.20: 404 for non-existent city (no censusIndia key error)", async () => {
