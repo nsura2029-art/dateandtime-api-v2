@@ -87,16 +87,17 @@ describe("M11.2.6: Wikidata description — schema", () => {
     expect(body.data.wikidata).toBeNull();
   });
 
-  it("M11.2.6.6: city with wiki_data_id but no staging row has empty block", async () => {
-    // Nyingchi (19966) — has wiki_data_id Q1012465 but no staging data
+  it("M11.2.6.6: Nyingchi (CN) has wikidata data (M11.2.7 backfill)", async () => {
+    // After M11.2.7 backfill, all 3,000 previously-missing cities
+    // (including Nyingchi) now have full wikidata data
     const r = await fetch(`${API}/api/v1/cities/19966`);
     const body = await r.json();
     expect(body.data.wikiDataId).toBe("Q1012465");
     expect(body.data.wikidata).toBeTruthy();
-    // Has the block but fields are empty
-    expect(body.data.wikidata.label).toBeNull();
-    expect(body.data.wikidata.altLabels).toEqual([]);
-    expect(body.data.wikidata.description).toBeNull();
+    // All fields are populated
+    expect(body.data.wikidata.label).toBe("Nyingchi");
+    expect(body.data.wikidata.altLabels).toContain("Linzhi");
+    expect(body.data.wikidata.description).toBeTruthy();
   });
 
   it("M11.2.6.7: altLabels is limited to 5 entries max", async () => {
