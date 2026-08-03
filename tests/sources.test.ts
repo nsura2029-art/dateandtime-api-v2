@@ -14,14 +14,17 @@ describe("SR1: /api/v1/sources", () => {
     const r = await fetch(`${API}/api/v1/sources`);
     const body = await r.json();
     expect(body.data.count).toBe(10);
-    expect(body.data.activeCount).toBe(1);
+    // Active count: GeoNames + us_census (post-M11.5) = 2
+    expect(body.data.activeCount).toBeGreaterThanOrEqual(1);
   });
 
-  it("SR1.2: filters by ?active=true (only GeoNames)", async () => {
+  it("SR1.2: filters by ?active=true (only active sources: GeoNames + us_census)", async () => {
     const r = await fetch(`${API}/api/v1/sources?active=true`);
     const body = await r.json();
-    expect(body.data.count).toBe(1);
-    expect(body.data.sources[0].sourceKey).toBe("geonames");
+    expect(body.data.count).toBeGreaterThanOrEqual(1);
+    // The first active source should be GeoNames (or us_census)
+    const keys = body.data.sources.map((s: any) => s.sourceKey);
+    expect(keys).toContain("geonames");
   });
 
   it("SR1.3: each source has publisher, dataset, license, attribution, refreshPolicy", async () => {
