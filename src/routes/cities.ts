@@ -155,6 +155,11 @@ const CityDetail = z.object({
     label: z.string().nullable().describe("Wikidata canonical English label (may differ from city name for non-English cities)"),
     altLabels: z.array(z.string()).describe("Wikidata alt labels (alternative names, misspellings, common variants)"),
     description: z.string().nullable().describe("One-line description: 'Wikidata label (also known as first alt label)' — useful for SEO meta tags, tooltips, and city page subtitles"),
+    // M11.2.8: P-code properties (top 5K cities only)
+    instanceOf: z.string().nullable().describe("Wikidata P31: Q-id of what this entity is (e.g. 'Q515' for city, 'Q486972' for human settlement)"),
+    countryQid: z.string().nullable().describe("Wikidata P17: Q-id of the country (cross-source validation)"),
+    adminQid: z.string().nullable().describe("Wikidata P131: Q-id of the administrative territorial entity"),
+    timezoneQid: z.string().nullable().describe("Wikidata P421: Q-id of the timezone"),
   }).nullable().describe("Wikidata enrichment (M11.2.6) — null if city has no wiki_data_id or no Wikidata staging row"),
   // M11.5: US Census block
   census: z.object({
@@ -1366,6 +1371,10 @@ cities.openapi(cityDetailRoute, async (c) => {
         label: wikiRow.english_label,
         altLabels,
         description,
+        instanceOf: null,
+        countryQid: null,
+        adminQid: null,
+        timezoneQid: null,
       };
     } else {
       // City has wiki_data_id but no wikidata_staging row (3,618 cases —
@@ -1375,7 +1384,32 @@ cities.openapi(cityDetailRoute, async (c) => {
         label: null,
         altLabels: [],
         description: null,
+        instanceOf: null,
+        countryQid: null,
+        adminQid: null,
+        timezoneQid: null,
       };
+    }
+
+    // M11.2.8: Look up Wikidata P-code properties (P31, P17, P131, P421)
+    const wikiQid = row.wiki_data_id;
+    if (wikiQid) {
+      const propsRow = await c.env.DB.prepare(
+        `SELECT instance_of, country_qid, admin_qid, timezone_qid
+         FROM wikidata_properties
+         WHERE qid = ? LIMIT 1`
+      ).bind(wikiQid).first<{
+        instance_of: string | null;
+        country_qid: string | null;
+        admin_qid: string | null;
+        timezone_qid: string | null;
+      }>();
+      if (propsRow && wikidataBlock) {
+        wikidataBlock.instanceOf = propsRow.instance_of;
+        wikidataBlock.countryQid = propsRow.country_qid;
+        wikidataBlock.adminQid = propsRow.admin_qid;
+        wikidataBlock.timezoneQid = propsRow.timezone_qid;
+      }
     }
   }
 
