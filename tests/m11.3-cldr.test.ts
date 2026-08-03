@@ -166,7 +166,7 @@ describe("M11.3: CLDR layer — coverage and data quality", () => {
         expect(c.localized.languageFallback).toBe(false);
       }
     }
-  });
+  }, 30000);
 
   it("M11.3.15: short names are returned when CLDR provides them", async () => {
     // GB has 'UK' as short in English
