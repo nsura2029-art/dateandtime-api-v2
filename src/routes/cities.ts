@@ -198,6 +198,30 @@ const CityDetail = z.object({
       nuts3Code: z.string().nullable().describe("NUTS 2024 region code"),
     }).nullable().describe("Eurostat URAU (City vs FUA) — null if no URAU match"),
   }).nullable().describe("Eurostat enrichment (M11.6) — null for non-EU cities or EU cities not in LAU/URAU"),
+  // M11.7: Census of India 2011 block (Indian cities only)
+  censusIndia: z.object({
+    censusCode: z.string().nullable().describe("6-digit Census of India town code (e.g. '800013' for Srinagar)"),
+    stateCode: z.string().nullable().describe("2-digit Census state code (e.g. '01' for J&K)"),
+    districtCode: z.string().nullable().describe("3-digit Census district code"),
+    uaCode: z.string().nullable().describe("9-digit Urban Agglomeration code (e.g. '500400100' for Srinagar UA part)"),
+    uaName: z.string().nullable().describe("Urban Agglomeration name (e.g. 'Srinagar (M Corp.+OG)')"),
+    level: z.number().int().nullable().describe("Hierarchy level: 1=statutory city, 2=sub-town/OG"),
+    households: z.number().int().nullable().describe("Number of households (No_HH)"),
+    population: z.number().int().nullable().describe("Total population (TOT_P) — 2011 Census"),
+    malePopulation: z.number().int().nullable().describe("Male population (TOT_M)"),
+    femalePopulation: z.number().int().nullable().describe("Female population (TOT_F)"),
+    sexRatio: z.number().int().nullable().describe("Sex ratio: females per 1000 males (TOT_F * 1000 / TOT_M)"),
+    childPopulation: z.number().int().nullable().describe("Child population age 0-6 (P_06)"),
+    childSexRatio: z.number().int().nullable().describe("Child sex ratio: girls per 1000 boys (F_06 * 1000 / M_06)"),
+    scPopulation: z.number().int().nullable().describe("Scheduled Caste population (P_SC)"),
+    stPopulation: z.number().int().nullable().describe("Scheduled Tribe population (P_ST)"),
+    literacyRate: z.number().nullable().describe("Literacy rate %: P_LIT / TOT_P * 100"),
+    workersTotal: z.number().int().nullable().describe("Total workers (TOT_WORK_P)"),
+    mainWorkers: z.number().int().nullable().describe("Main workers (MAINWORK_P) — worked >6 months"),
+    marginalWorkers: z.number().int().nullable().describe("Marginal workers (MARGWORK_P) — worked <6 months"),
+    nonWorkers: z.number().int().nullable().describe("Non-workers (NON_WORK_P)"),
+    censusYear: z.number().int().nullable().describe("Census year (2011)"),
+  }).nullable().describe("Census of India 2011 enrichment (M11.7) — null for non-Indian cities or cities not in Census"),
 });
 
 const CityDetailResponse = z.object({
@@ -1104,7 +1128,7 @@ cities.openapi(cityDetailRoute, async (c) => {
       ci.display_name, ci.short_name, ci.search_name,
       ci.geonames_id, ci.elevation_m, ci.wiki_url,
       ci.source_primary, ci.source_merged_with, ci.merge_method, ci.merge_run_id, ci.merged_at,
-      ci.fips_geoid, ci.gisco_id,
+      ci.fips_geoid, ci.gisco_id, ci.in_census_code,
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
       ar.id as ar_id, ar.name as ar_name, ar.country_id as ar_country_id,
@@ -1147,6 +1171,7 @@ cities.openapi(cityDetailRoute, async (c) => {
     data_quality_flags: string | null;
     fips_geoid: string | null;
     gisco_id: string | null;
+    in_census_code: string | null;
     co_id: number;
     co_cca2: string;
     co_cca3: string | null;
@@ -1454,6 +1479,91 @@ cities.openapi(cityDetailRoute, async (c) => {
   }
 
   // --------------------------------------------------------------------------
+  // STEP 4.8: Fetch Census of India 2011 data (M11.7)
+  // --------------------------------------------------------------------------
+  // For Indian cities, look up the Census of India 2011 attributes:
+  //   - population (TOT_P), sex ratio, literacy rate, workers
+  //   - ua_code + ua_name: parent Urban Agglomeration
+  //   - census_code: 6-digit town code (the join key)
+  //
+  // This block is only populated for IN cities that were matched to the
+  // 2011 Census PCA-UA dataset (1,946 statutory cities + 902 OGs).
+  // For non-Indian cities or unmatched Indian cities, this block is null.
+  // --------------------------------------------------------------------------
+  let censusIndiaBlock: {
+    censusCode: string | null;
+    stateCode: string | null;
+    districtCode: string | null;
+    uaCode: string | null;
+    uaName: string | null;
+    level: number | null;
+    households: number | null;
+    population: number | null;
+    malePopulation: number | null;
+    femalePopulation: number | null;
+    sexRatio: number | null;
+    childPopulation: number | null;
+    childSexRatio: number | null;
+    scPopulation: number | null;
+    stPopulation: number | null;
+    literacyRate: number | null;
+    workersTotal: number | null;
+    mainWorkers: number | null;
+    marginalWorkers: number | null;
+    nonWorkers: number | null;
+    censusYear: number | null;
+  } | null = null;
+  if (row.in_census_code) {
+    const censusRow = await c.env.DB.prepare(
+      `SELECT census_code, state_code, district_code, ua_code, ua_name, level,
+              households, population, male_population, female_population,
+              child_population, child_male, child_female,
+              sc_population, st_population,
+              literate_population, workers_total, main_workers, marginal_workers, non_workers,
+              census_year
+       FROM in_census_attributes
+       WHERE city_id = ? LIMIT 1`
+    ).bind(id).first<any>();
+
+    if (censusRow) {
+      // Compute derived metrics
+      const sexRatio = censusRow.male_population && censusRow.male_population > 0
+        ? Math.round((censusRow.female_population * 1000) / censusRow.male_population)
+        : null;
+      const childSexRatio = censusRow.child_male && censusRow.child_male > 0
+        ? Math.round((censusRow.child_female * 1000) / censusRow.child_male)
+        : null;
+      const literacyRate = censusRow.population && censusRow.population > 0 && censusRow.literate_population
+        ? Math.round((censusRow.literate_population * 1000) / censusRow.population) / 10  // percentage to 1 decimal
+        : null;
+
+      censusIndiaBlock = {
+        censusCode: censusRow.census_code,
+        stateCode: censusRow.state_code,
+        districtCode: censusRow.district_code,
+        uaCode: censusRow.ua_code,
+        uaName: censusRow.ua_name,
+        level: censusRow.level as number | null,
+        households: censusRow.households as number | null,
+        population: censusRow.population as number | null,
+        malePopulation: censusRow.male_population as number | null,
+        femalePopulation: censusRow.female_population as number | null,
+        sexRatio,
+        childPopulation: censusRow.child_population as number | null,
+        childSexRatio,
+        scPopulation: censusRow.sc_population as number | null,
+        stPopulation: censusRow.st_population as number | null,
+        literacyRate,
+        workersTotal: censusRow.workers_total as number | null,
+        mainWorkers: censusRow.main_workers as number | null,
+        marginalWorkers: censusRow.marginal_workers as number | null,
+        nonWorkers: censusRow.non_workers as number | null,
+        censusYear: censusRow.census_year as number | null,
+      };
+    }
+  }
+
+  // --------------------------------------------------------------------------
   // STEP 5: Build the response
   // --------------------------------------------------------------------------
   // Field mapping notes:
@@ -1541,6 +1651,8 @@ cities.openapi(cityDetailRoute, async (c) => {
         census: censusBlock,
         // M11.6 Eurostat
         eurostat: eurostatBlock,
+        // M11.7 Census of India
+        censusIndia: censusIndiaBlock,
       },
     },
     200
