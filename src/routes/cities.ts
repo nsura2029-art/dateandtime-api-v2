@@ -238,6 +238,25 @@ const CityDetail = z.object({
     }).nullable().describe("Population broken down by major age buckets"),
     acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022 for 2018-2022)"),
   }).nullable().describe("US Census ACS 5-year enrichment (M11.5.1) — null for non-US cities"),
+  // M11.5.1 expand: ACS 5-year Income (B19013) + Education (B15003)
+  acsIncome: z.object({
+    fipsGeoid: z.string().nullable().describe("7-digit FIPS GEOID"),
+    medianIncome: z.number().int().nullable().describe("Median household income in 2022 inflation-adjusted USD (B19013_E001)"),
+    acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022)"),
+  }).nullable().describe("ACS 5-year median household income (B19013) — null if not available"),
+  acsEducation: z.object({
+    fipsGeoid: z.string().nullable().describe("7-digit FIPS GEOID"),
+    population25Plus: z.number().int().nullable().describe("Population 25+ (B15003_E001)"),
+    lessThanHs: z.number().int().nullable().describe("Less than high school (E002-E010)"),
+    hsOrGed: z.number().int().nullable().describe("High school or GED (E011-E012)"),
+    someCollege: z.number().int().nullable().describe("Some college, no degree (E013-E014)"),
+    associateDegree: z.number().int().nullable().describe("Associate's degree (E015)"),
+    bachelorDegree: z.number().int().nullable().describe("Bachelor's degree (E016)"),
+    graduateDegree: z.number().int().nullable().describe("Graduate or professional degree (E017-E019)"),
+    bachelorOrHigher: z.number().int().nullable().describe("Bachelor's degree or higher (E015-E019)"),
+    bachelorOrHigherPct: z.number().nullable().describe("Bachelor's or higher as % of 25+ population"),
+    acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022)"),
+  }).nullable().describe("ACS 5-year educational attainment (B15003) — null if not available"),
 });
 
 const CityDetailResponse = z.object({
@@ -1606,31 +1625,91 @@ cities.openapi(cityDetailRoute, async (c) => {
     } | null;
     acsYear: number | null;
   } | null = null;
+  // M11.5.1 expand: ACS Income + Education blocks
+  let acsIncomeBlock: {
+    fipsGeoid: string | null;
+    medianIncome: number | null;
+    acsYear: number | null;
+  } | null = null;
+  let acsEducationBlock: {
+    fipsGeoid: string | null;
+    population25Plus: number | null;
+    lessThanHs: number | null;
+    hsOrGed: number | null;
+    someCollege: number | null;
+    associateDegree: number | null;
+    bachelorDegree: number | null;
+    graduateDegree: number | null;
+    bachelorOrHigher: number | null;
+    bachelorOrHigherPct: number | null;
+    acsYear: number | null;
+  } | null = null;
   if (row.fips_geoid) {
-    const acsRow = await c.env.DB.prepare(
-      `SELECT fips_geoid, total_population, male_population, female_population,
-              under_5, age_5_to_17, age_18_to_24, age_25_to_44, age_45_to_64, age_65_plus,
-              acs_year
-       FROM us_acs_attributes
-       WHERE city_id = ? LIMIT 1`
+    // M11.5.1 expand: Combine all 3 ACS queries into one for performance.
+    // 3-way LEFT JOIN: us_acs_attributes (Sex by Age) + us_acs_income_attributes (B19013) + us_acs_education_attributes (B15003)
+    // Joined on fips_geoid (us_acs_attributes uses city_id for the join, but fips_geoid is unique)
+    const acsCombined = await c.env.DB.prepare(
+      `SELECT
+         a.fips_geoid, a.total_population, a.male_population, a.female_population,
+         a.under_5, a.age_5_to_17, a.age_18_to_24, a.age_25_to_44, a.age_45_to_64, a.age_65_plus,
+         a.acs_year,
+         i.median_income,
+         e.population_25_plus, e.less_than_hs, e.hs_or_ged, e.some_college,
+         e.associate_degree, e.bachelor_degree, e.graduate_degree, e.bachelor_or_higher
+       FROM us_acs_attributes a
+       LEFT JOIN us_acs_income_attributes i ON i.fips_geoid = a.fips_geoid
+       LEFT JOIN us_acs_education_attributes e ON e.fips_geoid = a.fips_geoid
+       WHERE a.city_id = ? LIMIT 1`
     ).bind(id).first<any>();
 
-    if (acsRow) {
+    if (acsCombined) {
+      // Sex by Age block
       acsBlock = {
-        fipsGeoid: acsRow.fips_geoid,
-        totalPopulation: acsRow.total_population as number | null,
-        malePopulation: acsRow.male_population as number | null,
-        femalePopulation: acsRow.female_population as number | null,
+        fipsGeoid: acsCombined.fips_geoid,
+        totalPopulation: acsCombined.total_population as number | null,
+        malePopulation: acsCombined.male_population as number | null,
+        femalePopulation: acsCombined.female_population as number | null,
         ageBreakdown: {
-          under5: acsRow.under_5 as number | null,
-          age5to17: acsRow.age_5_to_17 as number | null,
-          age18to24: acsRow.age_18_to_24 as number | null,
-          age25to44: acsRow.age_25_to_44 as number | null,
-          age45to64: acsRow.age_45_to_64 as number | null,
-          age65plus: acsRow.age_65_plus as number | null,
+          under5: acsCombined.under_5 as number | null,
+          age5to17: acsCombined.age_5_to_17 as number | null,
+          age18to24: acsCombined.age_18_to_24 as number | null,
+          age25to44: acsCombined.age_25_to_44 as number | null,
+          age45to64: acsCombined.age_45_to_64 as number | null,
+          age65plus: acsCombined.age_65_plus as number | null,
         },
-        acsYear: acsRow.acs_year as number | null,
+        acsYear: acsCombined.acs_year as number | null,
       };
+
+      // Income block
+      if (acsCombined.median_income != null) {
+        acsIncomeBlock = {
+          fipsGeoid: acsCombined.fips_geoid,
+          medianIncome: acsCombined.median_income as number | null,
+          acsYear: acsCombined.acs_year as number | null,
+        };
+      }
+
+      // Education block
+      if (acsCombined.population_25_plus != null) {
+        const pop25plus = acsCombined.population_25_plus as number | null;
+        const bachHigher = acsCombined.bachelor_or_higher as number | null;
+        const bachPct = (pop25plus != null && pop25plus > 0 && bachHigher != null)
+          ? Math.round((bachHigher * 100 * 10) / pop25plus) / 10
+          : null;
+        acsEducationBlock = {
+          fipsGeoid: acsCombined.fips_geoid,
+          population25Plus: pop25plus,
+          lessThanHs: acsCombined.less_than_hs as number | null,
+          hsOrGed: acsCombined.hs_or_ged as number | null,
+          someCollege: acsCombined.some_college as number | null,
+          associateDegree: acsCombined.associate_degree as number | null,
+          bachelorDegree: acsCombined.bachelor_degree as number | null,
+          graduateDegree: acsCombined.graduate_degree as number | null,
+          bachelorOrHigher: bachHigher,
+          bachelorOrHigherPct: bachPct,
+          acsYear: acsCombined.acs_year as number | null,
+        };
+      }
     }
   }
 
@@ -1724,8 +1803,11 @@ cities.openapi(cityDetailRoute, async (c) => {
         eurostat: eurostatBlock,
         // M11.7 Census of India
         censusIndia: censusIndiaBlock,
-        // M11.5.1 ACS 5-year
+        // M11.5.1 ACS 5-year (Sex by Age, B01001)
         acs: acsBlock,
+        // M11.5.1 expand: ACS Income (B19013) + Education (B15003)
+        acsIncome: acsIncomeBlock,
+        acsEducation: acsEducationBlock,
       },
     },
     200

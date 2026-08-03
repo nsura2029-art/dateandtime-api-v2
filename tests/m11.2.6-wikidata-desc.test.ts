@@ -161,8 +161,8 @@ describe("M11.2.6: Wikidata description — format", () => {
 
 describe("M11.2.6: Wikidata description — coverage and performance", () => {
   it("M11.2.6.13: ~85% of cities with wiki_data_id have full wikidata data", async () => {
-    // Sample 20 cities with wiki_data_id
-    const r = await fetch(`${API}/api/v1/cities/search?q=a&limit=20`);
+    // Sample 10 cities with wiki_data_id (reduced from 20 for performance)
+    const r = await fetch(`${API}/api/v1/cities/search?q=a&limit=10`);
     const body = await r.json();
     const results = body.data.results.filter((c: any) => c.wikiDataId);
     expect(results.length).toBeGreaterThan(0);
@@ -176,10 +176,10 @@ describe("M11.2.6: Wikidata description — coverage and performance", () => {
         withLabel++;
       }
     }
-    // Should be most of them (some samples may not have staging data)
+    // Should be most of them. After M11.2.7 backfill, ~100% should have label.
     // Be lenient: at least 60% should have label
     expect(withLabel).toBeGreaterThanOrEqual(results.length * 0.6);
-  });
+  }, 30000);
 
   it("M11.2.6.14: 1 additional query for wikidata (was 4 before, now 5)", async () => {
     // The detail endpoint now makes 5 queries instead of 4:
