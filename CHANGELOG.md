@@ -4,7 +4,55 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — develop (M12 merged)
+## [unreleased] — develop (M13 merged)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 644/648 tests pass (3 pre-existing + 1 unrelated timeout).
+
+### What shipped
+
+- **M13: Holidays MVP** — 10 API endpoints, 190 holiday occurrences across US (168) + NL (22), 36 filter codes in catalog, 22 country_filter_policy rows demonstrating the variance (US=18 filters, NL=4)
+
+### Files
+
+- `migrations/156_holiday_core_schema.sql` (8 new tables)
+- `scripts/seed/holiday_filter_catalog.py` (36 filter codes)
+- `scripts/seed/holiday_nl_us_to_d1.py` (OpenHolidays + Nager.Date loaders)
+- `src/routes/holidays.ts` (10 endpoints, full OpenAPI)
+- `tests/m13-holidays.test.ts` (18 tests, all green)
+- `reports/holidays-deferred-work.md` (10 deferred endpoints + 4 phases + 8 advancements)
+
+### API additions (10)
+
+- `GET /api/v1/filters` — global filter catalog (36 codes)
+- `GET /api/v1/countries/{cca2}/filters` — **per-country filter list with counts** (the variance endpoint)
+- `GET /api/v1/holidays` — main list with country/mode/year/filters
+- `GET /api/v1/holidays/{id}` — single occurrence detail
+- `GET /api/v1/countries/{cca2}/holidays` — country shortcut
+- `GET /api/v1/holidays/today` — widget
+- `GET /api/v1/holidays/upcoming` — widget
+- `GET /api/v1/long-weekends` — SEO long-weekend finder
+- `GET /api/v1/calendars/holidays.ics` — RFC 5545 ICS export
+- `POST /api/v1/feedback` — submit correction
+
+### Data added
+
+- 36 holiday_filter rows
+- 22 country_filter_policy rows (US=18, NL=4)
+- 190 holiday_occurrence rows (NL=22, US=168)
+- 2 holiday_source rows (openholidays_api tier D, nager_date tier D)
+- 1 holiday_feedback row (test)
+
+### Deferred (post-MVP)
+
+See `reports/holidays-deferred-work.md`. Top 3 for next iteration:
+1. Phase 2: UN observances + IANA clock changes + seasons (1-2 days)
+2. UK adapter (next golden country, ~2 days)
+3. Filter count optimization (single GROUP BY query, 1 day)
+
+---
+
+## [M12] — develop (Global admin-2: counties, districts, communes)
 
 **Date:** 2026-08-03
 **Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 627/630 tests pass (3 pre-existing failures: env, M8.5, Rio Branco).

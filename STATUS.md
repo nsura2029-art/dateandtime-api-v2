@@ -6,7 +6,7 @@ Last updated: 2026-08-03 12:00 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M12 (global admin-2) shipped. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, **148,331 cities with full Wikidata descriptions (100% of Q-id cities)**, **5,000 cities with Wikidata P-codes (P31/P17/P131/P421)**, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **14,450 US cities with ACS 5-year demographics (Sex by Age + Income + Education + Tenure + Transport)**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **963 Indian cities with Census of India 2011 data**, **10,559 cities with real NCEI GSOM climate data (2020-2023)**, **56,293 cities mapped to their level-2 admin (counties, districts, communes) across 189 countries**, **47,549 admin-2 regions**, **156,111 cities with population (92%)**. **627 / 630 tests pass** (3 pre-existing failures: env, M8.5, Rio Branco). Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. **M13 (Holidays MVP)** shipped — 10 endpoints, 190 holiday occurrences, US+NL with 18/4 filter variance. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, **148,331 cities with full Wikidata descriptions (100% of Q-id cities)**, **5,000 cities with Wikidata P-codes (P31/P17/P131/P421)**, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **14,450 US cities with ACS 5-year demographics (Sex by Age + Income + Education + Tenure + Transport)**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **963 Indian cities with Census of India 2011 data**, **10,559 cities with real NCEI GSOM climate data (2020-2023)**, **56,293 cities mapped to their level-2 admin (counties, districts, communes) across 189 countries**, **47,549 admin-2 regions**, **190 holidays (US=168 federal+state, NL=22)**, **36 filter codes**, **22 country filter policies (US=18, NL=4)**, **156,111 cities with population (92%)**. **644 / 648 tests pass** (3 pre-existing: env, M8.5, Rio Branco + 1 unrelated M11.5.1 timeout). Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
@@ -27,7 +27,7 @@ HEAD~4: M11.5.1 + M11.7 + M11.2.7: Update STATUS, CHANGELOG, reports
 
 ## Test status
 
-**627 / 630 pass** (3 pre-existing failures: env CORS, M8.5 data-quality, Rio Branco timezone)
+**644 / 648 pass** (3 pre-existing: env CORS, M8.5 data-quality, Rio Branco timezone + 1 unrelated M11.5.1 timeout)
 
 | Test file | Tests | Covers |
 |---|---:|---|
