@@ -289,14 +289,19 @@ describe("Spec Phase 3: City aliases endpoint", () => {
 });
 
 describe("Spec Phase 3: City climate endpoint", () => {
-  it("CC.1: NYC climate is temperate", async () => {
+  it("CC.1: NYC climate is temperate (real NCEI data)", async () => {
     const r = await fetch(`${API}/api/v1/cities/122795/climate`);
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.data.cityId).toBe(122795);
-    expect(body.data.climateZone).toMatch(/temperate|subtropical/);
-    expect(body.data.hemisphere).toBe("north");
+    // M11.8: NYC has real NCEI GSOM data, so source=ncei-gsom
+    expect(body.data.source).toBe("ncei-gsom");
+    expect(body.data.dataYears).toBe("2020-2023");
     expect(body.data.months).toHaveLength(12);
+    // Northern hemisphere: July > January
+    const jul = body.data.months.find((m: { month: number }) => m.month === 7);
+    const jan = body.data.months.find((m: { month: number }) => m.month === 1);
+    expect(jul.avgHighC).toBeGreaterThan(jan.avgHighC);
   });
 
   it("CC.2: tropical city (Singapore) is tropical", async () => {

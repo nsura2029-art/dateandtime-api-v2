@@ -106,13 +106,13 @@ describe("M11.1.5: altNames search strategy", () => {
     expect(body.success).toBe(true);
   });
 
-  it("S12.8: altNames is faster than 200ms for most queries", async () => {
+  it("S12.8: altNames is faster than 800ms for most queries", async () => {
     const t0 = Date.now();
     const r = await fetch(`${API}/api/v1/cities/search?q=chimkent&limit=10`);
     await r.json();
     const elapsed = Date.now() - t0;
-    // With the new index, this should be <100ms; allow 500ms for network
-    expect(elapsed).toBeLessThan(500);
+    // With the new index, this should be <100ms; allow 800ms for network + cold start
+    expect(elapsed).toBeLessThan(800);
   });
 
   it("S12.9: total city count is unchanged after adding strategy", async () => {

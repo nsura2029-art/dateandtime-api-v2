@@ -4,7 +4,52 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — develop (M11.5.1 expand merged)
+## [unreleased] — develop (M11.2.8 + M11.8 merged)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 611/614 tests pass (3 pre-existing: env, M8.5, Rio Branco).
+
+### What shipped
+
+- **M11.2.8: Wikidata P-codes** (P31, P17, P131, P421) — 5,000 top cities now have type/country/admin/timezone cross-source identifiers
+- **M11.8: Real climate data from NCEI GSOM 2020-2023** — 10,559 cities (35% of top 30K) now have real monthly climate data, replacing the lat-based placeholder
+
+### Files
+
+- `migrations/153_wikidata_properties.sql` (new table + 2 indexes)
+- `migrations/154_climate_real.sql` (new table + 1 index)
+- `scripts/seed/wikidata_props_to_d1.py` (SPARQL fetcher)
+- `scripts/seed/ghcn_stations.py` (11MB station list downloader)
+- `scripts/seed/ghcn_station_to_city.py` (nearest-station matcher + NCEI fetcher)
+- `tests/m11.2.8-wikidata-pcodes.test.ts` (8 new tests)
+- `tests/m11.8-climate-real.test.ts` (10 new tests)
+
+### API changes
+
+- `wikidata` block in `/cities/{id}`: 4 new fields (instanceOf, countryQid, adminQid, timezoneQid)
+- `climate` endpoint in `/cities/{id}/climate`:
+  - New `source` field: `ncei-gsom` (real) | `lat-based-model` (fallback)
+  - New `dataYears` field (e.g. `2020-2023`)
+  - New `classification` per month (hot/cold/wet/dry/temperate)
+  - Lat-based fallback returns `climateZone` + `hemisphere` (legacy fields)
+
+### Data added
+
+- `wikidata_properties`: 5,000 rows (1 per top city, 9 cols)
+- `climate_real`: 87,808 rows (10,559 cities × 8-12 months each, 9 cols)
+- New sources: `wikidata-properties-2026-08-03`, `ncei-gsom-2020-2023`
+
+### Gotchas
+
+- D1 100-var limit: 9-col inserts use BATCH_ROWS=11 (99 vars safe)
+- NCEI GSOM header is QUOTED (`"TMAX"`), used Python `csv` module
+- Open-Meteo had a sticky 5/min rate limit — switched to NCEI
+- 50% of GHCN-Daily stations have no GSOM (404) — fall back to next-nearest
+- 1-degree grid sufficient for nearest-station match (median 20 km)
+
+---
+
+## [M11.5.1 expand 2] — develop (ACS Tenure + Transport)
 
 **Date:** 2026-08-03
 **Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 537/543 tests pass (6 pre-existing).
