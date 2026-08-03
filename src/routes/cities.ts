@@ -58,6 +58,7 @@ const CitySearchResult = z.object({
   population: z.number().nullable(),
   country: CountryRef,
   adminRegion: AdminRegionRef.nullable(),
+  subRegion: AdminRegionRef.nullable().describe("M12: Level-2 admin (county, district, commune). null for cities without admin-2 data."),
   timezone: TimezoneRef,
   distanceKm: z.number().nullable().describe("Distance from user (if lat/lon provided)"),
   score: z.number().describe("Internal ranking score (higher = better)"),
@@ -126,6 +127,14 @@ const CityDetail = z.object({
   claimedBy: z.array(z.string()).nullable(),
   country: CountryRef,
   adminRegion: AdminRegionRef.nullable(),
+  subRegion: z.object({
+    id: z.number().describe("GeoNames ID of the admin-2 region"),
+    name: z.string().nullable().describe("Admin-2 name (e.g. 'Pasco County', 'Bezirk Mitte')"),
+    code: z.string().nullable().describe("GeoNames hierarchical code (e.g. 'US.FL.101' = Florida, Pasco County)"),
+    type: z.string().nullable().describe("Region type: 'admin2' (counties, districts, communes, etc.)"),
+    level: z.number().describe("Admin level (2 for all admin-2 regions)"),
+    geonameId: z.number().nullable().describe("GeoNames ID — useful for linking to GeoNames API"),
+  }).nullable().describe("M12: Level-2 admin (county, district, commune). 56,293 cities have this populated."),
   timezone: TimezoneRef,
   source: z.object({
     id: z.string().nullable(),
@@ -1191,11 +1200,14 @@ cities.openapi(cityDetailRoute, async (c) => {
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
       ar.id as ar_id, ar.name as ar_name, ar.country_id as ar_country_id,
+      sub.id as sub_id, sub.name as sub_name, sub.code as sub_code,
+      sub.type as sub_type, sub.level as sub_level, sub.geoname_id as sub_geoname_id,
       tz.id as tz_id, tz.current_offset as tz_offset,
       tz.current_abbreviation as tz_abbrev, tz.is_dst as tz_dst
     FROM cities ci
     JOIN countries co ON co.id = ci.country_id
     LEFT JOIN administrative_regions ar ON ar.id = ci.state_id
+    LEFT JOIN administrative_regions sub ON sub.id = ci.admin2_id
     LEFT JOIN time_zones tz ON tz.id = ci.timezone
     WHERE ci.id = ?
   `;
@@ -1240,6 +1252,12 @@ cities.openapi(cityDetailRoute, async (c) => {
     ar_id: number | null;
     ar_name: string | null;
     ar_country_id: number | null;
+    sub_id: number | null;
+    sub_name: string | null;
+    sub_code: string | null;
+    sub_type: string | null;
+    sub_level: number | null;
+    sub_geoname_id: number | null;
     tz_id: string | null;
     tz_offset: number | null;
     tz_abbrev: string | null;
@@ -1867,6 +1885,16 @@ cities.openapi(cityDetailRoute, async (c) => {
         },
         adminRegion: row.ar_id
           ? { id: row.ar_id, name: row.ar_name, country_id: row.ar_country_id }
+          : null,
+        subRegion: row.sub_id
+          ? {
+              id: row.sub_id,
+              name: row.sub_name,
+              code: row.sub_code,
+              type: row.sub_type,
+              level: row.sub_level,
+              geonameId: row.sub_geoname_id,
+            }
           : null,
         timezone: {
           id: row.tz_id,

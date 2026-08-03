@@ -24,6 +24,7 @@ import countries from "@/routes/countries";
 import regions from "@/routes/regions";
 import states from "@/routes/states";
 import time from "@/routes/time";
+import subregions from "@/routes/subregions";
 import { registerDocs } from "@/routes/docs";
 
 import type { Env, Variables } from "@/types/env";
@@ -64,6 +65,7 @@ app.route("/", staging); // GET /api/v1/staging/summary + /api/v1/staging/cities
 app.route("/", states); // GET /api/v1/countries/:cca2/states + /api/v1/states/:id
 app.route("/", countries); // GET /api/v1/countries + /api/v1/countries/{cca2}
 app.route("/", regions); // GET /api/v1/regions + /api/v1/regions/:code/subregions + /api/v1/subregions/:code/countries
+app.route("/", subregions); // GET /api/v1/countries/:cca2/admin2 + /api/v1/admin2/:id (M12)
 app.route("/", time); // GET /api/v1/time/now + /api/v1/time/convert
 
 // OpenAPI + Swagger UI
