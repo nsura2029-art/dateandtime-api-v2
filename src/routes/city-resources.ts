@@ -108,6 +108,19 @@ const app = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+// M11.8: Classify month based on real temperature/precipitation
+function classifyMonth(avgHighC: number, precipMm: number): string {
+  // Hot: avg high > 30°C
+  if (avgHighC >= 30) return "hot";
+  // Cold: avg high < 10°C
+  if (avgHighC < 10) return "cold";
+  // Wet: high precipitation (> 100mm)
+  if (precipMm > 100) return "wet";
+  // Dry: low precipitation (< 30mm)
+  if (precipMm < 30) return "dry";
+  return "temperate";
+}
+
 // Simplified climate model (placeholder until we integrate a real source).
 // Based on latitude, generates monthly avg high/low temps + precipitation
 // following standard climatic patterns (tropical/temperate/continental/polar).
@@ -268,8 +281,45 @@ app.openapi(climateRoute, async (c) => {
     return c.json({ success: false, error: { code: "NO_COORDINATES", message: "City has no coordinates" } }, 400);
   }
 
-  const model = climateModel(city.latitude, city.longitude);
+  // Try real climate data first (M11.8: Open-Meteo 2020-2023)
+  const realRows = await c.env.DB.prepare(
+    `SELECT month, avg_high_c, avg_low_c, precipitation_mm, data_years, source
+     FROM climate_real
+     WHERE city_id = ?
+     ORDER BY month`
+  ).bind(id).all<{
+    month: number; avg_high_c: number; avg_low_c: number;
+    precipitation_mm: number; data_years: string; source: string;
+  }>();
 
+  if (realRows.results && realRows.results.length === 12) {
+    // Real data available
+    const dataYears = realRows.results[0].data_years;
+    const source = realRows.results[0].source;
+    const months = realRows.results.map((r) => ({
+      month: r.month,
+      monthName: MONTH_NAMES[r.month - 1],
+      avgHighC: r.avg_high_c,
+      avgLowC: r.avg_low_c,
+      precipitationMm: r.precipitation_mm,
+      classification: classifyMonth(r.avg_high_c, r.precipitation_mm),
+    }));
+    return c.json({
+      success: true,
+      data: {
+        cityId: id,
+        latitude: city.latitude,
+        longitude: city.longitude,
+        months,
+        dataYears,
+        source,
+        notes: `Real climate data from ${source} (${dataYears} monthly normals).`,
+      },
+    }, 200);
+  }
+
+  // Fallback to lat-based model
+  const model = climateModel(city.latitude, city.longitude);
   return c.json({
     success: true,
     data: {
@@ -279,7 +329,9 @@ app.openapi(climateRoute, async (c) => {
       climateZone: model.zone,
       hemisphere: model.hemisphere,
       months: model.months,
-      notes: "Simplified lat-based climate model (placeholder). For production, integrate a real source like World Bank CCKP or NOAA.",
+      dataYears: null,
+      source: "lat-based-model",
+      notes: "Simplified lat-based climate model (no real data for this city). For real data, see cities with top-30K population.",
     },
   }, 200);
 });
