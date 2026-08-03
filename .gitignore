@@ -42,3 +42,4 @@ migrations/cities/*.sql
 migrations/111_seed_alt_names.sql
 tmp/
 scripts/seed/__pycache__/
+.worktrees/
