@@ -10,11 +10,11 @@ import { describe, it, expect } from "vitest";
 const API = process.env.TEST_API_URL || "https://dt-api-v2-dev.nsura2029.workers.dev";
 
 describe("SR1: /api/v1/sources", () => {
-  it("SR1.1: returns all 10 registered sources", async () => {
+  it("SR1.1: returns all 12 registered sources (10 + 2 from M11.6 Eurostat)", async () => {
     const r = await fetch(`${API}/api/v1/sources`);
     const body = await r.json();
-    expect(body.data.count).toBe(10);
-    // Active count: GeoNames + us_census (post-M11.5) = 2
+    expect(body.data.count).toBe(12);
+    // Active count: GeoNames + us_census + eurostat_lau + eurostat_urau = 4
     expect(body.data.activeCount).toBeGreaterThanOrEqual(1);
   });
 
@@ -41,7 +41,8 @@ describe("SR1: /api/v1/sources", () => {
   it("SR1.4: GeoNames source has CC-BY-4.0 license with attribution", async () => {
     const r = await fetch(`${API}/api/v1/sources?active=true`);
     const body = await r.json();
-    const geo = body.data.sources[0];
+    const geo = body.data.sources.find((s: any) => s.sourceKey === "geonames");
+    expect(geo).toBeDefined();
     expect(geo.license).toBe("CC-BY-4.0");
     expect(geo.attribution).toContain("GeoNames");
   });
@@ -102,13 +103,14 @@ describe("SR3: /api/v1/sources/:key/releases", () => {
 });
 
 describe("SR4: Source coverage", () => {
-  it("SR4.1: 10 sources registered with correct keys", async () => {
+  it("SR4.1: 12 sources registered with correct keys", async () => {
     const r = await fetch(`${API}/api/v1/sources`);
     const body = await r.json();
     const expected = [
       "geonames", "wikidata", "cldr", "un_wpp",
       "us_census", "eurostat", "census_india",
       "india_proj", "world_bank", "nso",
+      "eurostat_lau", "eurostat_urau",  // M11.6
     ].sort();
     const actual = body.data.sources.map((s: { sourceKey: string }) => s.sourceKey).sort();
     expect(actual).toEqual(expected);

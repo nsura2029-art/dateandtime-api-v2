@@ -287,7 +287,7 @@
                 "64500"
               ]
             },
-            "description": "Returns full record for a city: name, country, admin region, timezone, capital status, tier, dr5hn enrichment, place names, postcodes, translations count, data quality."
+            "description": "Returns full record for a city: name, country, admin region, timezone, capital status, tier, dr5hn enrichment, place names, postcodes, translations count, data quality.\n\n## M11.2 Wikidata block (city.description)\n- `wikidata.label`: English canonical name from Wikidata\n- `wikidata.altLabels`: up to 5 alternative names\n- `wikidata.description`: one-liner built from label + first alt\n\n## M11.5 US Census block (census, US cities only)\n- `census.fips.geoid`: 7-digit FIPS GEOID (state+place)\n- `census.legalClass`: city/town/village/CDP/borough (from LSAD)\n- `census.landAreaSqMi` / `census.waterAreaSqMi`: Gazetteer\n- `census.densityPerSqMi`: computed (pop/land_area)\n- `census.populationTimeSeries`: 6 entries (2020-2025)\n- `census.populationLatest`: POPESTIMATE2025\n\n## M11.6 Eurostat block (eurostat, EU cities only)\n- `eurostat.lau`: Local Administrative Units (EU30, 97K records)\n  - `giscoId`, `lauName`, `population` (null for FR/ES/AL/IS/RS), `populationDensity`, `areaKm2`, `year`\n- `eurostat.urau`: City vs FUA (pan-EU, 1,332 records)\n  - `urauCode`, `urauName`, `fuaCode`, `fuaName` (wider metro), `areaSqKm`, `nuts3Code`"
           },
           "response": []
         },
