@@ -159,7 +159,8 @@ Before committing any doc:
 |---|---|
 | `docs/setup.md` | Onboarding: clone, install, set env vars, run |
 | `docs/troubleshooting.md` | Common errors and how to fix |
-| `docs/KNOWN_ISSUES.md` | BUG-1 (Swagger CORS), BUG-2 (503 on local), TODO-1 |
+| `KNOWN_ISSUES.md` (root) | BUG-1 (Swagger CORS), BUG-2 (503 on local), TODO-1 — detailed with repro + root cause |
+| `docs/KNOWN_ISSUES.md` | Summary of BUG-1, BUG-2 + deferred items from TODO.md |
 | `docs/api/openapi.json` | OpenAPI 3.1 spec (source of truth for API) |
 | `docs/api/timeanddatepro-api.postman_collection.json` | Postman collection (auto-gen) |
 | `docs/architecture/DB-EDGE-CASE-AUDIT.md` | 20 edge cases for the data model |
@@ -169,6 +170,27 @@ Before committing any doc:
 | `docs/PLAN-features-region-search-and-meeting-planner.md` | UI feature plans |
 | `docs/PLAN-db-cleanup-rebuild.md` | Original destructive-migration plan (superseded by new D1) |
 | `docs/PLAN-user-education-content.md` | 15 SEO articles plan |
+| `docs/references/README.md` | **Master index of all reference docs** |
+| `docs/references/data-platform-journey.md` | **M0 → M14 milestone-by-milestone narrative** |
+| `docs/references/data-sources-master.md` | **Every data source: tier, license, scope, what we extract** |
+| `docs/references/schema-evolution.md` | **All 157 migrations: what changed and why** |
+| `docs/references/api-endpoints.md` | **All 41 endpoints with params and examples** |
+| `docs/references/timezone-architecture.md` | **IANA timezones, DST, edge cases** |
+| `docs/references/regions-countries-cities.md` | **Geographic data model** |
+| `docs/references/data-enrichment-engine.md` | **How to add a new source: 4-step pattern** |
+| `docs/references/sources/wikidata.md` | **Wikidata Q-ids, P-codes, descriptions** |
+| `docs/references/sources/cities/cities-data-sources.md` | **dr5hn, GeoNames, layer merge** |
+| `docs/references/sources/cities/us-census.md` | **US Census + ACS demographics** |
+| `docs/references/holidays/data-sources.md` | **Holiday sources: tier A-D** |
+| `docs/references/holidays/nz-employment-nz-2026-2027.md` | **NZ Tier A data** |
+| `docs/references/holidays/us-csv-2026.md` | **US 2026 authoritative list** |
+| `docs/references/holidays/india-data-sources.md` | **India research** |
+| `docs/references/holidays/un-international-days.md` | **178 UN days list** |
+| `NEXT-TASKS.md` | **Recommended next tasks + new ideas for future** |
+| `STATUS.md` | **The one file to read first** — current state, branches, test status |
+| `CHANGELOG.md` | **Per-PR notes** — newest first |
+| `TODO.md` | **Active, next-up, future, done (M0-M14)** |
+| `reports/m*.md` | **Per-milestone result reports** (41 reports) |
 
 ## Adding a new doc (checklist)
 

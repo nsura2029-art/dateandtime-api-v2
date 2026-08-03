@@ -2,32 +2,41 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-03 12:00 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-03 18:50 UTC (M14 shipped)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. **M13 (Holidays MVP)** shipped — 10 endpoints, 190 holiday occurrences, US+NL with 18/4 filter variance. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, **148,331 cities with full Wikidata descriptions (100% of Q-id cities)**, **5,000 cities with Wikidata P-codes (P31/P17/P131/P421)**, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **14,450 US cities with ACS 5-year demographics (Sex by Age + Income + Education + Tenure + Transport)**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **963 Indian cities with Census of India 2011 data**, **10,559 cities with real NCEI GSOM climate data (2020-2023)**, **56,293 cities mapped to their level-2 admin (counties, districts, communes) across 189 countries**, **47,549 admin-2 regions**, **190 holidays (US=168 federal+state, NL=22)**, **36 filter codes**, **22 country filter policies (US=18, NL=4)**, **156,111 cities with population (92%)**. **644 / 648 tests pass** (3 pre-existing: env, M8.5, Rio Branco + 1 unrelated M11.5.1 timeout). Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. **M14 (Holiday enrichment)** shipped — 1,827 holiday occurrences for 2026 (US=410, NL=295, IN=293, NZ=312, GB=292), 178 UN international days, 18 Jewish holidays × 5 countries, 4 seasons (Meeus), 8 UK bank holidays, computed Easter. 41 API endpoints. 170,253 cities (dr5hn + GeoNames), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K alt names, 148K Wikidata descriptions, 5K Wikidata P-codes, 14,450 US cities with ACS demographics, 41,571 EU cities with LAU, 963 Indian cities, 10,559 cities with real NCEI climate, 47,549 admin-2 regions, 56,293 cities mapped to admin-2, **36 filter codes**, **22 country filter policies (US=22, NL=5 — was US=18, NL=4 in M13)**, **157 migrations**. **665 / 669 tests pass** (3 pre-existing: env CORS, M8.5, Rio Branco + 1 unrelated M11.5.1 timeout). Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.5.1 expand |
+| `develop` | Integration | up to date with M0-M14 |
 
-## Last 5 commits
+## M14 what shipped
 
-```
-HEAD: perf: bump all API perf test thresholds to 3000ms
-HEAD~1: Merge M11.5.1 expand: ACS Income (B19013) + Education (B15003) + perf consolidation
-HEAD~2: M11.5.1 expand: Combine 3 ACS queries into 1, bump perf thresholds
-HEAD~3: M11.5.1 expand: ACS Income (B19013) + Education (B15003) — 14,450 US cities
-HEAD~4: M11.5.1 + M11.7 + M11.2.7: Update STATUS, CHANGELOG, reports
-```
+| Component | Count | Source |
+|---|---:|---|
+| Holiday occurrences (2026) | 1,827 | Computed + Hebcal + UN + Nager |
+| - US | 410 | 84 Nager + 27 computed + 81 Hebcal + 218 UN + seasons |
+| - NL | 295 | 11 OpenHolidays + 6 Easter + 59 Hebcal + 219 UN |
+| - IN | 293 | 9 Nager + 59 Hebcal + 225 UN |
+| - NZ | 312 | 28 Nager + 59 Hebcal + 225 UN |
+| - GB | 292 | 8 computed + 59 Hebcal + 225 UN |
+| Worldwide (UN) | 225 | un_official (1 per UN day) |
+| Holiday filter codes | 36 | existing catalog |
+| Country filter policies | 5 countries | US, NL, IN, NZ, GB |
+| UN international days | 178 | holiday_un_day table |
+| Migrations | 157 | new: holiday_worldwide_and_categories |
+| API endpoints (M14) | 10 (existing) | new fields: worldwide, scopeLevel, category, origin, conceptTradition |
+| Tests (M14) | 21 | all green |
+| Research docs | 5 | docs/references/holidays/ |
 
 ## Test status
 
-**644 / 648 pass** (3 pre-existing: env CORS, M8.5 data-quality, Rio Branco timezone + 1 unrelated M11.5.1 timeout)
+**665 / 669 pass** (3 pre-existing: env CORS, M8.5 data-quality, Rio Branco timezone + 1 unrelated M11.5.1 timeout)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -43,48 +52,56 @@ HEAD~4: M11.5.1 + M11.7 + M11.2.7: Update STATUS, CHANGELOG, reports
 | `tests/m11.2-wikidata.test.ts` | 12 | M11.2 wikiUrl |
 | `tests/m11.2.5-wikidata-altlabels.test.ts` | 15 | M11.2.5 alt_label search |
 | `tests/m11.2.6-wikidata-desc.test.ts` | 18 | M11.2.6 wikidata description in /cities/{id} |
+| `tests/m11.2.8-wikidata-pcodes.test.ts` | 8 | M11.2.8 P-codes (P31/P17/P131/P421) |
 | `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
 | `tests/m11.4-worldbank.test.ts` | 18 | M11.4 country population (World Bank 2024) |
 | `tests/m11.5-us-census.test.ts` | 20 | M11.5 US Census Bureau attributes |
 | `tests/m11.5.1-acs.test.ts` | 16 | M11.5.1 ACS 5-year Sex by Age |
 | `tests/m11.5.1-income-education.test.ts` | 15 | M11.5.1 expand ACS Income + Education |
+| `tests/m11.5.1-tenure-transport.test.ts` | 15 | M11.5.1 expand 2 ACS Tenure + Transport |
 | `tests/m11.6-eurostat.test.ts` | 20 | M11.6 Eurostat LAU + URAU |
 | `tests/m11.7-census-india.test.ts` | 25 | M11.7 Census of India 2011 |
+| `tests/m11.8-climate-real.test.ts` | 10 | M11.8 NCEI real climate |
+| `tests/m12-admin2-global.test.ts` | 11 | M12 Global admin-2 |
+| `tests/m13-holidays.test.ts` | 18 | M13 Holidays MVP |
+| `tests/m14-holiday-enrichment.test.ts` | 21 | M14 Holiday enrichment |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
 | `tests/translations.test.ts` | 11 | M5 |
 | `tests/postcodes.test.ts` | 9 | M4 |
 | `tests/enrichment.test.ts` | 3 | M2/M3 |
-| `tests/health.test.ts` + `tests/status.test.ts` + `tests/env.test.ts` | (pre-existing) | 30 (1 failing) |
+| `tests/health.test.ts` + `tests/status.test.ts` + `tests/env.test.ts` | 30 (1 failing) | pre-existing |
 
 ## Next 3 things (priority order)
 
-1. **Time-calc endpoint (DST + date-line math)** (1-2 days)
+1. **Holidays Phase 7: Worldwide onboarding** (2-3 days)
+   - Add CA, AU, FR, DE, IT, ES, IE, NO, etc. (10+ countries)
+   - Each gets a computed/adapter loader following the GB pattern
+   - High SEO value: country holiday pages
+
+2. **Time-calc endpoint (DST + date-line math)** (1-2 days)
    - Compute "what time is it in Tokyo when it's 3pm in NYC"
    - Handle DST transitions and date-line crossing
    - Foundation for the "World time" / meeting planner features
 
-2. **M11.6.1: URAU GeoJSON expansion** (deferred)
-   - More EU countries, vector boundaries
-
-3. **M11.2.8: Add Wikidata P31/P17/P131 to description** (2-3 days)
-   - P31: instance of (city, town, village)
-   - P17: country
-   - P131: located in administrative territorial entity
-   - Richer description for /cities/{id}
+3. **ERA5 climate for 19K cities without NCEI stations** (3-5 days)
+   - 10,559 cities have real NCEI data, 19K don't
+   - ERA5 is the next-best free source
+   - User said "weather and climate after MVP" but tier 1 is "rich data" — see if MVP is "after" yet
 
 ## Future (deferred)
 
 | Item | Estimate | Why deferred |
 |---|---:|---|
 | M11.6.1: URAU GeoJSON expansion | 2-3 days | Need GISCO vector download |
-| M11.2.8: Add Wikidata P31/P17/P131 to description | 2-3 days | Need richer SPARQL ingestion |
-| M11.7.2: Full PCA town-level data | deferred | DCHB URLs 404; recurze dataset is 3rd-party |
-| polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
-| Add country localized name to /cities/{id} response | 2 hours | Cosmetic, countries object already exists |
-| Add /languages endpoint with localized language names | 2 hours | Same CLDR data, different `<language>` section |
-| "World time" feature (per user brainstorm) | TBD | Per product PRD |
+| M11.7.2: Full PCA town-level data (India) | 1 week | DCHB URLs 404; recurze is 3rd-party |
+| ERA5 climate for 19K cities | 3-5 days | User said "weather after MVP" |
+| Admin-2 population/area/coords | 1 week | Needs Wikidata SPARQL or GADM |
+| Holidays Phase 6: Admin/review UI | 1-2 days | Source assertion review queue |
+| Holidays Phase 2-4: 10 deferred endpoints | 3-5 days | business-day calc, CSV, subdivision, etc. |
+| Polygon-based confidence (E4 multi-TZ) | 1 week | Needs polygon data per city |
+| "World time" feature | TBD | Per product PRD (meeting planner) |
 | Production deployment | when ready | User said "not ready for production" |
 
 ## Known issues

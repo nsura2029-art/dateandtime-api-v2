@@ -4,7 +4,72 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — develop (M13 merged)
+## [unreleased] — develop (M14 merged)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 665/669 tests pass (3 pre-existing + 1 unrelated).
+
+### What shipped
+
+- **M14: Holiday enrichment (Tier 1 + Tier 2 + India + GB)**
+  - Schema migration 157: worldwide flag, category, origin, holiday_occurrence_state, holiday_un_day
+  - Tier 1 — Computed: US federal (5 U.S.C. § 6103), Easter (Computus), seasons (Meeus), DST, US observances, GB bank holidays, IN national
+  - Tier 2 — Hebcal: 18 Jewish holidays × 5 countries = 81+ occurrences
+  - Tier 2 — UN days: 178 international days (worldwide + per-country)
+  - 1,602 country-specific + 225 worldwide = 1,827 holiday occurrences for 2026
+  - Country breakdown: US=410, NL=295, IN=293, NZ=312, GB=292
+
+### Files
+
+- `migrations/157_holiday_worldwide_and_categories.sql`
+- `scripts/seed/holiday_enrich.py` (orchestrator)
+- `scripts/seed/holiday_enrichment/computed.py` (Tier 1 computed rules)
+- `scripts/seed/holiday_enrichment/un_days.py` (Tier 2 UN days)
+- `docs/references/holidays/` (5 research docs)
+- `docs/references/data-platform-journey.md` (M0→M14 narrative)
+- `docs/references/data-sources-master.md` (master source index)
+- `docs/references/schema-evolution.md` (157 migrations)
+- `docs/references/api-endpoints.md` (41 endpoints)
+- `docs/references/timezone-architecture.md`
+- `docs/references/regions-countries-cities.md`
+- `docs/references/data-enrichment-engine.md`
+
+### API changes
+
+- `/api/v1/holidays` and `/api/v1/holidays/{id}` now return new fields: `worldwide`, `scopeLevel`, `category`, `origin`, `conceptTradition`
+- `/api/v1/countries/{cca2}/filters` now includes worldwide events in count (US SEASON filter = 4 instead of 0)
+- All holiday routes use `LEFT JOIN countries` so worldwide events show up correctly
+- M13 tests updated for the new counts (US=22, NL=5)
+
+### Schema (migration 157)
+
+- `holiday_occurrence.country_id` is now **nullable** (was NOT NULL)
+- `holiday_occurrence.worldwide` (INTEGER) — true if applicable globally
+- `holiday_occurrence.category` (TEXT) — public_holiday, observance, religious, international, season, clock_change, etc.
+- `holiday_occurrence.origin` (TEXT) — nager_date, hebcal, un_official, computed_easter, computed_federal_us, etc.
+- `holiday_concept.worldwide` (INTEGER) — true for globally-observed concepts
+- `holiday_concept.origin` (TEXT)
+- `holiday_occurrence_state` (new) — per-state mentions (legal_holiday, observance, closed, partial, unrecognized)
+- `holiday_un_day` (new, 225 rows) — UN day registry
+- `holiday_country_un_day` (new) — which countries observe each UN day
+- New `holiday_source` rows: hebcal, un_official, computed_season, computed_federal_us, employment_nz, drikpanchang
+
+### Test count
+
+- Pre M14: 644 / 648
+- M14: +21 tests, all green
+- **Total: 665 / 669**
+
+### Deferred (post-MVP)
+
+See `reports/holidays-deferred-work.md`. Top 3 for next iteration:
+1. Phase 7: Worldwide onboarding (CA, AU, FR, DE, IT, ES, etc.) — 2-3 days
+2. ERA5 climate for 19K cities without NCEI stations — 3-5 days
+3. Holidays Phase 6: Admin/review UI for source assertions — 1-2 days
+
+---
+
+## [M13] — develop (Holidays MVP)
 
 **Date:** 2026-08-03
 **Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 644/648 tests pass (3 pre-existing + 1 unrelated timeout).

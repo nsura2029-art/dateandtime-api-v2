@@ -52,16 +52,22 @@ const OccurrenceRef = z.object({
   conceptId: z.number().int().describe("Holiday concept ID (e.g., 'Christmas Day' = 1)"),
   conceptName: z.string().describe("Concept name (e.g. 'Christmas Day')"),
   conceptNameLocal: z.string().nullable(),
-  countryCode: z.string().describe("ISO 3166-1 alpha-2"),
-  countryName: z.string(),
+  conceptTradition: z.string().nullable().describe("Religious/cultural tradition (christian, jewish, muslim, hindu, civic, etc.)"),
+  countryCode: z.string().nullable().describe("ISO 3166-1 alpha-2 or NULL for worldwide"),
+  countryName: z.string().nullable(),
   subdivisionCode: z.string().nullable().describe("ISO 3166-2 or NULL for national"),
   startDate: z.string().describe("ISO 8601 date (actual date)"),
   endDate: z.string().nullable().describe("ISO 8601 date or NULL for single-day"),
   observedDate: z.string().nullable().describe("Observed date (e.g. observed Monday)"),
   dateRole: z.enum(["actual", "observed", "substitute", "in_lieu", "working_day_swap"]),
   legalStatus: z.enum(["public", "de_facto", "optional", "observance", "half_day", "working_day_override", "school", "bank", "authorities"]),
-  eventDomain: z.string().nullable(),
+  scopeLevel: z.enum(["global", "country", "subdivision", "locality", "organization"]).describe("Scope: global = worldwide, country = national, subdivision = state/region"),
+  eventDomain: z.string().nullable().describe("Domain: civil, religious, UN, worldwide, astronomical, time_zone, sports, etc."),
+  prominence: z.string().nullable(),
   dateStatus: z.enum(["confirmed", "official_announced", "calculated", "tentative", "moon_sighting_pending", "estimated", "canceled"]),
+  worldwide: z.boolean().describe("True if this holiday applies globally (UN days, New Year, etc.)"),
+  category: z.string().nullable().describe("Primary category: public_holiday, observance, religious, international, season, clock_change, sporting_event, election, school_break, bank_closure"),
+  origin: z.string().nullable().describe("Which source produced this row: nager_date, hebcal, un_official, computed_easter, computed_federal_us, etc."),
   filters: z.array(z.string()).describe("Filter codes this occurrence belongs to"),
   sources: z.array(z.string()).describe("Source keys that contributed to this occurrence"),
 });
@@ -186,23 +192,25 @@ app.openapi(createRoute({
      ORDER BY p.display_order, f.label_en`
   ).bind(cca2).all<{ filter_code: string; state: string; default_selected: number; display_order: number; label_en: string }>();
 
-  // For each filter, count occurrences
+  // For each filter, count occurrences (includes both country-specific AND worldwide events)
   const filters = [];
   for (const p of (policyRes.results || [])) {
-    // rangeCount: in requested range
+    // rangeCount: in requested range (country events + worldwide)
     const rangeRes = await c.env.DB.prepare(
       `SELECT COUNT(DISTINCT occ.id) as n
        FROM holiday_occurrence occ
        JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
-       WHERE occ.country_id = ? AND f.filter_code = ?
+       WHERE (occ.country_id = ? OR occ.country_id IS NULL OR occ.worldwide = 1)
+         AND f.filter_code = ?
          AND occ.start_date <= ? AND COALESCE(occ.end_date, occ.start_date) >= ?`
     ).bind(country.id, p.filter_code, to, from).first<{ n: number }>();
-    // annualCount: in full year
+    // annualCount: in full year (country events + worldwide)
     const annualRes = await c.env.DB.prepare(
       `SELECT COUNT(DISTINCT occ.id) as n
        FROM holiday_occurrence occ
        JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
-       WHERE occ.country_id = ? AND f.filter_code = ?
+       WHERE (occ.country_id = ? OR occ.country_id IS NULL OR occ.worldwide = 1)
+         AND f.filter_code = ?
          AND substr(occ.start_date, 1, 4) = ?`
     ).bind(country.id, p.filter_code, String(year)).first<{ n: number }>();
     filters.push({
@@ -267,7 +275,8 @@ app.openapi(HolidaysListRoute, async (c) => {
   // Build query
   const where: string[] = ["occ.start_date <= ?", "COALESCE(occ.end_date, occ.start_date) >= ?"];
   const params: any[] = [to, from];
-  const joins: string[] = ["JOIN holiday_concept c ON c.id = occ.concept_id", "JOIN countries co ON co.id = occ.country_id"];
+  // Use LEFT JOIN for countries so worldwide events (country_id NULL) aren't dropped
+  const joins: string[] = ["JOIN holiday_concept c ON c.id = occ.concept_id", "LEFT JOIN countries co ON co.id = occ.country_id"];
 
   if (q.country) {
     const country = await c.env.DB.prepare("SELECT id FROM countries WHERE cca2 = ?").bind(q.country.toUpperCase()).first<{ id: number }>();
@@ -277,8 +286,8 @@ app.openapi(HolidaysListRoute, async (c) => {
     where.push("occ.country_id = ?");
     params.push(country.id);
   } else if (q.mode === "international") {
-    // Only global observances
-    where.push("occ.event_domain IN ('UN', 'worldwide', 'astronomical', 'time_zone')");
+    // Only global/worldwide observances (per migration 157)
+    where.push("(occ.worldwide = 1 OR occ.country_id IS NULL)");
   } else if (q.mode === "combined") {
     // Country events + global
     // Already filtered by country if specified; otherwise all
@@ -304,9 +313,11 @@ app.openapi(HolidaysListRoute, async (c) => {
   // Page of results
   const rows = await c.env.DB.prepare(
     `SELECT DISTINCT occ.id, occ.concept_id, c.name_en as concept_name, c.name_local as concept_name_local,
+            c.tradition as concept_tradition,
             occ.country_id, co.cca2 as country_code, co.name as country_name,
             occ.subdivision_code, occ.start_date, occ.end_date, occ.observed_date,
-            occ.date_role, occ.legal_status, occ.event_domain, occ.date_status
+            occ.date_role, occ.legal_status, occ.scope_level, occ.event_domain, occ.prominence, occ.date_status,
+            occ.worldwide, occ.category, occ.origin
      FROM holiday_occurrence occ ${joins.join(" ")}
      WHERE ${where.join(" AND ")}
      ORDER BY occ.start_date
@@ -327,6 +338,7 @@ app.openapi(HolidaysListRoute, async (c) => {
       conceptId: r.concept_id,
       conceptName: r.concept_name,
       conceptNameLocal: r.concept_name_local,
+      conceptTradition: r.concept_tradition,
       countryCode: r.country_code,
       countryName: r.country_name,
       subdivisionCode: r.subdivision_code,
@@ -335,8 +347,13 @@ app.openapi(HolidaysListRoute, async (c) => {
       observedDate: r.observed_date,
       dateRole: r.date_role,
       legalStatus: r.legal_status,
+      scopeLevel: r.scope_level,
       eventDomain: r.event_domain,
+      prominence: r.prominence,
       dateStatus: r.date_status,
+      worldwide: r.worldwide === 1,
+      category: r.category,
+      origin: r.origin,
       filters: (fRes.results || []).map((f) => f.filter_code),
       sources: (sRes.results || []).map((s) => s.source_key),
     });
