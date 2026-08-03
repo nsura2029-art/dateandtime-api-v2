@@ -2,34 +2,32 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-03 02:30 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-03 03:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.6 + M11.7 both shipped. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **422 Indian cities with Census of India 2011 data**, **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.5.1 + M11.7 + M11.2.7 all shipped. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, **148,331 cities with full Wikidata descriptions (100% of Q-id cities)**, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **14,450 US cities with ACS 5-year Sex-by-Age demographics**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **963 Indian cities with Census of India 2011 data**, **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.5 |
-| `feature/m11.6-eurostat` | M11.6 Eurostat LAU + URAU | **41,571 LAU + 597 URAU cities — done, awaiting merge** |
-| `feature/m11.7-census-india` | M11.7 Census of India 2011 | **422 cities done, awaiting merge** |
+| `develop` | Integration | up to date with M0-M11.5.1 |
 
 ## Last 5 commits
 
 ```
-HEAD: M11.4: World Bank country population (216 countries, pivoted from UN WPP)
-HEAD~1: M11.2.5: Wikidata alt_labels search strategy (15 new tests)
-HEAD~2: M11.3: Unicode CLDR localized country names (5,000 rows, 20 langs, 2 new endpoints)
-HEAD~3: M11.2.x: apply Wikidata population values to cities (21,461 filled)
-HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
+HEAD: Merge M11.7 + M11.5.1 + M11.2.7: censusIndia, acs, wikidata backfill
+HEAD~1: M11.2.7: Update M11.2.6.6 test to verify backfilled data instead of gap
+HEAD~2: M11.2.7: Backfill 3,000 missing wikidata_staging entries
+HEAD~3: M11.5.1: ACS 5-year estimates (Sex by Age, B01001) — 14,450 US cities
+HEAD~4: M11.7: Census of India 2011 (963 cities, 130.9M people)
 ```
 
 ## Test status
 
-**444 / 447 pass** (3 pre-existing failures, all unrelated to M11.x work)
+**524 / 528 pass** (4 pre-existing failures, all unrelated to M11.x work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -48,6 +46,9 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 | `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
 | `tests/m11.4-worldbank.test.ts` | 18 | M11.4 country population (World Bank 2024) |
 | `tests/m11.5-us-census.test.ts` | 20 | M11.5 US Census Bureau attributes |
+| `tests/m11.5.1-acs.test.ts` | 16 | M11.5.1 ACS 5-year Sex by Age |
+| `tests/m11.6-eurostat.test.ts` | 20 | M11.6 Eurostat LAU + URAU |
+| `tests/m11.7-census-india.test.ts` | 25 | M11.7 Census of India 2011 |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
@@ -58,25 +59,26 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 
 ## Next 3 things (priority order)
 
-1. **M11.6: Eurostat (City vs FUA)** (2-3 days)
-   - EU-only
-   - Distinguish administrative City from FUA
+1. **M11.5.1 expand: B19013 + B15003** (1 day)
+   - B19013: median household income (18MB)
+   - B15003: educational attainment (200MB)
+   - Same FIPS join key, same loader pattern
 
-2. **M11.7: Census of India** (1-2 days)
-   - 2011 still official
-   - Will fix ~684 NULL IN cities (post M11.2.x)
+2. **M11.6.1: URAU GeoJSON expansion** (deferred)
+   - More EU countries, vector boundaries
 
-3. **M11.5.1: ACS 5-year demographics** (deferred)
-   - Median income, housing, education
-   - Per-city US demographics
-   - Same FIPS join key
+3. **M11.7.2: Full PCA town-level data** (deferred — DCHB URLs 404)
+   - recurze/IndianCities has 523 cities 100K+ (third-party)
+   - Would need a fallback strategy
 
 ## Future (deferred)
 
 | Item | Estimate | Why deferred |
 |---|---:|---|
-| M11.2.7: Backfill missing 32,600 Wikidata Q-ids | 1-2 hours | Re-run SPARQL with full Q-id list |
+| M11.5.1 expand: B19013 (income) + B15003 (education) | 1 day | Same FIPS loader, different tables |
+| M11.6.1: URAU GeoJSON expansion | 2-3 days | Need GISCO vector download |
 | M11.2.8: Add Wikidata P31/P17/P131 to description | 2-3 days | Need richer SPARQL ingestion |
+| M11.7.2: Full PCA town-level data | deferred | DCHB URLs 404; recurze dataset is 3rd-party |
 | Time-calc endpoint (DST + date-line math) | 1-2 days | Separate scope |
 | polygon-based confidence (E4 multi-TZ municipality) | 1 week | Needs polygon data per city |
 | Add country localized name to /cities/{id} response | 2 hours | Cosmetic, countries object already exists |
@@ -87,7 +89,7 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 ## Known issues
 
 - **BUG-1 (open)**: Swagger UI CORS via `wrangler dev --remote` proxy. Workaround: open `https://dt-api-v2-dev.nsura2029.workers.dev/docs` directly.
-- **pre-existing test failures (3)**: M8.5 data-quality issues, env.test.ts localhost wildcard, Rio Branco timezone. All unrelated to M11.x.
+- **pre-existing test failures (4)**: M8.5 data-quality issues, env.test.ts localhost wildcard, M11.6.20 LAU pop_2024 (FR/ES/AL/IS/RS have 0), Rio Branco timezone. All unrelated to M11.x.
 - **State code mismatch (5-10% merge misses)**: dr5hn uses ISO 3166-2, GeoNames uses FIPS. 10-km fuzzy tier catches many but not all.
 - **GeoNames `elevation_m` is NULL for all cities**: cities5000.txt doesn't include elevation; needs alternate dataset.
 - **Phoenix OR**: dr5hn incorrectly marks `is_state_capital=1` — fixed in M6 migration 132, but watch for re-occurrence in dr5hn updates.
