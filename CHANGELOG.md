@@ -4,6 +4,95 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
+## [unreleased] — feature/m11.5-us-census (M11.5 US Census Bureau)
+
+**Date:** 2026-08-02
+**Status:** Applied to D1 — 14,459 US cities with FIPS, 10,121 with population time series
+
+### What shipped
+
+- **Migration 147**: `us_census_attributes` (city_id, FIPS, LSAD, area, internal point, pop_2020..pop_2025) + `cities.fips_state_code`, `cities.fips_place_code`, `cities.fips_geoid`
+- **`scripts/seed/us_gazetteer_to_d1.py`** — matches 14,459 of 17,055 US cities to FIPS via (state + name) — 25 min load
+- **`scripts/seed/us_census_population_to_d1.py`** — loads 10,121 incorporated places with population time series — 15 min load
+- **`scripts/seed/us_census_publish.sh`** — uploads to R2, registers source_releases
+- **`src/routes/cities.ts`** — new `census` block in /cities/{id} response
+- **20 new tests** in `tests/m11.5-us-census.test.ts`, all pass
+
+### 7 new attributes per US city (via `census` block)
+
+| Attribute | Example (NYC) | Source |
+|---|---|---|
+| `fips.geoid` | "3651000" | Gazetteer (US Census Bureau) |
+| `legalClass` | "city" / "town" / "CDP" / "borough" | LSAD code |
+| `landAreaSqMi` | 300.457 | Gazetteer |
+| `waterAreaSqMi` | 165.8 | Gazetteer |
+| `densityPerSqMi` | 28571.9 | computed: pop / land_area |
+| `populationTimeSeries` | 2020-2025 (6 entries) | SUB-EST (annual) |
+| `populationLatest` | 8,584,629 (2025) | SUB-EST POPESTIMATE2025 |
+| `internalLat` / `internalLon` | 40.71 / -74.01 | Gazetteer internal point |
+
+### Sample API response
+
+**`GET /api/v1/cities/122795` (New York City):**
+```json
+{
+  "name": "New York City",
+  "census": {
+    "fips": { "state": "36", "place": "51000", "geoid": "3651000" },
+    "legalClass": "city",
+    "functionalStatus": "A",
+    "landAreaSqMi": 300.457,
+    "waterAreaSqMi": 165.8,
+    "densityPerSqMi": 28571.9,
+    "internalLat": 40.71,
+    "internalLon": -74.01,
+    "populationTimeSeries": [
+      { "year": 2020, "population": 8751188 },
+      { "year": 2021, "population": 8447958 },
+      { "year": 2022, "population": 8362665 },
+      { "year": 2023, "population": 8433834 },
+      { "year": 2024, "population": 8596825 },
+      { "year": 2025, "population": 8584629 }
+    ],
+    "populationLatest": 8584629,
+    "populationYear": 2025,
+    "estimatesBase2020": 8805594,
+    "vintage": "vintage-2025"
+  }
+}
+```
+
+### Coverage
+
+- 14,459 / 17,055 US cities matched to FIPS (84.8%)
+- 10,121 / 19,483 incorporated places have population time series
+- 2,596 unmatched (Alaska boroughs, MCDs, etc. — Census tracks these as county-equivalents)
+- Non-US cities: `census: null`
+
+### Source releases
+
+| release_id | source_key | status | row_count | raw_r2_key |
+|---|---|---|---:|---|
+| `us-census-gazetteer-2024-2026-08-02` | `us_census` | `raw-stored` | 14,459 | `raw/us_census/gazetteer/2024/...` |
+| `us-census-sub-est-2025-2026-08-02` | `us_census` | `raw-stored` | 10,121 | `raw/us_census/sub-est/2025/...` |
+
+### Gotchas hit
+
+- **Encoding**: SUB-EST2025 CSV uses Latin-1 (Spanish place names with ñ, á). Used `encoding="latin-1", errors="replace"`.
+- **LSAD parsing**: Gazetteer has some non-numeric LSAD values (e.g. "UG" for territories). Used try/except with default 0.
+- **Trailing whitespace**: Gazetteer file has wide fields with trailing spaces for visual alignment. Strip all keys/values.
+- **Match algorithm**: Initial O(N*M) was too slow (estimated 12+ hours). Switched to O(N+M) via dict-by-state-of-normalized-name.
+- **Loaders clobber each other**: gazetteer loader sets legal_class/land_area; sub_est loader overwrites the whole row. Fixed by using `ON CONFLICT(city_id) DO UPDATE` in both loaders.
+- **FIPS place 5-digit**: Some places have leading zeros (e.g. "00124"). Used `.zfill(5)` everywhere.
+- **Bug in API**: Initial deploy didn't include `ci.fips_geoid` in the main SELECT, so the API returned null. Fixed by adding to SELECT and CityRow type.
+
+### Test summary
+
+444/447 pass (3 pre-existing failures, 0 new from M11.5).
+M11.5 added 20 new tests, all green.
+
+---
+
 ## [unreleased] — feature/m11.2.6-wikidata-desc (M11.2.6 Wikidata descriptions)
 
 **Date:** 2026-08-02
