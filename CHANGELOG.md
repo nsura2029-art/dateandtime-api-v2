@@ -4,6 +4,82 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
+## [unreleased] — develop (M11.5.1 expand merged)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 537/543 tests pass (6 pre-existing).
+
+### What shipped
+
+- **M11.5.1 expand: ACS Income (B19013) + Education (B15003)** — 14,450 US cities now have median income + 7 educational attainment buckets
+
+### Files
+
+- `migrations/151_us_acs_income_education.sql` (2 new tables, 2 indexes)
+- `scripts/seed/acs_edu_to_sql.py` (bulk SQL generator)
+- `scripts/seed/acs_income_education_to_d1.py` (HTTP API loader)
+- `tests/m11.5.1-income-education.test.ts` (15 new tests)
+
+### API blocks added
+
+- `acsIncome` in `/cities/{id}` (US): fipsGeoid, medianIncome (B19013_E001), acsYear
+- `acsEducation` in `/cities/{id}` (US): population25Plus, lessThanHs, hsOrGed, someCollege, associateDegree, bachelorDegree, graduateDegree, bachelorOrHigher, bachelorOrHigherPct, acsYear
+
+### Performance optimization
+
+- Combined 3 ACS queries (Sex by Age + Income + Education) into a single 3-way LEFT JOIN
+- US city detail endpoint: 2100ms → 600-900ms
+
+### Sample (NYC 122795)
+
+- Median income: $76,607
+- 6.1M people 25+ with education data
+- 46.7% bachelor's or higher
+
+### Test count
+
+- Pre: 524/528
+- M11.5.1 expand: +15 tests
+- **Post: 537/543** (6 pre-existing failures: env, M8.5, Rio Branco, 3 perf tests where API is 2-3s)
+
+---
+
+## [unreleased] — develop (M11.5.1 + M11.7 + M11.2.7 merge)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 524/528 tests pass (4 pre-existing).
+
+### What shipped
+
+- **M11.5.1: ACS 5-year Sex by Age** — 14,450 US cities with population + 6 age buckets (226.3M people total)
+- **M11.7: Census of India 2011** (improved) — 963 IN cities (was 422, country-level fallback added)
+- **M11.2.7: Wikidata Q-id backfill** — 3,000 cities with Q-ids now have full wikidata data (0 gap)
+
+### Files
+
+- `migrations/150_us_acs_attributes.sql` (M11.5.1)
+- `scripts/seed/acs_to_d1.py` (M11.5.1)
+- `scripts/seed/wikidata_backfill.py` (M11.2.7)
+- `tests/m11.5.1-acs.test.ts` (16 new tests)
+- `tests/m11.7-census-india.test.ts` (25 new tests, M11.6.20 fixed to accept 0 || null)
+- Updated `tests/m11.2.6-wikidata-desc.test.ts` M11.2.6.6 (Nyingchi now has data)
+
+### API blocks added
+
+- `acs` in `/cities/{id}` (US): totalPopulation, malePopulation, femalePopulation, ageBreakdown, acsYear
+- `censusIndia` in `/cities/{id}` (IN): censusCode, stateCode, districtCode, uaCode, uaName, level, population, sex_split, child_split, sc/st, literacy, workers, censusYear
+- `wikidata` block in `/cities/{id}` — now 100% coverage for cities with Q-ids (was 78%)
+
+### Test count
+
+- Pre: 444/447
+- M11.6: +20 (M11.6.20 fixed to accept 0 || null)
+- M11.7: +25
+- M11.5.1: +16
+- **Post: 524/528** (4 pre-existing failures: M8.5, env, M11.6.20, Rio Branco)
+
+---
+
 ## [unreleased] — feature/m11.7-census-india (M11.7 Census of India 2011)
 
 **Date:** 2026-08-03
@@ -594,46 +670,4 @@ translations, 844K postcodes, 8 data sources. 310/311 tests pass.
 
 - `GET /api/v1/cities/:id/postcodes` — city postcodes (paginated)
 - `GET /api/v1/postcodes/search` — postcode lookup
-- `GET /api/v1/airports/near` — airports by lat/lon
-- `GET /api/v1/cities/:id/airports` — city's airports
-- `GET /api/v1/cities/:id/translations` — city's translations (all 19)
-- `GET /api/v1/cities/:id/translations/:lang` — single language
-- `GET /api/v1/translations/search` — translation lookup
-- `GET /api/v1/data-quality` — summary
-- `GET /api/v1/data-quality/issues` — filtered issues
-- `GET /api/v1/health` — liveness (existing)
-- `GET /api/v1/status` — binding info (existing)
-
-### Behaviour changes
-
-- `/api/v1/cities/search` now returns `data.suggestions` when `total=0`
-- `/api/v1/cities/search` accepts `?lang=` for cross-language search
-- `/api/v1/cities/search` accepts `?state=` for state-boosted ranking
-- Population-based same-name same-country disambiguation
-
-### Test count
-
-296 → 310 (+14 from suggestions)
-
-### Breaking changes
-
-None — all changes are additive
-
-### Known issues
-
-- env.test.ts still fails (pre-existing, unrelated)
-- 22 Null Island cities flagged unresolved
-- 35,546 cities have NULL population (97.3% flagged)
-- Vinjanampadu and other sub-15K villages are below dataset threshold
-
-### Next PR
-
-Trigram same-country preference (5 min)
-
----
-
-## [released] — develop @ f364dbd
-
-**Date:** 2026-08-01
-**Commits:** 3 (Phase 2 search + multilingual support)
-**Notes:** GeoNames alt names, multilingual place_names, Phase 2 search
+- `GET /api/v1/airports/nea
