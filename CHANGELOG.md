@@ -4,7 +4,64 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — feature/m11.5-us-census (M11.5 US Census Bureau)
+## [unreleased] — feature/m11.6-eurostat (M11.6 Eurostat LAU + URAU)
+
+**Date:** 2026-08-03
+**Status:** API deployed. URAU loaded (597 cities, 487 FUAs). LAU loader in progress (~75 min remaining for ~44K cities).
+
+### What shipped
+
+- **Migration 148**: `eu_lau_attributes` (city_id, gisco_id, lau_name, pop_2024, pop_density_2024, area_km2, year, release_id, fetched_at) + `eu_urau_attributes` (city_id, urau_code, urau_name, fua_code, fua_name, area_sqm, nuts3_code, release_id, fetched_at) + `cities.gisco_id` + 3 indexes
+- **`scripts/seed/eurostat_lau_to_d1.py`** — loads ~44K EU cities from LAU_RG_01M_2024_3035.csv (~80 min)
+- **`scripts/seed/eurostat_urau_to_d1.py`** — loads 597 EU cities with URAU City-vs-FUA data from URAU_AT_2024.csv (~2 min)
+- **`scripts/seed/eurostat_publish.sh`** — uploads both to R2, registers source_registry + source_releases
+- **`src/routes/cities.ts`** — new `eurostat` block in /cities/{id} response (lau + urau sub-blocks)
+- **20 new tests** in `tests/m11.6-eurostat.test.ts`, all pass
+
+### New attributes per EU city (via `eurostat` block)
+
+| Sub-block | Attribute | Example (Berlin) | Notes |
+|---|---|---|---|
+| `eurostat.lau` | `giscoId` | "DE_11000000" | Eurostat LAU ID |
+| `eurostat.lau` | `population` | 3664088 | null for FR/ES/AL/IS/RS (privacy laws) |
+| `eurostat.lau` | `populationDensity` | 4110.4 | people per km² |
+| `eurostat.lau` | `areaKm2` | 891.78 | LAU 2024 |
+| `eurostat.lau` | `year` | 2024 | data vintage |
+| `eurostat.urau` | `urauCode` | "DE001C" | City code |
+| `eurostat.urau` | `fuaCode` | "DE001F" | Functional Urban Area code |
+| `eurostat.urau` | `fuaName` | "Berlin" | Wider metro area name |
+| `eurostat.urau` | `nuts3Code` | "DE300" | NUTS 2024 region |
+| `eurostat.urau` | `areaSqKm` | 891.78 | URAU city area |
+
+### Sources
+
+- **Eurostat LAU 2024**: https://gisco-services.ec.europa.eu/distribution/v2/lau/csv/LAU_RG_01M_2024_3035.csv (5.6 MB, 97,987 records, 30 countries, released 2026-02-18)
+- **Eurostat URAU 2024** (City vs FUA): https://gisco-services.ec.europa.eu/distribution/v2/urau/csv/URAU_AT_2024.csv (63.5 KB, 1,332 records)
+- **Note**: URAU filename says "_AT" but the file is pan-EU
+
+### Coverage
+
+- LAU: ~44K EU cities matched to our DB (~80% of EU subset)
+- URAU: 597 cities + 487 distinct FUAs (out of 739 cities / 593 FUAs in source)
+- 5 countries (FR/ES/AL/IS/RS) have POP_2024=0 — national privacy laws, by design
+
+### Test count
+
+- Pre M11.6: 444/447 (3 pre-existing failures: M8.5, env.test.ts, Rio Branco)
+- M11.6 added 20 tests, all green
+- Post M11.6: 464/467 (3 pre-existing failures, 0 new from M11.x)
+
+### Gotchas
+
+- **URAU file is pan-EU** despite filename "URAU_AT_2024.csv"
+- **FUA lookup ordering**: FUA records (URAU_CATG=F) come AFTER cities in CSV. Must collect FUA first.
+- **5 countries with POP_2024=0** is by design — privacy laws
+- **R2 credentials**: initial script had CF account ID as R2 key. Fixed.
+- **source_registry schema**: source_key, publisher, dataset, coverage, access_method, endpoint_url, license, license_url, attribution, refresh_policy, known_limitations, is_active, created_at, updated_at
+
+---
+
+## [merged 2026-08-02] — feature/m11.5-us-census (M11.5 US Census Bureau)
 
 **Date:** 2026-08-02
 **Status:** Applied to D1 — 14,459 US cities with FIPS, 10,121 with population time series

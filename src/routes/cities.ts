@@ -179,6 +179,25 @@ const CityDetail = z.object({
     estimatesBase2020: z.number().int().nullable().describe("April 2020 census-day estimates base"),
     vintage: z.string().nullable().describe("Census vintage: 'vintage-2025'"),
   }).nullable().describe("US Census Bureau enrichment (M11.5) — null for non-US cities or US cities not in Census"),
+  // M11.6: Eurostat block (LAU + URAU for EU cities)
+  eurostat: z.object({
+    lau: z.object({
+      giscoId: z.string().nullable().describe("Eurostat LAU ID (e.g. 'DE_11000000' for Berlin)"),
+      lauName: z.string().nullable().describe("Official LAU name (may differ from dr5hn name)"),
+      population: z.number().int().nullable().describe("Population 1 Jan 2024 (null for FR/ES/AL/IS/RS — privacy laws)"),
+      populationDensity: z.number().nullable().describe("People per km² (LAU 2024)"),
+      areaKm2: z.number().nullable().describe("Area in km² (LAU 2024)"),
+      year: z.number().int().nullable().describe("Data vintage (2024)"),
+    }).nullable().describe("Eurostat LAU (Local Administrative Units) — null if no match"),
+    urau: z.object({
+      urauCode: z.string().nullable().describe("URAU City code (e.g. 'FR028C' for Nîmes)"),
+      urauName: z.string().nullable().describe("URAU City name"),
+      fuaCode: z.string().nullable().describe("Functional Urban Area code (e.g. 'FR028F')"),
+      fuaName: z.string().nullable().describe("Functional Urban Area name (the wider metro area)"),
+      areaSqKm: z.number().nullable().describe("URAU city area in km²"),
+      nuts3Code: z.string().nullable().describe("NUTS 2024 region code"),
+    }).nullable().describe("Eurostat URAU (City vs FUA) — null if no URAU match"),
+  }).nullable().describe("Eurostat enrichment (M11.6) — null for non-EU cities or EU cities not in LAU/URAU"),
 });
 
 const CityDetailResponse = z.object({
@@ -1085,7 +1104,7 @@ cities.openapi(cityDetailRoute, async (c) => {
       ci.display_name, ci.short_name, ci.search_name,
       ci.geonames_id, ci.elevation_m, ci.wiki_url,
       ci.source_primary, ci.source_merged_with, ci.merge_method, ci.merge_run_id, ci.merged_at,
-      ci.fips_geoid,
+      ci.fips_geoid, ci.gisco_id,
       co.id as co_id, co.cca2 as co_cca2, co.cca3 as co_cca3,
       co.name as co_name, co.flag_emoji as co_flag, co.capital as co_capital,
       ar.id as ar_id, ar.name as ar_name, ar.country_id as ar_country_id,
@@ -1127,6 +1146,7 @@ cities.openapi(cityDetailRoute, async (c) => {
     timezone_source: string | null;
     data_quality_flags: string | null;
     fips_geoid: string | null;
+    gisco_id: string | null;
     co_id: number;
     co_cca2: string;
     co_cca3: string | null;
@@ -1362,6 +1382,78 @@ cities.openapi(cityDetailRoute, async (c) => {
   }
 
   // --------------------------------------------------------------------------
+  // STEP 4.7: Fetch Eurostat LAU + URAU data (M11.6)
+  // --------------------------------------------------------------------------
+  // For EU cities with a gisco_id, look up the Eurostat LAU attributes:
+  //   - lau: official LAU ID, name, population (2024), density, area
+  //   - urau: URAU city code, name, FUA (Functional Urban Area) code+name
+  //
+  // LAU is pan-EU (30 countries, ~98K records). URAU is pan-EU for the
+  // ~739 cities that have a FUA classification. Population is null for
+  // FR/ES/AL/IS/RS due to national privacy laws.
+  //
+  // This block is only populated for EU cities (~80K in our DB). For non-EU
+  // cities or EU cities without a gisco_id, this block is null.
+  // --------------------------------------------------------------------------
+  let eurostatBlock: {
+    lau: {
+      giscoId: string | null;
+      lauName: string | null;
+      population: number | null;
+      populationDensity: number | null;
+      areaKm2: number | null;
+      year: number | null;
+    } | null;
+    urau: {
+      urauCode: string | null;
+      urauName: string | null;
+      fuaCode: string | null;
+      fuaName: string | null;
+      areaSqKm: number | null;
+      nuts3Code: string | null;
+    } | null;
+  } | null = null;
+  if (row.gisco_id) {
+    // Fetch both LAU and URAU in parallel (but Cloudflare Workers D1 doesn't
+    // have native parallel; we just await sequentially — fast enough)
+    const lauRow = await c.env.DB.prepare(
+      `SELECT gisco_id, lau_name, pop_2024, pop_density_2024, area_km2, year
+       FROM eu_lau_attributes
+       WHERE city_id = ? LIMIT 1`
+    ).bind(id).first<any>();
+
+    const urauRow = await c.env.DB.prepare(
+      `SELECT urau_code, urau_name, fua_code, fua_name, area_sqm, nuts3_code
+       FROM eu_urau_attributes
+       WHERE city_id = ? LIMIT 1`
+    ).bind(id).first<any>();
+
+    eurostatBlock = {
+      lau: lauRow
+        ? {
+            giscoId: lauRow.gisco_id,
+            lauName: lauRow.lau_name,
+            population: lauRow.pop_2024 as number | null,
+            populationDensity: lauRow.pop_density_2024 as number | null,
+            areaKm2: lauRow.area_km2 as number | null,
+            year: lauRow.year as number | null,
+          }
+        : null,
+      urau: urauRow
+        ? {
+            urauCode: urauRow.urau_code,
+            urauName: urauRow.urau_name,
+            fuaCode: urauRow.fua_code as string | null,
+            fuaName: urauRow.fua_name as string | null,
+            // area_sqm is in km² (despite name), per Eurostat docs
+            areaSqKm: urauRow.area_sqm as number | null,
+            nuts3Code: urauRow.nuts3_code as string | null,
+          }
+        : null,
+    };
+  }
+
+  // --------------------------------------------------------------------------
   // STEP 5: Build the response
   // --------------------------------------------------------------------------
   // Field mapping notes:
@@ -1447,6 +1539,8 @@ cities.openapi(cityDetailRoute, async (c) => {
         wikidata: wikidataBlock,
         // M11.5 US Census
         census: censusBlock,
+        // M11.6 Eurostat
+        eurostat: eurostatBlock,
       },
     },
     200
