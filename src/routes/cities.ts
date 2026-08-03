@@ -257,6 +257,25 @@ const CityDetail = z.object({
     bachelorOrHigherPct: z.number().nullable().describe("Bachelor's or higher as % of 25+ population"),
     acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022)"),
   }).nullable().describe("ACS 5-year educational attainment (B15003) — null if not available"),
+  // M11.5.1 expand 2: ACS 5-year Tenure (B25003) + Transport (B08301)
+  acsTenure: z.object({
+    fipsGeoid: z.string().nullable().describe("7-digit FIPS GEOID"),
+    totalOccupied: z.number().int().nullable().describe("Total occupied housing units (B25003_E001)"),
+    ownerOccupied: z.number().int().nullable().describe("Owner-occupied units (B25003_E002)"),
+    renterOccupied: z.number().int().nullable().describe("Renter-occupied units (B25003_E003)"),
+    ownerOccupiedPct: z.number().nullable().describe("Owner-occupied %"),
+    renterOccupiedPct: z.number().nullable().describe("Renter-occupied %"),
+    acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022)"),
+  }).nullable().describe("ACS 5-year housing tenure (B25003) — null if not available"),
+  acsTransport: z.object({
+    fipsGeoid: z.string().nullable().describe("7-digit FIPS GEOID"),
+    totalWorkers: z.number().int().nullable().describe("Total workers 16+ (B08301_E001)"),
+    carOrVan: z.number().int().nullable().describe("Car, truck, or van workers (B08301_E002 — best-guess)"),
+    droveAlone: z.number().int().nullable().describe("Drove alone (B08301_E003)"),
+    publicTransport: z.number().int().nullable().describe("Public transport (B08301 — best-guess column)"),
+    workedAtHome: z.number().int().nullable().describe("Worked at home (B08301 — best-guess column)"),
+    acsYear: z.number().int().nullable().describe("End year of ACS 5-year period (2022)"),
+  }).nullable().describe("ACS 5-year means of transportation (B08301) — null if not available. Note: B08301 has 21 raw columns stored; this block exposes a few key rollups."),
 });
 
 const CityDetailResponse = z.object({
@@ -1644,6 +1663,25 @@ cities.openapi(cityDetailRoute, async (c) => {
     bachelorOrHigherPct: number | null;
     acsYear: number | null;
   } | null = null;
+  // M11.5.1 expand 2: Tenure (B25003) + Transport (B08301)
+  let acsTenureBlock: {
+    fipsGeoid: string | null;
+    totalOccupied: number | null;
+    ownerOccupied: number | null;
+    renterOccupied: number | null;
+    ownerOccupiedPct: number | null;
+    renterOccupiedPct: number | null;
+    acsYear: number | null;
+  } | null = null;
+  let acsTransportBlock: {
+    fipsGeoid: string | null;
+    totalWorkers: number | null;
+    carOrVan: number | null;
+    droveAlone: number | null;
+    publicTransport: number | null;
+    workedAtHome: number | null;
+    acsYear: number | null;
+  } | null = null;
   if (row.fips_geoid) {
     // M11.5.1 expand: Combine all 3 ACS queries into one for performance.
     // 3-way LEFT JOIN: us_acs_attributes (Sex by Age) + us_acs_income_attributes (B19013) + us_acs_education_attributes (B15003)
@@ -1655,10 +1693,16 @@ cities.openapi(cityDetailRoute, async (c) => {
          a.acs_year,
          i.median_income,
          e.population_25_plus, e.less_than_hs, e.hs_or_ged, e.some_college,
-         e.associate_degree, e.bachelor_degree, e.graduate_degree, e.bachelor_or_higher
+         e.associate_degree, e.bachelor_degree, e.graduate_degree, e.bachelor_or_higher,
+         t.total_occupied, t.owner_occupied, t.renter_occupied,
+         t.owner_occupied_pct, t.renter_occupied_pct,
+         tr.e001, tr.e002, tr.e003, tr.e010, tr.e021,
+         tr.car_or_van, tr.public_transport_guess, tr.worked_at_home_guess
        FROM us_acs_attributes a
        LEFT JOIN us_acs_income_attributes i ON i.fips_geoid = a.fips_geoid
        LEFT JOIN us_acs_education_attributes e ON e.fips_geoid = a.fips_geoid
+       LEFT JOIN us_acs_tenure_attributes t ON t.fips_geoid = a.fips_geoid
+       LEFT JOIN us_acs_transport_attributes tr ON tr.fips_geoid = a.fips_geoid
        WHERE a.city_id = ? LIMIT 1`
     ).bind(id).first<any>();
 
@@ -1707,6 +1751,32 @@ cities.openapi(cityDetailRoute, async (c) => {
           graduateDegree: acsCombined.graduate_degree as number | null,
           bachelorOrHigher: bachHigher,
           bachelorOrHigherPct: bachPct,
+          acsYear: acsCombined.acs_year as number | null,
+        };
+      }
+
+      // Tenure block (M11.5.1 expand 2: B25003)
+      if (acsCombined.total_occupied != null) {
+        acsTenureBlock = {
+          fipsGeoid: acsCombined.fips_geoid,
+          totalOccupied: acsCombined.total_occupied as number | null,
+          ownerOccupied: acsCombined.owner_occupied as number | null,
+          renterOccupied: acsCombined.renter_occupied as number | null,
+          ownerOccupiedPct: acsCombined.owner_occupied_pct as number | null,
+          renterOccupiedPct: acsCombined.renter_occupied_pct as number | null,
+          acsYear: acsCombined.acs_year as number | null,
+        };
+      }
+
+      // Transport block (M11.5.1 expand 2: B08301)
+      if (acsCombined.e001 != null) {
+        acsTransportBlock = {
+          fipsGeoid: acsCombined.fips_geoid,
+          totalWorkers: acsCombined.e001 as number | null,
+          carOrVan: acsCombined.car_or_van as number | null,
+          droveAlone: acsCombined.e003 as number | null,
+          publicTransport: acsCombined.public_transport_guess as number | null,
+          workedAtHome: acsCombined.worked_at_home_guess as number | null,
           acsYear: acsCombined.acs_year as number | null,
         };
       }
@@ -1808,6 +1878,9 @@ cities.openapi(cityDetailRoute, async (c) => {
         // M11.5.1 expand: ACS Income (B19013) + Education (B15003)
         acsIncome: acsIncomeBlock,
         acsEducation: acsEducationBlock,
+        // M11.5.1 expand 2: Tenure (B25003) + Transport (B08301)
+        acsTenure: acsTenureBlock,
+        acsTransport: acsTransportBlock,
       },
     },
     200
