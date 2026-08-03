@@ -6,15 +6,15 @@ Last updated: 2026-08-02 16:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.2.6 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.5 complete. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **10,121 US cities with Census population time series 2020-2025**, **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
 | Branch | Purpose | Status |
 |---|---|---|
 | `main` | Production (empty) | dormant |
-| `develop` | Integration | up to date with M0-M11.4 |
-| `feature/m11.2.6-wikidata-desc` | M11.2.6 Wikidata descriptions in /cities/{id} | ready to merge |
+| `develop` | Integration | up to date with M0-M11.2.6 |
+| `feature/m11.5-us-census` | M11.5 US Census Bureau city attributes | ready to merge |
 
 ## Last 5 commits
 
@@ -28,7 +28,7 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 
 ## Test status
 
-**429 / 432 pass** (3 pre-existing failures, all unrelated to M11.x work)
+**444 / 447 pass** (3 pre-existing failures, all unrelated to M11.x work)
 
 | Test file | Tests | Covers |
 |---|---:|---|
@@ -46,6 +46,7 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 | `tests/m11.2.6-wikidata-desc.test.ts` | 18 | M11.2.6 wikidata description in /cities/{id} |
 | `tests/m11.3-cldr.test.ts` | 18 | M11.3 country localized names |
 | `tests/m11.4-worldbank.test.ts` | 18 | M11.4 country population (World Bank 2024) |
+| `tests/m11.5-us-census.test.ts` | 20 | M11.5 US Census Bureau attributes |
 | `tests/suggestions.test.ts` | 14 | M10+ did-you-mean |
 | `tests/endpoints.test.ts` | 14 | M7 |
 | `tests/search-ranking.test.ts` | 14 | M6 |
@@ -56,17 +57,18 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 
 ## Next 3 things (priority order)
 
-1. **M11.5: US Census (state/city pop)** (2-3 days)
-   - Vintage tracking adds complexity
-   - Will fix the ~22K NULL cities in US (post-M11.2.x)
-
-2. **M11.6: Eurostat (City vs FUA)** (2-3 days)
+1. **M11.6: Eurostat (City vs FUA)** (2-3 days)
    - EU-only
    - Distinguish administrative City from FUA
 
-3. **M11.7: Census of India** (1-2 days)
+2. **M11.7: Census of India** (1-2 days)
    - 2011 still official
    - Will fix ~684 NULL IN cities (post M11.2.x)
+
+3. **M11.5.1: ACS 5-year demographics** (deferred)
+   - Median income, housing, education
+   - Per-city US demographics
+   - Same FIPS join key
 
 ## Future (deferred)
 
@@ -108,13 +110,14 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 | place_names | 451,000+ | dr5hn alt names |
 | data_sources | 8 | M8 |
 | data_quality_checks | 10 | M8 |
-| **source_registry** | **10** | **M11.0 (1 active = GeoNames)** |
-| **source_releases** | **5** | **M11.0 + M11.1.5 + M11.2 + M11.3 + M11.4** |
+| **source_registry** | **10** | **M11.0 (2 active = GeoNames + us_census)** |
+| **source_releases** | **7** | **M11.0 + M11.1.5 + M11.2 + M11.3 + M11.4 + M11.5 (gaz + sub-est)** |
 | **cities_staging** | **69,561** | **M11.0 (raw, validated)** |
 | **alt_names_staging** | **767,572** | **M11.1.5 (GeoNames alt names, validated)** |
 | **wikidata_staging** | **115,731** | **M11.2 (Wikidata entities, raw-stored)** |
 | **country_names** | **5,000** | **M11.3 (CLDR 48.2 country names, 20 langs × 250 countries)** |
 | **country_populations** | **216** | **M11.4 (World Bank SP.POP.TOTL year=2024, 216 of 250 countries)** |
+| **us_census_attributes** | **14,459** | **M11.5 (US Census Bureau: 14,459 with FIPS, 10,121 with pop time series)** |
 | **city_layer_log** | **0** | **M11.1 (table created, audit inserts skipped)** |
 
 ## M11.1 layer field coverage
@@ -147,6 +150,8 @@ HEAD~4: M11.2: Wikidata ingestion (115K entities, 117K cities with wiki_url)
 | `raw/geonames/alternateNamesV2/2026-08-02/` | 30 MB | Filtered alt names for cities5000 |
 | `raw/cldr/territories-48.2/2026-08-02/` | 8.6 MB | CLDR 48.2: 20 lang XMLs + tarball + manifest |
 | `raw/world_bank/pop-totl/2026-08-02/` | 78.7 KB | World Bank SP.POP.TOTL 2024 (216 countries JSON + manifest) |
+| `raw/us_census/gazetteer/2024/2026-08-03/` | 1.2 MB | US Census 2024 Gazetteer (zip + manifest) |
+| `raw/us_census/sub-est/2025/2026-08-03/` | 7.1 MB | US Census SUB-EST2025 (CSV + manifest) |
 
 ## How to resume work
 
