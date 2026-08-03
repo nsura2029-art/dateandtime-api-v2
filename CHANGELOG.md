@@ -670,4 +670,88 @@ translations, 844K postcodes, 8 data sources. 310/311 tests pass.
 
 - `GET /api/v1/cities/:id/postcodes` — city postcodes (paginated)
 - `GET /api/v1/postcodes/search` — postcode lookup
-- `GET /api/v1/airports/nea
+- `GET /api/v1/airports/near` — airports by lat/lon
+- `GET /api/v1/cities/:id/airports` — city's airports
+- `GET /api/v1/cities/:id/translations` — city's translations (all 19)
+- `GET /api/v1/cities/:id/translations/:lang` — single language
+- `GET /api/v1/translations/search` — translation lookup
+- `GET /api/v1/data-quality` — summary
+- `GET /api/v1/data-quality/issues` — filtered issues
+- `GET /api/v1/health` — liveness (existing)
+- `GET /api/v1/status` — binding info (existing)
+
+### Behaviour changes
+
+- `/api/v1/cities/search` now returns `data.suggestions` when `total=0`
+- `/api/v1/cities/search` accepts `?lang=` for cross-language search
+- `/api/v1/cities/search` accepts `?state=` for state-boosted ranking
+- Population-based same-name same-country disambiguation
+
+### Test count
+
+296 → 310 (+14 from suggestions)
+
+### Breaking changes
+
+None — all changes are additive
+
+### Known issues
+
+- env.test.ts still fails (pre-existing, unrelated)
+- 22 Null Island cities flagged unresolved
+- 35,546 cities have NULL population (97.3% flagged)
+- Vinjanampadu and other sub-15K villages are below dataset threshold
+
+### Next PR
+
+Trigram same-country preference (5 min)
+
+---
+
+## [released] — develop @ f364dbd
+
+**Date:** 2026-08-01
+**Commits:** 3 (Phase 2 search + multilingual support)
+**Notes:** GeoNames alt names, multilingual place_names, Phase 2 search
+
+## [unreleased] — develop (Spec gap closure merged 2026-08-03)
+
+**Date:** 2026-08-03
+**Status:** API deployed at https://dt-api-v2-dev.nsura2029.workers.dev. 590/593 tests pass (3 pre-existing).
+
+### What shipped
+
+- **9 new endpoints** closing the spec gap from `reports/SPEC-VALIDATION-2026-08-03.md`
+- 47 new tests, all green
+
+### New endpoints
+
+- `GET /api/v1/regions` + `/regions/{code}/subregions` + `/subregions/{code}/countries`
+- `GET /api/v1/countries/{cca2}/states` + `/states/{id}`
+- `GET /api/v1/cities` (list with filters: region/country/state/type/population/tier)
+- `GET /api/v1/cities/near` (proximity: ?lat&lon&radiusKm)
+- `GET /api/v1/cities/{id}/aliases` (historical + alternate names)
+- `GET /api/v1/cities/{id}/climate` (placeholder lat-based model)
+- `GET /api/v1/time/now` (current local time)
+- `GET /api/v1/time/convert` (time conversion with DST/IDL/half-hour)
+
+### Files
+
+- `src/routes/regions.ts` (3 endpoints)
+- `src/routes/states.ts` (2 endpoints)
+- `src/routes/cities-list.ts` (2 endpoints)
+- `src/routes/city-resources.ts` (2 endpoints)
+- `src/routes/time.ts` (2 endpoints)
+- `src/index.ts` (route order matters)
+- `tests/spec-gap-regions-states.test.ts` (47 tests)
+
+### Spec compliance
+
+13/13 acceptance criteria met (was 11/13). Spec Phase 3 (endpoints) and Phase 4 (DST/IDL) now complete.
+
+### Next
+
+- M11.5.1 expand: B25003 (tenure) + B08301 (transportation)
+- M11.2.8: Wikidata P31/P17/P131
+- Climate model upgrade (World Bank CCKP or NOAA)
+- Production deployment
