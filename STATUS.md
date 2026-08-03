@@ -2,11 +2,11 @@
 
 **If you only read one file in this repo, read this one.**
 
-Last updated: 2026-08-03 00:30 UTC (auto-refreshed by scripts/sync-status.sh)
+Last updated: 2026-08-03 02:30 UTC (auto-refreshed by scripts/sync-status.sh)
 
 ## TL;DR
 
-`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.6 Eurostat in progress. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **597 EU cities with URAU City-vs-FUA data**, **~6K EU cities with LAU attributes (loading)**, **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
+`dateandtime-api-v2` — Hono + Cloudflare D1 + Zod timezone/cities API. M11.6 + M11.7 both shipped. 170,253 cities (dr5hn 152,970 + GeoNames 17,283 new), 250 countries, 462 IANA timezones, 19-language translations, 844K postcodes, 767K GeoNames alt names, 144,713 cities with full Wikidata descriptions, 5,000 CLDR country translations, 216 country populations (WB 2024), **14,459 US cities with Census attributes**, **41,571 EU cities with LAU attributes**, **597 EU cities with URAU City-vs-FUA data**, **422 Indian cities with Census of India 2011 data**, **156,111 cities with population (92%)**. Live at `https://dt-api-v2-dev.nsura2029.workers.dev`. **Not deployed to production.**
 
 ## Current branch state
 
@@ -14,7 +14,8 @@ Last updated: 2026-08-03 00:30 UTC (auto-refreshed by scripts/sync-status.sh)
 |---|---|---|
 | `main` | Production (empty) | dormant |
 | `develop` | Integration | up to date with M0-M11.5 |
-| `feature/m11.6-eurostat` | M11.6 Eurostat LAU + URAU | in progress (LAU loader running) |
+| `feature/m11.6-eurostat` | M11.6 Eurostat LAU + URAU | **41,571 LAU + 597 URAU cities — done, awaiting merge** |
+| `feature/m11.7-census-india` | M11.7 Census of India 2011 | **422 cities done, awaiting merge** |
 
 ## Last 5 commits
 

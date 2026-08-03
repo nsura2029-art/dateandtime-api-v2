@@ -4,7 +4,78 @@ Per-PR notes. Newest first. Update on every merge to develop.
 
 ---
 
-## [unreleased] — feature/m11.6-eurostat (M11.6 Eurostat LAU + URAU)
+## [unreleased] — feature/m11.7-census-india (M11.7 Census of India 2011)
+
+**Date:** 2026-08-03
+**Status:** API deployed. 422 IN cities matched (130.9M total population).
+
+### What shipped
+
+- **Migration 149**: `in_census_attributes` (26 cols) + `cities.in_census_code` + 2 indexes
+- **`scripts/seed/census_india_to_d1.py`** — parses PCA-UA XLSX, matches to our IN cities (~2 min for 422)
+- **`scripts/seed/census_india_publish.sh`** — uploads to R2, registers source_registry + source_releases
+- **`src/routes/cities.ts`** — new `censusIndia` field in CityDetail schema + step 4.8 query
+- **25 new tests** in `tests/m11.7-census-india.test.ts`, all pass
+- Updated `tests/sources.test.ts` for census_india is_active=true (was already in registry)
+
+### New attributes per Indian city (via `censusIndia` block)
+
+| Attribute | Example (Mumbai) | Source |
+|---|---|---|
+| `censusCode` | "802794" | 6-digit Census town code |
+| `stateCode` | "27" | 2-digit state code (Maharashtra) |
+| `districtCode` | "520" | 3-digit district code |
+| `uaCode` | "501300100" | 9-digit Urban Agglomeration code |
+| `uaName` | "(a) Greater Mumbai (M Corp.)" | UA name |
+| `level` | 1 | 1=statutory city, 0=metro total, 2=sub-town/OG |
+| `households` | 2,156,089 | No_HH |
+| `population` | 12,442,373 | TOT_P (2011) |
+| `malePopulation` | 6,715,116 | TOT_M |
+| `femalePopulation` | 5,727,257 | TOT_F |
+| `sexRatio` | 853 | derived: female/male × 1000 |
+| `childPopulation` | 1,147,536 | P_06 (0-6 years) |
+| `childSexRatio` | 898 | derived: F_06/M_06 × 1000 |
+| `scPopulation` | 786,612 | P_SC (Scheduled Caste) |
+| `stPopulation` | 57,941 | P_ST (Scheduled Tribe) |
+| `literacyRate` | 81 | derived: P_LIT/TOT_P × 100 |
+| `workersTotal` | 4,567,167 | TOT_WORK_P |
+| `mainWorkers` | 3,888,394 | MAINWORK_P (>6 months work) |
+| `marginalWorkers` | 678,773 | MARGWORK_P (<6 months work) |
+| `nonWorkers` | 7,875,206 | NON_WORK_P |
+| `censusYear` | 2011 | Census year |
+
+### Sources
+
+- **Census of India 2011, PCA-UA**: https://censusindia.gov.in/nada/index.php/catalog/45261/download/48987/PCA11-UA-0000.xlsx (1.98 MB, 3,319 records, 1,946 Level 1 + 902 Level 2 + 298 Level 0 + 3 Level 3)
+- **Released**: 2011, still the latest official Indian census as of 2026 (2021 delayed by COVID)
+
+### Coverage
+
+- 422 / 7,467 Indian cities (5.7%) matched
+- 3,762 IN cities without state assignment don't match (need fallback)
+- 23 states represented, 236 distinct UAs
+- 130.9M total population matched (out of India's 1.21B in 2011)
+
+### Test count
+
+- Pre M11.7: 484/487 (3 pre-existing failures)
+- M11.7 added 25 tests, all green
+- Updated 3 sources tests for census_india activation
+- **Post M11.7: 509/512** (3 pre-existing failures, 0 new from M11.x)
+
+### Gotchas
+
+- **Variable shadowing**: M11.6 used `const c` for Eurostat row, M11.7 reused `const c` for census row, but `c` is the Hono context. Caused `ReferenceError: Cannot access 'c2' before initialization` on Indian cities. Fixed by renaming M11.7's row variable to `censusRow`.
+- **State table name**: Used `states` but actual table is `administrative_regions` with `type='state'` filter.
+- **NaN in derived metrics**: Zod's `z.number().nullable()` rejects NaN. Fixed with null-safe division.
+- **Level 0 vs Level 1 ambiguity**: For some cities (e.g. "Delhi"), only Level 0 (UA total) exists. We prefer Level 1 (city proper) when both exist, fall back to Level 0 (metro total) otherwise. The `level` field tells clients which.
+- **"Bruhat Bangalore" prefix**: Karnataka's UA is "Bruhat Bangalore UA" (Level 0). We strip "Bruhat" prefix to match "Bangalore" in our DB.
+- **"Greater Mumbai" prefix**: Similar, "Greater Mumbai" → "Mumbai".
+- **D1 table name `administrative_regions`**: Not `states`. Type column distinguishes state/district/etc.
+
+---
+
+## [merged 2026-08-03] — feature/m11.6-eurostat (M11.6 Eurostat LAU + URAU)
 
 **Date:** 2026-08-03
 **Status:** API deployed. URAU loaded (597 cities, 487 FUAs). LAU loader in progress (~75 min remaining for ~44K cities).

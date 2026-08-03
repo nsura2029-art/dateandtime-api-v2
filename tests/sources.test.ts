@@ -10,11 +10,11 @@ import { describe, it, expect } from "vitest";
 const API = process.env.TEST_API_URL || "https://dt-api-v2-dev.nsura2029.workers.dev";
 
 describe("SR1: /api/v1/sources", () => {
-  it("SR1.1: returns all 12 registered sources (10 + 2 from M11.6 Eurostat)", async () => {
+  it("SR1.1: returns all 12 registered sources (census_india flipped to active by M11.7)", async () => {
     const r = await fetch(`${API}/api/v1/sources`);
     const body = await r.json();
     expect(body.data.count).toBe(12);
-    // Active count: GeoNames + us_census + eurostat_lau + eurostat_urau = 4
+    // Active count: GeoNames + us_census + eurostat_lau + eurostat_urau + census_india = 5
     expect(body.data.activeCount).toBeGreaterThanOrEqual(1);
   });
 
