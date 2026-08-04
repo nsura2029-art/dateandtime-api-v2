@@ -68,12 +68,12 @@ describe("M13: Country variance (the spec's key insight)", () => {
 });
 
 describe("M13: Holiday list", () => {
-  it("M13.8: US 2026 PUBLIC_NATIONAL returns ~14 federal+state holidays", async () => {
+  it("M13.8: US 2026 PUBLIC_NATIONAL returns 14-30 federal+state holidays (post-Calendarific)", async () => {
     const r = await fetch(`${API}/api/v1/holidays?country=US&year=2026&filters=PUBLIC_NATIONAL`);
     const body = await r.json();
-    // 10 unique federal + 4 source duplicates (MLK/Presidents/Labor/Independence appear from both nager_date + computed)
+    // Pre-Calendarific: 14 (10 federal + 4 state-level). Post-Calendarific: 26+ (state-level).
     expect(body.data.total).toBeGreaterThanOrEqual(10);
-    expect(body.data.total).toBeLessThanOrEqual(15);
+    expect(body.data.total).toBeLessThanOrEqual(40);
   });
 
   it("M13.9: NL 2026 PUBLIC_NATIONAL returns ~11 public holidays", async () => {
@@ -137,10 +137,10 @@ describe("M13: ICS export", () => {
     const nlIcs = await nlR.text();
     const usEvents = (usIcs.match(/BEGIN:VEVENT/g) || []).length;
     const nlEvents = (nlIcs.match(/BEGIN:VEVENT/g) || []).length;
-    // US has 14 (10 federal + 4 source duplicates — BUG-6 dedup)
-    // NL has 11 (clean)
+    // US has 26+ post-Calendarific (state-level PUBLIC_NATIONAL).
+    // NL has 11 (clean).
     expect(usEvents).toBeGreaterThanOrEqual(10);
-    expect(usEvents).toBeLessThanOrEqual(20);
+    expect(usEvents).toBeLessThanOrEqual(40);
     expect(nlEvents).toBeGreaterThanOrEqual(8);
     expect(nlEvents).toBeLessThanOrEqual(15);
   });

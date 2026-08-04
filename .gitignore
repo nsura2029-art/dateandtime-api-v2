@@ -47,3 +47,5 @@ scripts/seed/__pycache__/
 # Calendarific raw API responses (re-fetch with calendarific_pull.py)
 holiday_data/calendarific/
 !holiday_data/README.md
+scripts/ingest/calendarific.sql
+holiday_data/calendarific/
