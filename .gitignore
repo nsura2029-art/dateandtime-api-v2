@@ -43,3 +43,7 @@ migrations/111_seed_alt_names.sql
 tmp/
 scripts/seed/__pycache__/
 .worktrees/
+
+# Calendarific raw API responses (re-fetch with calendarific_pull.py)
+holiday_data/calendarific/
+!holiday_data/README.md
