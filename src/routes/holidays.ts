@@ -20,6 +20,7 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import type { Env, Variables } from "@/types/env";
 import type { D1Database } from "@cloudflare/workers-types";
+import { computeLongWeekends, planYearPTO } from "@/lib/longWeekend";
 
 // =====================================================================
 // Schemas
@@ -886,6 +887,275 @@ app.openapi(createRoute({
       year,
       count: longWeekends.length,
       longWeekends,
+    },
+  });
+});
+
+// -------------------------------------------------------------------------
+// GET /api/v1/countries/{cca2}/long-weekends/{year} — enhanced long weekend finder
+// -------------------------------------------------------------------------
+//   Supports:
+//   - work_days: mon-fri (default) | sun-thu | fri-sat | sat-wed
+//   - min_days: 3 (default)
+//   - include_optional: true (default)
+//   - subdivisions: comma-separated (e.g. "US-CA,US-NY")
+//   - pto: 0 (default) | 1-3 — include PTO extension strategies
+app.openapi(createRoute({
+  method: "get",
+  path: "/api/v1/countries/{cca2}/long-weekends/{year}",
+  tags: ["Holidays"],
+  summary: "Long weekends in a country for a year (enhanced: multi-day holidays, PTO strategies)",
+  description: "Returns 3+ day off-blocks created by public holidays. Supports multi-day holidays, optional holidays, custom work schedules, and PTO extension strategies.",
+  request: {
+    params: z.object({
+      cca2: z.string().length(2),
+      year: z.coerce.number().int(),
+    }),
+    query: z.object({
+      work_days: z.enum(["mon-fri", "sun-thu", "fri-sat", "sat-wed"]).optional(),
+      min_days: z.coerce.number().int().min(2).max(14).optional(),
+      include_optional: z.coerce.boolean().optional(),
+      subdivisions: z.string().optional().describe("Comma-separated ISO 3166-2 codes"),
+      pto: z.coerce.number().int().min(0).max(5).optional().describe("Include PTO strategies (1-5 days)"),
+    }),
+  },
+  responses: { 200: { content: { "application/json": { schema: z.object({
+    success: z.boolean(),
+    data: z.object({
+      countryCode: z.string(),
+      year: z.number().int(),
+      workDays: z.enum(["mon-fri", "sun-thu", "fri-sat", "sat-wed"]),
+      minDays: z.number().int(),
+      includeOptional: z.boolean(),
+      totalLongWeekends: z.number().int(),
+      totalDaysOff: z.number().int(),
+      summary: z.object({
+        "3-day": z.number().int(),
+        "4-day": z.number().int(),
+        "5-day": z.number().int(),
+        "6-day+": z.number().int(),
+      }),
+      longWeekends: z.array(z.object({
+        start: z.string(),
+        end: z.string(),
+        days: z.number().int(),
+        type: z.enum(["3-day", "4-day", "5-day", "6-day", "7-day", "extended"]),
+        trigger: z.string(),
+        holidays: z.array(z.string()),
+        includesOptional: z.boolean(),
+        ptoStrategies: z.array(z.object({
+          ptoDays: z.array(z.string()),
+          totalOff: z.number().int(),
+          efficiency: z.number(),
+          extendsTo: z.string(),
+          direction: z.enum(["before", "after"]),
+        })).optional(),
+      })),
+    }),
+  })}}, description: "Long weekends with PTO strategies" } },
+}), async (c) => {
+  const cca2 = c.req.valid("param").cca2.toUpperCase();
+  const year = c.req.valid("param").year;
+  const q = c.req.valid("query");
+
+  const country = await c.env.DB.prepare("SELECT id, name FROM countries WHERE cca2 = ?")
+    .bind(cca2).first<{ id: number; name: string }>();
+  if (!country) {
+    return c.json({ success: false, error: { code: "COUNTRY_NOT_FOUND", message: `Country ${cca2} not found` } }, 404);
+  }
+
+  const workDays = (q.work_days || "mon-fri") as "mon-fri" | "sun-thu" | "fri-sat" | "sat-wed";
+  const minDays = q.min_days || 3;
+  const includeOptional = q.include_optional !== false;
+  const maxPto = q.pto || 0;
+  const subdivisions = q.subdivisions?.split(",").map((s) => s.trim()).filter(Boolean);
+
+  // Build SQL with optional subdivision filter
+  let sql = `
+    SELECT DISTINCT occ.start_date, occ.end_date, c.name_en as name,
+           f.filter_code, occ.subdivision_code
+    FROM holiday_occurrence occ
+    JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
+    JOIN holiday_concept c ON c.id = occ.concept_id
+    WHERE occ.country_id = ?
+      AND f.filter_code IN ('PUBLIC_NATIONAL', 'PUBLIC_LOCAL', 'OPTIONAL_HOLIDAY', 'HALF_DAY_HOLIDAY')
+      AND substr(occ.start_date, 1, 4) = ?
+  `;
+  const params: (string | number)[] = [country.id, String(year)];
+
+  if (subdivisions && subdivisions.length > 0) {
+    // Either no subdivision, or matches the list
+    const placeholders = subdivisions.map(() => "?").join(",");
+    sql += ` AND (occ.subdivision_code IS NULL OR occ.subdivision_code IN (${placeholders}))`;
+    params.push(...subdivisions);
+  }
+  sql += ` ORDER BY occ.start_date`;
+
+  const rows = await c.env.DB.prepare(sql).bind(...params).all<{
+    start_date: string;
+    end_date: string | null;
+    name: string;
+    filter_code: string;
+    subdivision_code: string | null;
+  }>();
+
+  const holidays = (rows.results || []).map((r) => ({
+    date: r.start_date,
+    endDate: r.end_date,
+    name: r.name,
+    filterCode: r.filter_code,
+    subdivisionCode: r.subdivision_code,
+  }));
+
+  // Compute long weekends using the lib
+  const result = computeLongWeekends(holidays, year, {
+    workDays,
+    minDays,
+    includeOptional,
+    subdivisions,
+  });
+
+  // Attach PTO strategies if requested
+  if (maxPto > 0 && result.ptoStrategies) {
+    for (const w of result.longWeekends) {
+      const ptoStrats = result.ptoStrategies[w.start];
+      if (ptoStrats && ptoStrats.length > 0) {
+        // Take only the top maxPto strategies
+        (w as any).ptoStrategies = ptoStrats.slice(0, maxPto * 2);
+      }
+    }
+  }
+
+  return c.json({
+    success: true,
+    data: {
+      countryCode: cca2.toUpperCase(),
+      year,
+      workDays: result.workDays,
+      minDays: result.minDays,
+      includeOptional: result.includeOptional,
+      totalLongWeekends: result.totalLongWeekends,
+      totalDaysOff: result.totalDaysOff,
+      summary: result.summary,
+      longWeekends: result.longWeekends.map((w) => ({
+        start: w.start,
+        end: w.end,
+        days: w.days,
+        type: w.type,
+        trigger: w.trigger,
+        holidays: w.holidays,
+        includesOptional: w.includesOptional,
+        ptoStrategies: (w as any).ptoStrategies,
+      })),
+    },
+  });
+});
+
+// -------------------------------------------------------------------------
+// GET /api/v1/countries/{cca2}/pto-strategy/{year} — best PTO planning
+// -------------------------------------------------------------------------
+app.openapi(createRoute({
+  method: "get",
+  path: "/api/v1/countries/{cca2}/pto-strategy/{year}",
+  tags: ["Holidays"],
+  summary: "Best PTO strategy for the year (greedy optimal)",
+  description: "Given N available PTO days, find the optimal way to use them to maximize total days off. Uses greedy selection by efficiency (days off per PTO day).",
+  request: {
+    params: z.object({
+      cca2: z.string().length(2),
+      year: z.coerce.number().int(),
+    }),
+    query: z.object({
+      available_pto: z.coerce.number().int().min(1).max(20).default(5),
+      work_days: z.enum(["mon-fri", "sun-thu", "fri-sat", "sat-wed"]).optional(),
+      subdivisions: z.string().optional(),
+    }),
+  },
+  responses: { 200: { content: { "application/json": { schema: z.object({
+    success: z.boolean(),
+    data: z.object({
+      countryCode: z.string(),
+      year: z.number().int(),
+      availablePto: z.number().int(),
+      totalPtoUsed: z.number().int(),
+      totalDaysOff: z.number().int(),
+      coverage: z.string(),
+      strategies: z.array(z.object({
+        ptoDays: z.array(z.string()),
+        longWeekendStart: z.string(),
+        longWeekendEnd: z.string(),
+        naturalDays: z.number().int(),
+        extendedDays: z.number().int(),
+        efficiency: z.number(),
+      })),
+    }),
+  })}}, description: "PTO strategy" } },
+}), async (c) => {
+  const cca2 = c.req.valid("param").cca2.toUpperCase();
+  const year = c.req.valid("param").year;
+  const q = c.req.valid("query");
+
+  const country = await c.env.DB.prepare("SELECT id FROM countries WHERE cca2 = ?")
+    .bind(cca2).first<{ id: number }>();
+  if (!country) {
+    return c.json({ success: false, error: { code: "COUNTRY_NOT_FOUND", message: `Country ${cca2} not found` } }, 404);
+  }
+
+  const workDays = (q.work_days || "mon-fri") as "mon-fri" | "sun-thu" | "fri-sat" | "sat-wed";
+  const subdivisions = q.subdivisions?.split(",").map((s) => s.trim()).filter(Boolean);
+
+  let sql = `
+    SELECT DISTINCT occ.start_date, occ.end_date, c.name_en as name,
+           f.filter_code, occ.subdivision_code
+    FROM holiday_occurrence occ
+    JOIN holiday_occurrence_filter f ON f.occurrence_id = occ.id
+    JOIN holiday_concept c ON c.id = occ.concept_id
+    WHERE occ.country_id = ?
+      AND f.filter_code IN ('PUBLIC_NATIONAL', 'PUBLIC_LOCAL', 'OPTIONAL_HOLIDAY', 'HALF_DAY_HOLIDAY')
+      AND substr(occ.start_date, 1, 4) = ?
+  `;
+  const params: (string | number)[] = [country.id, String(year)];
+  if (subdivisions && subdivisions.length > 0) {
+    const placeholders = subdivisions.map(() => "?").join(",");
+    sql += ` AND (occ.subdivision_code IS NULL OR occ.subdivision_code IN (${placeholders}))`;
+    params.push(...subdivisions);
+  }
+  sql += ` ORDER BY occ.start_date`;
+
+  const rows = await c.env.DB.prepare(sql).bind(...params).all<{
+    start_date: string;
+    end_date: string | null;
+    name: string;
+    filter_code: string;
+    subdivision_code: string | null;
+  }>();
+
+  const holidays = (rows.results || []).map((r) => ({
+    date: r.start_date,
+    endDate: r.end_date,
+    name: r.name,
+    filterCode: r.filter_code,
+    subdivisionCode: r.subdivision_code,
+  }));
+
+  // Compute long weekends + PTO strategies
+  const result = computeLongWeekends(holidays, year, { workDays, subdivisions });
+  const plan = planYearPTO(
+    result.longWeekends,
+    result.ptoStrategies || {},
+    q.available_pto,
+  );
+
+  return c.json({
+    success: true,
+    data: {
+      countryCode: cca2.toUpperCase(),
+      year,
+      availablePto: q.available_pto,
+      totalPtoUsed: plan.totalPtoUsed,
+      totalDaysOff: plan.totalDaysOff,
+      coverage: plan.coverage,
+      strategies: plan.strategies,
     },
   });
 });
