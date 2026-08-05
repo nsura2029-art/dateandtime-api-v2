@@ -26,6 +26,12 @@ function registerDocs(app: OpenAPIHono<{ Bindings: Env; Variables: Variables }>)
   // GET /openapi.json — OpenAPI 3.1 spec
   // ============================================================================
   app.get("/openapi.json", (c) => {
+    // Derive the current deployment URL from the request — this becomes
+    // the default server for "Try it out" requests, so it always works
+    // regardless of which Worker (prod / dev / local) served the spec.
+    const currentOrigin = new URL(c.req.url).origin;
+    const isDev = c.env.API_NAME.includes("-dev") || currentOrigin.includes("localhost");
+
     return c.json(
       app.getOpenAPI31Document({
         openapi: "3.1.0",
@@ -33,27 +39,31 @@ function registerDocs(app: OpenAPIHono<{ Bindings: Env; Variables: Variables }>)
           title: c.env.API_NAME,
           version: c.env.API_VERSION,
           description:
-            "dateandtime.live API v2 — cities, time zones, holidays, on-this-day events. " +
-            "Hono + Cloudflare D1 + Zod. See https://github.com/nsura2029-art/dateandtime-api-v2 for source.",
+            "dateandtime.live API v2 — cities, time zones, postal codes, translations, airports. " +
+            "Hono + Cloudflare D1 + Zod. " +
+            "**Coverage:** 152,970 cities, 250 countries, 462 IANA timezones, 844K postcodes, 2.97M translations (19 langs). " +
+            "See https://github.com/nsura2029-art/dateandtime-api-v2 for source. " +
+            "Read `/docs/timezone-core-logic.md` for how timezones are assigned (polygon-verified, dr5hn, manual override).",
         },
         servers: [
-          { url: "https://api.dateandtime.live", description: "Production" },
-          { url: "https://dev.api.dateandtime.live", description: "Dev (same D1, separate Worker)" },
-          { url: "http://localhost:8787", description: "Local dev (wrangler dev)" },
+          // Current deployment (always first → Swagger UI's default)
+          { url: currentOrigin, description: `Current (${isDev ? "dev" : "prod"} — auto-detected)` },
+
+          // Workers (Cloudflare-provided *.workers.dev subdomains)
+          // Worker name comes from wrangler.toml [env.*] name field
+          { url: "https://dt-api-v2.nsura2029.workers.dev", description: "Production Worker" },
+          { url: "https://dt-api-v2-dev.nsura2029.workers.dev", description: "Dev Worker" },
+
+          // Local dev
+          { url: "http://localhost:8787", description: "Local (wrangler dev)" },
         ],
         tags: [
           { name: "Meta", description: "API metadata, health, status" },
-          { name: "Cities", description: "GeoNames cities (33,945 rows)" },
-          { name: "Countries", description: "ISO 3166-1 countries" },
-          { name: "Time", description: "Current time, sunrise/sunset" },
-          { name: "Timezones", description: "IANA timezone database" },
-          { name: "Holidays", description: "Public holidays (Nager.Date + curated)" },
-          { name: "OnThisDay", description: "Historical events by date" },
-          { name: "DST", description: "Daylight saving transitions" },
-          { name: "Popular", description: "Curated popular cities" },
-          { name: "Search", description: "Full-text search (FTS5)" },
-          { name: "Feedback", description: "User feedback" },
-          { name: "Admin", description: "Data quality + admin ops" },
+          { name: "Cities", description: "dr5hn cities (152,970 rows) with full timezone + dr5hn enrichment" },
+          { name: "Translations", description: "19-language translations (ar, br, de, es, fa, fr, hi, hr, it, ja, ko, nl, pl, pt, pt-BR, ru, tr, uk, zh-CN)" },
+          { name: "Postcodes", description: "Postal/ZIP codes from dr5hn (844,248 rows, 14 countries)" },
+          { name: "Airports", description: "Airports near a point (data import pending via cron)" },
+          { name: "Data Quality", description: "Timezone confidence, sources, audit, known issues" },
         ],
       })
     );

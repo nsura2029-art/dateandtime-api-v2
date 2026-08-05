@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""
+Generate cities seed (152,970 rows from dr5hn) as per-country SQL files.
+
+Output:
+  - migrations/cities/{cca2}.sql — one file per country (250 files)
+  - migrations/cities/run-all.sh — wrapper script to apply all 250 files
+
+Why per-country:
+  - 152,970 cities = ~23MB of SQL (too big for one file)
+  - 250 files × ~90KB each = manageable
+  - User can re-run individual countries if one fails
+  - Easy to see which countries are missing
+
+Usage:
+  python3 scripts/seed/107_generate_cities.py
+  bash migrations/cities/run-all.sh
+"""
+import json
+import urllib.request
+import os
+import tempfile
+from pathlib import Path
+from collections import defaultdict
+
+DOWNLOAD_URL = (
+    "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/"
+    "master/json/countries+states+cities.json"
+)
+# Use OS-appropriate temp dir (works on Windows, macOS, Linux)
+TMP_FILE = str(Path(tempfile.gettempdir()) / "countries-states-cities.json")
+OUTPUT_DIR = Path("migrations/cities")
+
+
+def escape_sql(s):
+    if s is None:
+        return 'NULL'
+    return "'" + str(s).replace("'", "''") + "'"
+
+
+def sql_num(v):
+    """Coerce numeric value to SQL literal (handles 0 correctly, unlike `or`)."""
+    if v is None:
+        return 'NULL'
+    if isinstance(v, bool):
+        return '1' if v else '0'
+    return str(v)
+
+
+# Load state → timezone map for better per-city timezone accuracy
+STATE_TZ_MAP = {}
+try:
+    with open('scripts/seed/state-tz-map.json') as f:
+        STATE_TZ_MAP = json.load(f)
+    print(f"  Loaded state→tz map for {len([k for k in STATE_TZ_MAP if not k.startswith('_')])} countries")
+except FileNotFoundError:
+    print("  No state-tz-map.json found, using country-level timezones only")
+
+
+def main():
+    # Download
+    print("=== Downloading dr5hn source data ===")
+    if not os.path.exists(TMP_FILE):
+        print(f"  Downloading {DOWNLOAD_URL}...")
+        urllib.request.urlretrieve(DOWNLOAD_URL, TMP_FILE)
+    print(f"  → {TMP_FILE}")
+
+    # Load
+    with open(TMP_FILE) as f:
+        data = json.load(f)
+    print(f"  Countries in file: {len(data)}")
+
+    # Build country map and state name → id map per country
+    country_by_id = {c['id']: c for c in data}
+    state_name_to_id = {}  # (country_id, state_name) -> state_id
+    for c in data:
+        for s in c.get('states', []):
+            state_name_to_id[(c['id'], s.get('name'))] = s['id']
+
+    # Build the set of valid state_ids (across all countries) for FK validation
+    # If a state_id is referenced by a city but not in our admin_regions, NULL it
+    valid_state_ids = set()
+    for c in data:
+        for s in c.get('states', []):
+            valid_state_ids.add(s['id'])
+
+    # Collect cities per country
+    cities_by_country = defaultdict(list)
+    total_cities = 0
+    orphan_state_count = 0
+    for c in data:
+        country_id = c['id']
+        for state in c.get('states', []):
+            state_code = state.get('iso2')  # e.g. 'AK', 'AL' for US states
+            state_tz = state.get('timezone')  # state-level default
+            for city in state.get('cities', []):
+                # If the state's id is not in our admin_regions set (shouldn't
+                # happen since we use the same source, but be safe), NULL it
+                state_id = state['id'] if state['id'] in valid_state_ids else None
+                if state_id is None:
+                    orphan_state_count += 1
+                cities_by_country[country_id].append({
+                    'id': city['id'],
+                    'name': city.get('name'),
+                    'country_id': country_id,
+                    'state_id': state_id,
+                    '_state_code': state_code,  # for state-level tz lookup (internal)
+                    'latitude': city.get('latitude'),
+                    'longitude': city.get('longitude'),
+                    'timezone': city.get('timezone') or state_tz,  # city tz > state tz > country default
+                    'population': None,
+                    'feature_code': None,
+                })
+                total_cities += 1
+
+    if orphan_state_count:
+        print(f"  NULLed {orphan_state_count} orphan state_id references (states not in admin_regions)")
+
+    # Now find timezones for cities by re-walking data with timezone info
+    # (The countries+cities.json has timezone inside city object, but
+    # the structure is `cities` as list of names. Let me re-fetch.)
+    # Use the simpler countries+cities.json to get timezone per city name+country
+    print(f"  Total cities: {total_cities}")
+
+    cities_simple_url = (
+        "https://raw.githubusercontent.com/dr5hn/countries-states-cities-database/"
+        "master/json/countries+cities.json"
+    )
+    cities_simple_tmp = str(Path(tempfile.gettempdir()) / "countries-cities.json")
+    if not os.path.exists(cities_simple_tmp):
+        print(f"  Downloading {cities_simple_url}...")
+        urllib.request.urlretrieve(cities_simple_url, cities_simple_tmp)
+    with open(cities_simple_tmp) as f:
+        cities_simple = json.load(f)
+
+    # This file has only city NAMES (no timezones, no lat/lon).
+    # So we can't use it for timezones. Timezone data is only in countries+states+cities.json
+    # which we've already loaded.
+
+    # Re-walk: look at city timezones from the bigger file
+    # Actually, dr5hn's countries+states+cities.json has timezones only on the country level.
+    # Individual cities don't have a timezone field in dr5hn.
+    # We'll default to the country's first canonical_timezone.
+    # EXCEPT for countries with a state→tz map (US, CA, AU, BR, MX, RU)
+    # where we use the state-level timezone.
+
+    for c in data:
+        country_id = c['id']
+        cca2 = c.get('iso2')
+        # Get default timezone from country
+        country_tz = None
+        timezones = c.get('timezones', [])
+        if timezones and isinstance(timezones, list):
+            country_tz = timezones[0].get('zoneName') if isinstance(timezones[0], dict) else None
+
+        # State-level timezone map for this country
+        country_state_tz = STATE_TZ_MAP.get(cca2, {})
+
+        for city in cities_by_country.get(country_id, []):
+            # Try state-level map first (e.g. US states → timezones)
+            state_code = city.get('_state_code')
+            if state_code and state_code in country_state_tz:
+                city['timezone'] = country_state_tz[state_code]
+            elif not city.get('timezone'):
+                city['timezone'] = country_tz
+
+    # Make output dir
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Build country map (cca2 -> dr5hn_id)
+    country_id_to_cca2 = {c['id']: c.get('iso2') for c in data}
+    cca2_to_country_id = {cca2: cid for cid, cca2 in country_id_to_cca2.items()}
+
+    # D1 limits: ~100 vars per prepared statement, ~1MB per statement.
+    # cities has 12 cols, so 8 rows = 96 vars (safe).
+    # Each chunk is its own INSERT statement (one ; per statement).
+    # 16,731 US cities = 2,091 INSERTs × ~800 bytes = ~1.7MB file.
+    BATCH = 8
+
+    # Write per-country files
+    file_list = []
+    for cca2, country_id in sorted(cca2_to_country_id.items()):
+        cities = cities_by_country.get(country_id, [])
+        if not cities:
+            continue
+
+        country_name = country_by_id[country_id].get('name', cca2)
+
+        def make_insert(chunk_cities):
+            rows = []
+            for city in chunk_cities:
+                row = f"""  ({city['id']}, {escape_sql(city['name'])}, {city['country_id']}, {city['state_id']}, {sql_num(city.get('latitude'))}, {sql_num(city.get('longitude'))}, {escape_sql(city.get('timezone'))}, {sql_num(city.get('population'))}, {escape_sql(city.get('feature_code'))}, 'city', 'dr5hn:{city['id']}', 'dr5hn-2026-07-29')"""
+                rows.append(row)
+            return """INSERT INTO cities (id, name, country_id, state_id, latitude, longitude, timezone, population, feature_code, place_type, source_id, source_version) VALUES
+""" + ",\n".join(rows) + ";"
+
+        chunks = [cities[i:i+BATCH] for i in range(0, len(cities), BATCH)]
+        n_inserts = len(chunks)
+
+        parts = [
+            f"-- Cities for {cca2} ({country_name}): {len(cities)} cities from dr5hn",
+            f"-- Generated by: scripts/seed/107_generate_cities.py",
+            f"-- Split into {n_inserts} INSERT statements of {BATCH} rows each (D1 ~100-var/INSERT limit)",
+            "",
+        ]
+        parts.extend(make_insert(chunk) for chunk in chunks)
+        parts.append("")  # trailing newline
+
+        out_file = OUTPUT_DIR / f"{cca2}.sql"
+        out_file.write_text("\n".join(parts))
+        file_list.append((cca2, len(cities), str(out_file)))
+
+    # Write run-all.sh — parameterized so user can override DB_NAME
+    # Usage: DB_NAME=timeandtimepro-full-v2 REMOTE=1 bash migrations/cities/run-all.sh
+    run_all = [
+        "#!/usr/bin/env bash",
+        "# Apply all per-country city seed files in order.",
+        "#",
+        "# Usage:",
+        "#   DB_NAME=timeandtimepro-full-v2 REMOTE=1 bash migrations/cities/run-all.sh",
+        "#",
+        "# Defaults: DB_NAME=timeandtimepro-full, REMOTE=0 (local SQLite)",
+        "",
+        "set -e",
+        "",
+        'DB_NAME="${DB_NAME:-timeandtimepro-full}"',
+        'if [ "${REMOTE:-0}" = "1" ]; then',
+        '  REMOTE_FLAG="--remote"',
+        'else',
+        '  REMOTE_FLAG=""',
+        'fi',
+        "",
+    ]
+    for cca2, count, path in file_list:
+        run_all.append(f'# {cca2}: {count} cities')
+        run_all.append(
+            f'wrangler d1 execute "$DB_NAME" --env dev $REMOTE_FLAG --file="{path}" || '
+            f'{{ echo "WARNING: {cca2} failed (likely 0 cities or empty), continuing"; true; }}'
+        )
+    run_all.append("")
+    run_all.append('echo "✅ All cities seeded."')
+    Path(OUTPUT_DIR / "run-all.sh").write_text("\n".join(run_all))
+    os.chmod(OUTPUT_DIR / "run-all.sh", 0o755)
+
+    print(f"\n=== Generated {len(file_list)} country files in {OUTPUT_DIR}/ ===")
+    for cca2, count, path in file_list[:10]:
+        print(f"  {cca2}: {count} cities → {path}")
+    print(f"  ... ({len(file_list) - 10} more)")
+    print(f"\n  Total cities: {sum(c for _, c, _ in file_list)}")
+    print(f"  Wrapper: {OUTPUT_DIR}/run-all.sh")
+
+
+if __name__ == '__main__':
+    main()

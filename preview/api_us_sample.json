@@ -1,0 +1,237 @@
+{
+  "success": true,
+  "data": {
+    "countryCode": "US",
+    "mode": "country",
+    "year": 2026,
+    "from": "2026-07-03",
+    "to": "2026-07-05",
+    "total": 17,
+    "count": 10,
+    "holidays": [
+      {
+        "id": 38,
+        "conceptId": 19,
+        "conceptName": "Independence Day",
+        "conceptNameLocal": "Independence Day",
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": null,
+        "startDate": "2026-07-03",
+        "endDate": "2026-07-03",
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "civil",
+        "dateStatus": "confirmed",
+        "filters": [
+          "BANK_CLOSURE",
+          "PUBLIC_NATIONAL"
+        ],
+        "sources": [
+          "nager_date"
+        ]
+      },
+      {
+        "id": 9055,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": "US-AK",
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "local holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_LOCAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 9056,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": "US-AL",
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "local holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_LOCAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 9057,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": "US-AR",
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "local holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_LOCAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 9058,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": "US-AZ",
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "local holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_LOCAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 9059,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": "US-OK",
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "local holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_LOCAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 9060,
+        "conceptId": 2329,
+        "conceptName": "Independence Day (substitute)",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": null,
+        "startDate": "2026-07-03",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "national holiday",
+        "dateStatus": "confirmed",
+        "filters": [
+          "PUBLIC_NATIONAL"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      },
+      {
+        "id": 729,
+        "conceptId": 162,
+        "conceptName": "International Day of Cooperatives",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": null,
+        "startDate": "2026-07-04",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "observance",
+        "eventDomain": "UN",
+        "dateStatus": "official_announced",
+        "filters": [
+          "OBS_IMPORTANT",
+          "UN_OBSERVANCE"
+        ],
+        "sources": [
+          "un_official"
+        ]
+      },
+      {
+        "id": 2101,
+        "conceptId": 19,
+        "conceptName": "Independence Day",
+        "conceptNameLocal": "Independence Day",
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": null,
+        "startDate": "2026-07-04",
+        "endDate": null,
+        "observedDate": "2026-07-03",
+        "dateRole": "actual",
+        "legalStatus": "public",
+        "eventDomain": "civil",
+        "dateStatus": "confirmed",
+        "filters": [
+          "GOVERNMENT_CLOSURE",
+          "PUBLIC_NATIONAL"
+        ],
+        "sources": [
+          "computed_federal_us"
+        ]
+      },
+      {
+        "id": 9061,
+        "conceptId": 162,
+        "conceptName": "International Day of Cooperatives",
+        "conceptNameLocal": null,
+        "countryCode": "US",
+        "countryName": "United States",
+        "subdivisionCode": null,
+        "startDate": "2026-07-04",
+        "endDate": null,
+        "observedDate": null,
+        "dateRole": "actual",
+        "legalStatus": "observance",
+        "eventDomain": "united nations observance",
+        "dateStatus": "confirmed",
+        "filters": [
+          "UN_OBSERVANCE"
+        ],
+        "sources": [
+          "calendarific_api"
+        ]
+      }
+    ]
+  }
+}

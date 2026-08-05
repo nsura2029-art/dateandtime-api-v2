@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Long Weekend Trip Planner — Plan your year around holidays</title>
+<style>
+/* === Reset & tokens === */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+  --primary: #4f46e5;
+  --primary-soft: #eef2ff;
+  --primary-hover: #4338ca;
+  --red: #ef4444;
+  --red-soft: #fef2f2;
+  --green: #10b981;
+  --green-soft: #ecfdf5;
+  --blue: #3b82f6;
+  --blue-soft: #eff6ff;
+  --amber: #f59e0b;
+  --amber-soft: #fffbeb;
+  --purple: #8b5cf6;
+  --purple-soft: #f5f3ff;
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --surface: #18181b;
+    --surface-2: #27272a;
+    --border: #27272a;
+    --border-strong: #3f3f46;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #71717a;
+    --primary-soft: #1e1b4b;
+    --red-soft: #450a0a;
+    --green-soft: #052e1e;
+    --blue-soft: #0c2541;
+    --amber-soft: #451a03;
+    --purple-soft: #2e1065;
+  }
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === Layout === */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+
+/* === Sidebar === */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}
+.nav { list-style: none; }
+.nav-section { margin-bottom: 24px; }
+.nav-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding: 0 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.1s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.nav-item-icon { width: 16px; height: 16px; }
+
+.user-card {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: auto;
+}
+.user-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.user-card-row span:first-child { color: var(--text-muted); }
+.user-card-row span:last-child { font-weight: 600; }
+.user-card-stat {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.user-card-stat .num { font-size: 18px; font-weight: 700; color: var(--primary); }
+.user-card-stat .lbl { font-size: 10px; color: var(--text-faint); text-transform: uppercase; }
+
+/* === Main === */
+.main {
+  padding: 24px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.page-title { font-size: 24px; font-weight: 700; }
+.page-subtitle { color: var(--text-muted); margin-top: 4px; font-size: 13px; }
+.page-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* === Controls === */
+.control-select, .control-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+}
+.control-select:hover, .control-input:hover { border-color: var(--border-strong); }
+.btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.1s;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* === Bento grid === */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.bento-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s;
+}
+.bento-card:hover { box-shadow: var(--shadow); }
+.bento-col-3 { grid-column: span 3; }
+.bento-col-4 { grid-column: span 4; }
+.bento-col-5 { grid-column: span 5; }
+.bento-col-6 { grid-column: span 6; }
+.bento-col-7 { grid-column: span 7; }
+.bento-col-8 { grid-column: span 8; }
+.bento-col-12 { grid-column: span 12; }
+@media (max-width: 1100px) {
+  .bento-col-3, .bento-col-4, .bento-col-5 { grid-column: span 6; }
+  .bento-col-7, .bento-col-8 { grid-column: span 12; }
+}
+@media (max-width: 700px) {
+  .bento > * { grid-column: span 12 !important; }
+}
+
+/* === Hero stat === */
+.hero-stat {
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+}
+.hero-stat .lbl { opacity: 0.85; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.hero-stat .num { font-size: 36px; font-weight: 700; margin: 8px 0 4px; line-height: 1; }
+.hero-stat .sub { opacity: 0.85; font-size: 12px; }
+.hero-stat .next-date { font-size: 14px; font-weight: 600; margin-top: 12px; opacity: 0.95; }
+
+/* === KPI tiles === */
+.kpi { display: flex; flex-direction: column; }
+.kpi .kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.kpi .kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.kpi .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* === Map embed === */
+.map-embed {
+  width: 100%;
+  height: 200px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.map-pin {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.map-pin.home {
+  background: var(--green);
+  left: 50%; top: 50%;
+  margin-left: -12px; margin-top: -24px;
+}
+.map-label {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+/* === Year calendar (Absentify-style) === */
+.year-cal {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .year-cal { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .year-cal { grid-template-columns: 1fr; } }
+.mini-month {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.mini-month h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mini-month h4 .badge {
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  font-size: 10px;
+  text-align: center;
+}
+.mini-dow {
+  color: var(--text-faint);
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 0;
+  font-size: 9px;
+}
+.mini-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: var(--text);
+  position: relative;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 10px;
+}
+.mini-day:hover { background: var(--surface-2); }
+.mini-day.other-month { opacity: 0.25; }
+.mini-day.weekend { color: var(--text-faint); }
+.mini-day.holiday { background: var(--red-soft); color: var(--red); font-weight: 700; }
+.mini-day.optional { background: var(--amber-soft); color: var(--amber); font-weight: 600; }
+.mini-day.lw {
+  background: var(--green-soft);
+  color: var(--green);
+  font-weight: 700;
+}
+.mini-day.today { outline: 2px solid var(--primary); outline-offset: -2px; }
+.mini-day.lw-cluster { background: linear-gradient(135deg, var(--green-soft), var(--purple-soft)); }
+.mini-day .marker {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+/* === LW cards === */
+.lw-list { display: flex; flex-direction: column; gap: 10px; }
+.lw-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+.lw-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--primary); }
+.lw-score {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+.lw-score.s-90 { background: linear-gradient(135deg, #10b981, #059669); }
+.lw-score.s-75 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.lw-score.s-60 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.lw-score.s-40 { background: linear-gradient(135deg, #94a3b8, #64748b); }
+.lw-info h5 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.lw-info .meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.lw-info .meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.lw-info .meta .chip {
+  background: var(--surface-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--text);
+}
+.lw-info .meta .chip.green { background: var(--green-soft); color: var(--green); }
+.lw-info .meta .chip.purple { background: var(--purple-soft); color: var(--purple); }
+.lw-info .meta .chip.blue { background: var(--blue-soft); color: var(--blue); }
+.lw-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.lw-pto { font-size: 12px; color: var(--text-muted); }
+.lw-pto strong { color: var(--text); font-weight: 700; }
+
+/* === Destination cards === */
+.dest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.dest-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.dest-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.dest-photo {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--surface-2);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.dest-photo .distance-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+}
+.dest-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.dest-country { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.dest-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.dest-stats .stat-val { color: var(--text); font-weight: 600; }
+
+/* === Modal === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.2s ease-out;
+}
+@keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-lg { max-width: 720px; }
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.modal-header h3 { font-size: 18px; font-weight: 700; }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover { background: var(--surface-2); }
+.modal-body { padding: 24px; }
+
+/* === Onboarding === */
+.onboarding-step { display: none; }
+.onboarding-step.active { display: block; }
+.onboarding-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+.onboarding-progress .dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.onboarding-progress .dot.active { background: var(--primary); }
+.onboarding-step h4 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.onboarding-step p { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.option-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.1s;
+  font-family: inherit;
+}
+.option-card:hover { border-color: var(--primary); background: var(--primary-soft); }
+.option-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.option-card .opt-icon { font-size: 24px; margin-bottom: 6px; }
+.option-card .opt-title { font-weight: 600; font-size: 14px; }
+.option-card .opt-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.search-results {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.search-results .result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.search-results .result-item:hover { background: var(--surface-2); }
+.search-results .result-item:last-child { border-bottom: none; }
+.search-results .r-meta { color: var(--text-muted); font-size: 12px; }
+
+/* === Tabs === */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: inherit;
+  transition: all 0.1s;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* === Trip list === */
+.trip-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.trip-card:hover { box-shadow: var(--shadow); border-color: var(--primary); }
+.trip-photo {
+  width: 100px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+}
+.trip-info h5 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.trip-info .meta { font-size: 12px; color: var(--text-muted); }
+.trip-stats { text-align: right; }
+.trip-stat { font-size: 11px; color: var(--text-muted); }
+.trip-stat .num { font-size: 16px; font-weight: 700; color: var(--text); display: block; }
+
+/* === Empty state === */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty h4 { color: var(--text); margin-bottom: 4px; font-size: 16px; font-weight: 600; }
+
+/* === Loading === */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === Toast === */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--text);
+  color: var(--surface);
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.2s ease-out;
+}
+.toast.success { background: var(--green); color: white; }
+.toast.error { background: var(--red); color: white; }
+@keyframes toastIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+/* === Live status === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.status-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-badge.live { background: var(--green-soft); color: var(--green); }
+.status-badge.live .dot { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* === Insights charts === */
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+.bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.bar-track { background: var(--surface-2); border-radius: 4px; height: 8px; overflow: hidden; }
+.bar-fill { background: var(--primary); height: 100%; border-radius: 4px; }
+.bar-val { text-align: right; font-weight: 600; }
+
+/* === Print === */
+@media print {
+  .sidebar, .page-actions, .btn, .modal-overlay { display: none !important; }
+  body { background: white; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">🗓️</div>
+      <div>Long Weekend</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Plan</div>
+      <ul class="nav">
+        <li><button class="nav-item active" data-view="plan"><span class="nav-item-icon">📅</span> Year Overview</button></li>
+        <li><button class="nav-item" data-view="discover"><span class="nav-item-icon">🔍</span> Discover</button></li>
+        <li><button class="nav-item" data-view="trips"><span class="nav-item-icon">✈️</span> My Trips</button></li>
+        <li><button class="nav-item" data-view="insights"><span class="nav-item-icon">💡</span> Insights</button></li>
+      </ul>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Preferences</div>
+      <ul class="nav">
+        <li><button class="nav-item" id="openOnboarding"><span class="nav-item-icon">⚙️</span> Setup wizard</button></li>
+        <li><button class="nav-item" id="exportTrips"><span class="nav-item-icon">📤</span> Export trips</button></li>
+        <li><button class="nav-item" id="clearAll"><span class="nav-item-icon">🗑️</span> Clear all data</button></li>
+      </ul>
+    </div>
+
+    <div class="user-card" id="userCard">
+      <div class="user-card-row"><span>Home</span><span id="ucHome">—</span></div>
+      <div class="user-card-row"><span>Country</span><span id="ucCountry">—</span></div>
+      <div class="user-card-row"><span>PTO/year</span><span id="ucPto">—</span></div>
+      <div class="user-card-stat">
+        <div><div class="num" id="ucTrips">0</div><div class="lbl">Trips</div></div>
+        <div><div class="num" id="ucDays">0</div><div class="lbl">Days off</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="pageTitle">Year Overview</h1>
+        <p class="page-subtitle" id="pageSubtitle">Plan your year around public holidays</p>
+      </div>
+      <div class="page-actions">
+        <select class="control-select" id="countrySel">
+          <option value="US">🇺🇸 United States</option>
+          <option value="CA">🇨🇦 Canada</option>
+          <option value="IN">🇮🇳 India</option>
+          <option value="GB">🇬🇧 United Kingdom</option>
+          <option value="AU">🇦🇺 Australia</option>
+          <option value="DE">🇩🇪 Germany</option>
+          <option value="FR">🇫🇷 France</option>
+          <option value="MX">🇲🇽 Mexico</option>
+          <option value="JP">🇯🇵 Japan</option>
+          <option value="IT">🇮🇹 Italy</option>
+          <option value="ES">🇪🇸 Spain</option>
+        </select>
+        <select class="control-select" id="yearSel">
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+        </select>
+        <select class="control-select" id="ptoSel">
+          <option value="0">No PTO</option>
+          <option value="2">+2 days</option>
+          <option value="3">+3 days PTO</option>
+          <option value="2" selected>+2 days PTO</option>
+        </select>
+        <span class="status-badge live" id="statusBadge"><span class="dot"></span> Live</span>
+      </div>
+    </div>
+
+    <!-- ===== PLAN VIEW ===== -->
+    <div class="tab-pane active" id="view-plan">
+      <div class="bento">
+        <!-- Hero: Next LW countdown -->
+        <div class="bento-card bento-col-3 hero-stat">
+          <div class="lbl">Next Long Weekend</div>
+          <div class="num" id="heroCountdown">—</div>
+          <div class="next-date" id="heroName">Loading…</div>
+          <div class="sub" id="heroSub">—</div>
+        </div>
+
+        <!-- KPI: LWs -->
+        <div class="bento-card bento-col-3 kpi">
+          <div class="kpi-label">Long Weekends</div>
+          <div class="kpi-value" id="kpiLw">—</div>
+          <div class="kpi-sub" id="kpiLwSub">3+ day off-blocks</div>
+        </div>
+
+        <!-- KPI: Days off -->
+        <div class="bento-card bento-col-3 kpi">
+          <div class="kpi-label">Total Days Off</div>
+          <div class="kpi-value" id="kpiDays">—</div>
+          <div class="kpi-sub" id="kpiDaysSub">vs 104 weekend days</div>
+        </div>
+
+        <!-- KPI: Efficiency -->
+        <div class="bento-card bento-col-3 kpi">
+          <div class="kpi-label">PTO Efficiency</div>
+          <div class="kpi-value" id="kpiEff">—</div>
+          <div class="kpi-sub" id="kpiEffSub">days off per PTO day</div>
+        </div>
+
+        <!-- Map: home + nearby destinations -->
+        <div class="bento-card bento-col-5">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+            <h4 style="font-size:14px; font-weight:600">📍 Nearby Destinations</h4>
+            <button class="btn btn-sm" id="changeHome">Change</button>
+          </div>
+          <div class="map-embed" id="mapEmbed" style="background: linear-gradient(135deg, #dbeafe, #ede9fe);">
+            <div class="map-pin home"></div>
+            <div class="map-label" style="left: 50%; top: 75%; transform: translateX(-50%)" id="mapLabel">Home</div>
+          </div>
+          <div id="nearbyList" style="margin-top:12px; font-size:12px; color: var(--text-muted)">
+            Set your home city in <a href="#" id="openOnboarding2">onboarding</a> to see nearby destinations.
+          </div>
+        </div>
+
+        <!-- Top LW Pick -->
+        <div class="bento-card bento-col-7">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+            <h4 style="font-size:14px; font-weight:600">🏆 Top LW Picks This Year</h4>
+            <select class="control-select" id="rankBy" style="font-size:12px; padding:4px 8px">
+              <option value="value">Trip value</option>
+              <option value="duration">Duration</option>
+              <option value="season">Season</option>
+            </select>
+          </div>
+          <div class="lw-list" id="lwList">
+            <div class="loading"><div class="spinner"></div>Loading…</div>
+          </div>
+        </div>
+
+        <!-- Year calendar -->
+        <div class="bento-card bento-col-12">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+            <h4 style="font-size:14px; font-weight:600">📆 Year Calendar</h4>
+            <div style="display:flex; gap:8px; font-size:11px; color: var(--text-muted)">
+              <span><span style="display:inline-block; width:10px; height:10px; background:var(--red-soft); border-radius:2px"></span> Holiday</span>
+              <span><span style="display:inline-block; width:10px; height:10px; background:var(--amber-soft); border-radius:2px"></span> Optional</span>
+              <span><span style="display:inline-block; width:10px; height:10px; background:var(--green-soft); border-radius:2px"></span> LW (3+d)</span>
+              <span><span style="display:inline-block; width:10px; height:10px; background:linear-gradient(135deg, var(--green-soft), var(--purple-soft)); border-radius:2px"></span> Cluster</span>
+            </div>
+          </div>
+          <div class="year-cal" id="yearCal">
+            <div class="loading" style="grid-column: span 3"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DISCOVER VIEW ===== -->
+    <div class="tab-pane" id="view-discover">
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap">
+        <input class="search-input" id="destSearch" placeholder="Search destinations…" style="max-width:300px" />
+        <select class="control-select" id="destDistance">
+          <option value="500">Within 500km</option>
+          <option value="2000" selected>Within 2000km</option>
+          <option value="5000">Within 5000km</option>
+          <option value="20000">Anywhere</option>
+        </select>
+        <select class="control-select" id="destType">
+          <option value="all">All destinations</option>
+          <option value="beach">🏖️ Beach</option>
+          <option value="city">🏙️ City</option>
+          <option value="mountain">⛰️ Mountain</option>
+          <option value="culture">🏛️ Cultural</option>
+        </select>
+        <select class="control-select" id="destBudget">
+          <option value="all">Any budget</option>
+          <option value="cheap">$ Budget</option>
+          <option value="mid" selected>$$ Mid-range</option>
+          <option value="luxury">$$$ Luxury</option>
+        </select>
+      </div>
+      <div id="destGrid" class="dest-grid">
+        <div class="loading" style="grid-column: span 4"><div class="spinner"></div>Set home in onboarding to discover</div>
+      </div>
+    </div>
+
+    <!-- ===== TRIPS VIEW ===== -->
+    <div class="tab-pane" id="view-trips">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+        <h3 style="font-size:18px; font-weight:700">My Trips <span style="font-size:13px; color:var(--text-muted); font-weight:400" id="tripsCount"></span></h3>
+        <button class="btn btn-primary" id="newTrip">+ New trip</button>
+      </div>
+      <div id="tripsList">
+        <div class="empty">
+          <div class="icon">✈️</div>
+          <h4>No trips yet</h4>
+          <p>Click on a long weekend in the Year Overview to plan a trip</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INSIGHTS VIEW ===== -->
+    <div class="tab-pane" id="view-insights">
+      <div class="bento">
+        <div class="bento-card bento-col-6">
+          <h4 style="font-size:14px; font-weight:600; margin-bottom:12px">📊 Days off by month</h4>
+          <div class="bar-chart" id="chartMonth"></div>
+        </div>
+        <div class="bento-card bento-col-6">
+          <h4 style="font-size:14px; font-weight:600; margin-bottom:12px">🏆 Trip value distribution</h4>
+          <div class="bar-chart" id="chartValue"></div>
+        </div>
+        <div class="bento-card bento-col-12">
+          <h4 style="font-size:14px; font-weight:600; margin-bottom:12px">💡 Smart recommendations</h4>
+          <div id="recommendations"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== ONBOARDING MODAL ===== -->
+<div class="modal-overlay" id="onboardingModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>Welcome! Let's plan your perfect year</h3>
+      <button class="modal-close" onclick="closeOnboarding()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="onboarding-progress">
+        <div class="dot active" data-step="1"></div>
+        <div class="dot" data-step="2"></div>
+        <div class="dot" data-step="3"></div>
+        <div class="dot" data-step="4"></div>
+        <div class="dot" data-step="5"></div>
+      </div>
+
+      <!-- Step 1: Home city -->
+      <div class="onboarding-step active" data-step="1">
+        <h4>Where are you based?</h4>
+        <p>This helps us find nearby destinations and calculate travel costs.</p>
+        <input class="search-input" id="onbCitySearch" placeholder="Search city (e.g. New York, London, Mumbai)…" />
+        <div class="search-results" id="onbCityResults"></div>
+      </div>
+
+      <!-- Step 2: Country -->
+      <div class="onboarding-step" data-step="2">
+        <h4>Which country's holidays should we use?</h4>
+        <p>Your home country determines the public holiday calendar.</p>
+        <div class="option-grid" id="onbCountryGrid"></div>
+      </div>
+
+      <!-- Step 3: PTO budget -->
+      <div class="onboarding-step" data-step="3">
+        <h4>How many PTO days do you get per year?</h4>
+        <p>This is your total vacation allowance (not including public holidays).</p>
+        <input class="search-input" id="onbPto" type="number" min="0" max="60" value="15" style="max-width:200px" />
+        <div class="kpi-sub" style="margin-top:8px">US average: 10-15 days • EU minimum: 20 days</div>
+      </div>
+
+      <!-- Step 4: Travel party -->
+      <div class="onboarding-step" data-step="4">
+        <h4>Who's usually travelling with you?</h4>
+        <p>This affects destination and activity recommendations.</p>
+        <div class="option-grid" id="onbPartyGrid">
+          <button class="option-card" data-val="solo"><div class="opt-icon">🧳</div><div class="opt-title">Solo</div><div class="opt-desc">Just me</div></button>
+          <button class="option-card" data-val="couple"><div class="opt-icon">💑</div><div class="opt-title">Couple</div><div class="opt-desc">With my partner</div></button>
+          <button class="option-card" data-val="family"><div class="opt-icon">👨‍👩‍👧</div><div class="opt-title">Family</div><div class="opt-desc">With kids</div></button>
+          <button class="option-card" data-val="group"><div class="opt-icon">👥</div><div class="opt-title">Group</div><div class="opt-desc">Friends / extended</div></button>
+        </div>
+      </div>
+
+      <!-- Step 5: Vibes -->
+      <div class="onboarding-step" data-step="5">
+        <h4>What kind of trips do you love?</h4>
+        <p>Pick up to 3. We'll match destinations to your style.</p>
+        <div class="option-grid" id="onbVibesGrid">
+          <button class="option-card" data-val="beach"><div class="opt-icon">🏖️</div><div class="opt-title">Beach</div><div class="opt-desc">Sun, sand, sea</div></button>
+          <button class="option-card" data-val="city"><div class="opt-icon">🏙️</div><div class="opt-title">City</div><div class="opt-desc">Urban exploration</div></button>
+          <button class="option-card" data-val="mountain"><div class="opt-icon">⛰️</div><div class="opt-title">Mountain</div><div class="opt-desc">Hiking, nature</div></button>
+          <button class="option-card" data-val="culture"><div class="opt-icon">🏛️</div><div class="opt-title">Culture</div><div class="opt-desc">Museums, history</div></button>
+          <button class="option-card" data-val="food"><div class="opt-icon">🍜</div><div class="opt-title">Food</div><div class="opt-desc">Culinary focus</div></button>
+          <button class="option-card" data-val="adventure"><div class="opt-icon">🪂</div><div class="opt-title">Adventure</div><div class="opt-desc">Active, thrilling</div></button>
+        </div>
+        <div class="onboarding-actions">
+          <button class="btn" id="onbBack">Back</button>
+          <button class="btn btn-primary" id="onbFinish">Finish setup</button>
+        </div>
+      </div>
+
+      <div class="onboarding-actions" id="onbNav" style="margin-top:0; padding-top:0; border-top:none">
+        <button class="btn" id="onbBack2" style="visibility:hidden">Back</button>
+        <button class="btn btn-primary" id="onbNext">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DAY DETAIL MODAL ===== -->
+<div class="modal-overlay" id="dayModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="dayModalTitle">Date</h3>
+      <button class="modal-close" onclick="closeDayModal()">×</button>
+    </div>
+    <div class="modal-body" id="dayModalBody"></div>
+  </div>
+</div>
+
+<!-- ===== TRIP DETAIL MODAL ===== -->
+<div class="modal-overlay" id="tripModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="tripModalTitle">Plan a trip</h3>
+      <button class="modal-close" onclick="closeTripModal()">×</button>
+    </div>
+    <div class="modal-body" id="tripModalBody"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ====================================================================
+// CONFIG
+// ====================================================================
+const API = 'https://dt-api-v2-dev.nsura2029.workers.dev';
+const STORAGE_KEY = 'lw_planner_prefs_v1';
+const TRIPS_KEY = 'lw_planner_trips_v1';
+
+// ====================================================================
+// STATE
+// ====================================================================
+let prefs = {
+  homeCityId: null,
+  homeCityName: null,
+  homeCountry: 'US',
+  homeLat: null,
+  homeLon: null,
+  pto: 15,
+  party: 'couple',
+  vibes: ['beach', 'city'],
+  onboarded: false,
+};
+let trips = [];
+let data = {
+  country: 'US',
+  year: 2026,
+  pto: 5,
+  holidays: [],
+  longWeekends: [],
+  homeCity: null,
+  nearby: [],
+};
+
+// ====================================================================
+// UTILS
+// ====================================================================
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function fmt(d, opts) {
+  if (typeof d === 'string') d = new Date(d + 'T12:00:00');
+  return d.toLocaleDateString('en-US', opts || { month: 'short', day: 'numeric' });
+}
+function fmtFull(d) { return fmt(d, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+function iso(d) {
+  if (typeof d === 'string') return d;
+  return d.toISOString().split('T')[0];
+}
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ====================================================================
+// PERSIST
+// ====================================================================
+function loadPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    prefs = { ...prefs, ...saved };
+  } catch (e) {}
+}
+function savePrefs() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+}
+function loadTrips() {
+  try { trips = JSON.parse(localStorage.getItem(TRIPS_KEY) || '[]'); } catch (e) { trips = []; }
+}
+function saveTrips() {
+  localStorage.setItem(TRIPS_KEY, JSON.stringify(trips));
+}
+
+// ====================================================================
+// DATA LOADING
+// ====================================================================
+async function loadData() {
+  const country = $('#countrySel').value;
+  const year = parseInt($('#yearSel').value);
+  const ptoRaw = $('#ptoSel').value;
+  const pto = ptoRaw ? parseInt(ptoRaw) : 0;
+  data.country = country;
+  data.year = year;
+  data.pto = pto;
+
+  $('#statusBadge').className = 'status-badge';
+  $('#statusBadge').innerHTML = '<span class="dot"></span> Loading…';
+
+  try {
+    const [lwResp, hResp] = await Promise.all([
+      fetch(`${API}/api/v1/countries/${country}/long-weekends/${year}?pto=${pto}&min_days=2`).then(r => r.json()),
+      fetch(`${API}/api/v1/holidays?year=${year}&country=${country}&filters=PUBLIC_NATIONAL,PUBLIC_LOCAL,OPTIONAL_HOLIDAY&limit=500`).then(r => r.json()),
+    ]);
+    if (!lwResp.success || !hResp.success) throw new Error('API error: ' + JSON.stringify({lw: lwResp.error, h: hResp.error}));
+
+    data.longWeekends = lwResp.data.longWeekends || [];
+    data.holidays = hResp.data.holidays || [];
+
+    // Load home city + nearby if set (non-blocking)
+    if (prefs.homeCityId) {
+      try {
+        data.homeCity = await fetch(`${API}/api/v1/cities/${prefs.homeCityId}`).then(r => r.json()).then(d => d.data);
+        if (data.homeCity) {
+          const nearRes = await fetch(`${API}/api/v1/cities/near?lat=${data.homeCity.latitude}&lon=${data.homeCity.longitude}&radiusKm=2000&limit=30`);
+          const nearData = await nearRes.json();
+          if (nearData.success) data.nearby = nearData.data?.cities || [];
+        }
+      } catch (e) {
+        console.warn('Could not load home/nearby:', e);
+        data.nearby = [];
+      }
+    }
+
+    $('#statusBadge').className = 'status-badge live';
+    $('#statusBadge').innerHTML = '<span class="dot"></span> Live';
+    render();
+    if (!window._listenersAttached) { window._listenersAttached = true; $$('#countrySel, #yearSel, #ptoSel').forEach(s => s.addEventListener('change', loadData)); }
+  } catch (err) {
+    console.error(err);
+    $('#statusBadge').className = 'status-badge';
+    $('#statusBadge').innerHTML = '<span class="dot"></span> Error';
+    toast('Failed to load: ' + (err.message || 'Unknown error'), 'error');
+  }
+}
+
+// ====================================================================
+// RENDERING
+// ====================================================================
+function render() { $('#statusBadge').className = 'status-badge live'; $('#statusBadge').innerHTML = '<span class="dot"></span> Live';
+  // Update sidebar user card
+  $('#ucHome').textContent = prefs.homeCityName || '—';
+  $('#ucCountry').textContent = data.country;
+  $('#ucPto').textContent = prefs.pto + ' days';
+  $('#ucTrips').textContent = trips.length;
+  const daysOff = trips.reduce((s, t) => s + (t.days || 0), 0);
+  $('#ucDays').textContent = daysOff;
+
+  renderPlan();
+  renderDiscover();
+  renderTrips();
+  renderInsights();
+}
+
+function renderPlan() {
+  const lws = data.longWeekends.filter(l => l.days >= 3);
+  const totalDays = lws.reduce((s, l) => s + l.days, 0);
+
+  // Hero: next LW
+  const today = new Date();
+  const nextLw = lws.find(l => new Date(l.end + 'T12:00:00') >= today);
+  if (nextLw) {
+    const startD = new Date(nextLw.start + 'T12:00:00');
+    const daysUntil = Math.max(0, Math.ceil((startD - today) / 86400000));
+    $('#heroCountdown').textContent = daysUntil;
+    $('#heroName').textContent = nextLw.trigger;
+    $('#heroSub').textContent = fmtFull(nextLw.start) + ' → ' + fmtFull(nextLw.end) + ' (' + nextLw.days + ' days)';
+  } else {
+    $('#heroCountdown').textContent = '—';
+    $('#heroName').textContent = 'No more LWs this year';
+    $('#heroSub').textContent = 'Try 2027';
+  }
+
+  // KPIs
+  $('#kpiLw').textContent = lws.length;
+  $('#kpiLwSub').textContent = lws.filter(l => l.days >= 4).length + ' are 4+ days';
+  $('#kpiDays').textContent = totalDays;
+  $('#kpiDaysSub').textContent = '+ ' + data.pto + ' PTO = ' + (totalDays + data.pto) + ' total';
+  const eff = data.pto > 0 ? (totalDays / data.pto).toFixed(1) : '∞';
+  $('#kpiEff').textContent = eff + 'x';
+  $('#kpiEffSub').textContent = 'days off per PTO';
+
+  // Map label
+  if (prefs.homeCityName) {
+    $('#mapLabel').textContent = prefs.homeCityName;
+    $('#nearbyList').innerHTML = data.nearby.slice(0, 5).map(c => `
+      <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border)">
+        <span>${escapeHtml(c.name)}, ${c.country?.cca2 || ''}</span>
+        <span style="color:var(--text-muted)">${c.distanceKm ? Math.round(c.distanceKm) + ' km' : ''} ${c.population ? '· ' + (c.population/1000|0) + 'k' : ''}</span>
+      </div>
+    `).join('') || '<em>No nearby cities</em>';
+  }
+
+  // Top LW picks (ranked by value)
+  const ranked = lws.map(lw => ({
+    ...lw,
+    score: scoreLw(lw),
+  })).sort((a, b) => b.score - a.score).slice(0, 5);
+
+  $('#lwList').innerHTML = ranked.map(lw => {
+    const scoreClass = lw.score >= 90 ? 's-90' : lw.score >= 75 ? 's-75' : lw.score >= 60 ? 's-60' : 's-40';
+    return `<div class="lw-card" onclick="openLwDetail('${lw.start}')">
+      <div class="lw-score ${scoreClass}">${lw.score}</div>
+      <div class="lw-info">
+        <h5>${escapeHtml(lw.trigger)}</h5>
+        <div class="meta">
+          <span class="chip green">${lw.type} (${lw.days}d)</span>
+          <span>${fmt(lw.start)} → ${fmt(lw.end)}</span>
+          <span>${scoreLwReasons(lw)}</span>
+        </div>
+      </div>
+      <div class="lw-actions">
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openTripPlanner('${lw.start}')">Plan trip</button>
+        <div class="lw-pto">+${data.pto} PTO = ${lw.days + data.pto}d</div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty"><div class="icon">📅</div>No LWs this year</div>';
+
+  // Year calendar
+  renderYearCal();
+}
+
+function scoreLw(lw) {
+  let score = 50 + lw.days * 5; // base + duration
+  const startD = new Date(lw.start + 'T12:00:00');
+  const month = startD.getMonth();
+  // Season: spring (3-5) +20, fall (9-11) +20, summer (6-8) +5, winter (12-2) -5
+  if (month >= 3 && month <= 4) score += 25; // spring break
+  else if (month >= 9 && month <= 10) score += 25; // fall foliage
+  else if (month >= 5 && month <= 8) score += 5;
+  else score -= 5;
+  // Type bonus
+  if (lw.days >= 4) score += 10;
+  if (lw.days >= 5) score += 10;
+  // Today bonus
+  const today = new Date();
+  const daysFromNow = Math.abs((startD - today) / 86400000);
+  if (daysFromNow < 60) score += 5; // coming soon
+  return Math.max(0, Math.min(100, score));
+}
+
+function scoreLwReasons(lw) {
+  const startD = new Date(lw.start + 'T12:00:00');
+  const month = startD.getMonth();
+  const reasons = [];
+  if (month >= 3 && month <= 4) reasons.push('🌸 spring');
+  else if (month >= 9 && month <= 10) reasons.push('🍂 fall');
+  else if (month >= 5 && month <= 8) reasons.push('☀️ summer');
+  else reasons.push('❄️ winter');
+  if (lw.days >= 4) reasons.push('long');
+  return reasons.map(r => `<span>${r}</span>`).join('');
+}
+
+function renderYearCal() {
+  const year = data.year;
+  const html = [];
+  for (let m = 0; m < 12; m++) {
+    const firstDow = new Date(year, m, 1).getDay();
+    const daysInMonth = new Date(year, m+1, 0).getDate();
+    const prevMonthDays = new Date(year, m, 0).getDate();
+    const todayKey = iso(new Date());
+    const monthName = new Date(year, m, 1).toLocaleDateString('en-US', { month: 'long' });
+
+    // LWs in this month
+    const monthLws = data.longWeekends.filter(lw => {
+      const sd = new Date(lw.start);
+      return sd.getFullYear() === year && sd.getMonth() === m && lw.days >= 3;
+    });
+
+    let dayHtml = '';
+    for (let i = 0; i < firstDow; i++) {
+      dayHtml += `<div class="mini-day other-month">${prevMonthDays - firstDow + i + 1}</div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, m, d);
+      const key = iso(date);
+      const dow = date.getDay();
+      const lw = data.longWeekends.find(l => l.start <= key && l.end >= key && l.days >= 3);
+      const h = data.holidays.find(hd => hd.startDate === key);
+      let cls = 'mini-day';
+      if (dow === 0 || dow === 6) cls += ' weekend';
+      if (lw) cls += ' lw';
+      if (h) {
+        if (h.filters.includes('PUBLIC_NATIONAL')) cls += ' holiday';
+        else if (h.filters.includes('OPTIONAL_HOLIDAY')) cls += ' optional';
+        else if (h.filters.includes('PUBLIC_LOCAL')) cls += ' optional';
+      }
+      if (key === todayKey) cls += ' today';
+      dayHtml += `<div class="${cls}" onclick="openDayModal('${key}')" title="${h ? escapeHtml(h.conceptName) : ''}${lw ? ' • LW: ' + escapeHtml(lw.trigger) : ''}">${d}</div>`;
+    }
+    html += `<div class="mini-month">
+      <h4>${monthName} ${monthLws.length > 0 ? `<span class="badge">${monthLws.length} LW${monthLws.length > 1 ? 's' : ''}</span>` : ''}</h4>
+      <div class="mini-grid">
+        <div class="mini-dow">S</div><div class="mini-dow">M</div><div class="mini-dow">T</div><div class="mini-dow">W</div><div class="mini-dow">T</div><div class="mini-dow">F</div><div class="mini-dow">S</div>
+        ${dayHtml}
+      </div>
+    </div>`;
+  }
+  $('#yearCal').innerHTML = html;
+}
+
+function renderDiscover() {
+  if (!prefs.homeCityId || !data.nearby.length) {
+    $('#destGrid').innerHTML = `<div class="empty" style="grid-column:span 4"><div class="icon">🗺️</div><h4>Set your home city first</h4><p>Click <a href="#" onclick="openOnboarding(); return false">here</a> to set up your preferences</p></div>`;
+    return;
+  }
+  // Filter & rank nearby
+  const destType = $('#destType').value;
+  const destBudget = $('#destBudget').value;
+  const destDistance = parseInt($('#destDistance').value);
+
+  // Big cities only (tier1 or population > 500k)
+  let cities = data.nearby
+    .filter(c => c.distanceKm <= destDistance && c.population > 200000)
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, 20);
+
+  cities = cities.map(c => {
+    let vibes = [];
+    if (c.country?.cca2 === 'US' || c.country?.cca2 === 'GB' || c.country?.cca2 === 'DE' || c.country?.cca2 === 'FR') vibes.push('city');
+    if (c.tier === 'tier1' && c.population > 1000000) vibes.push('city', 'food');
+    if (c.population > 5000000) vibes.push('culture');
+    return { ...c, vibes, type: vibes[0] || 'city' };
+  });
+
+  // Filter by type
+  if (destType !== 'all') cities = cities.filter(c => c.vibes.includes(destType));
+
+  $('#destGrid').innerHTML = cities.slice(0, 12).map(c => {
+    const emoji = c.type === 'beach' ? '🏖️' : c.type === 'mountain' ? '⛰️' : c.type === 'culture' ? '🏛️' : '🏙️';
+    return `<div class="dest-card" onclick="openDestDetail(${c.id})">
+      <div class="dest-photo">${emoji}<div class="distance-badge">${Math.round(c.distanceKm)} km</div></div>
+      <div class="dest-name">${escapeHtml(c.name)}</div>
+      <div class="dest-country">${escapeHtml(c.country?.name || '')}</div>
+      <div class="dest-stats">
+        <span>Population <span class="stat-val">${(c.population / 1000000).toFixed(1)}M</span></span>
+        <span>Flight <span class="stat-val">~${Math.round(c.distanceKm / 800)}h</span></span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty"><div class="icon">🔍</div>No destinations match your filters</div>';
+}
+
+function renderTrips() {
+  $('#tripsCount').textContent = trips.length ? `(${trips.length})` : '';
+  if (!trips.length) {
+    $('#tripsList').innerHTML = `<div class="empty"><div class="icon">✈️</div><h4>No trips yet</h4><p>Click on a long weekend in the Year Overview to plan a trip</p></div>`;
+    return;
+  }
+  $('#tripsList').innerHTML = trips.map((t, i) => `<div class="trip-card" onclick="openTripDetail(${i})">
+    <div class="trip-photo">✈️</div>
+    <div class="trip-info">
+      <h5>${escapeHtml(t.destination || t.lwName || 'Untitled trip')}</h5>
+      <div class="meta">${fmt(t.start)} → ${fmt(t.end)} • ${t.days} days • ${escapeHtml(t.lwName || '')}</div>
+    </div>
+    <div class="trip-stats">
+      <div class="trip-stat"><span class="num">${t.pto || 0}</span>PTO used</div>
+    </div>
+  </div>`).join('');
+}
+
+function renderInsights() {
+  // Days off by month
+  const byMonth = new Array(12).fill(0);
+  data.longWeekends.filter(l => l.days >= 3).forEach(l => {
+    const m = new Date(l.start).getMonth();
+    byMonth[m] += l.days;
+  });
+  const maxMonth = Math.max(...byMonth, 1);
+  $('#chartMonth').innerHTML = byMonth.map((d, i) => {
+    const monthName = new Date(2026, i).toLocaleDateString('en-US', { month: 'short' });
+    return `<div class="bar-row">
+      <span>${monthName}</span>
+      <div class="bar-track"><div class="bar-fill" style="width: ${(d / maxMonth * 100).toFixed(0)}%; background: ${d > 0 ? 'var(--green)' : 'var(--border)'}"></div></div>
+      <span class="bar-val">${d}d</span>
+    </div>`;
+  }).join('');
+
+  // Value distribution
+  const buckets = { '90+': 0, '75-89': 0, '60-74': 0, '<60': 0 };
+  data.longWeekends.filter(l => l.days >= 3).forEach(l => {
+    const s = scoreLw(l);
+    if (s >= 90) buckets['90+']++;
+    else if (s >= 75) buckets['75-89']++;
+    else if (s >= 60) buckets['60-74']++;
+    else buckets['<60']++;
+  });
+  const maxBucket = Math.max(...Object.values(buckets), 1);
+  $('#chartValue').innerHTML = Object.entries(buckets).map(([k, v]) =>
+    `<div class="bar-row">
+      <span>${k}</span>
+      <div class="bar-track"><div class="bar-fill" style="width: ${(v / maxBucket * 100).toFixed(0)}%"></div></div>
+      <span class="bar-val">${v}</span>
+    </div>`).join('');
+
+  // Smart recommendations
+  const recs = [];
+  const lws = data.longWeekends.filter(l => l.days >= 3);
+  const best = lws.map(l => ({ l, s: scoreLw(l) })).sort((a, b) => b.s - a.s)[0];
+  if (best) recs.push(`🌟 Your best LW: <strong>${escapeHtml(best.l.trigger)}</strong> (score ${best.s}). Book it now!`);
+
+  const closeLws = lws.filter(l => Math.abs((new Date(l.start) - new Date()) / 86400000) < 60);
+  if (closeLws.length) recs.push(`📅 ${closeLws.length} LW${closeLws.length > 1 ? 's' : ''} coming up in the next 60 days.`);
+
+  const stackable = lws.filter(l => l.days >= 4);
+  if (stackable.length >= 2) recs.push(`🎯 You have ${stackable.length} LWs that are 4+ days — perfect for a real vacation.`);
+
+  if (prefs.pto > 0) {
+    const ptoOff = data.pto;
+    const natural = lws.reduce((s, l) => s + l.days, 0);
+    recs.push(`💰 With ${ptoOff} PTO days, you can unlock ${natural + ptoOff} total days off.`);
+  }
+
+  if (!prefs.onboarded) recs.push(`👋 <a href="#" onclick="openOnboarding(); return false">Set up your preferences</a> to get personalized recommendations.`);
+  else if (!prefs.homeCityId) recs.push(`📍 <a href="#" onclick="openOnboarding(); return false">Set your home city</a> to see nearby destinations.`);
+
+  $('#recommendations').innerHTML = recs.map(r => `<div style="padding:10px 0; border-bottom:1px solid var(--border); font-size:13px">${r}</div>`).join('') || '<em>No insights yet — load some data first.</em>';
+}
+
+// ====================================================================
+// VIEW SWITCHING
+// ====================================================================
+$$('.nav-item[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.nav-item[data-view]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.tab-pane').forEach(p => p.classList.remove('active'));
+    $('#view-' + btn.dataset.view).classList.add('active');
+    const titles = {
+      plan: ['Year Overview', 'Plan your year around public holidays'],
+      discover: ['Discover Destinations', 'Find places to go for your long weekends'],
+      trips: ['My Trips', 'Your saved trips and itineraries'],
+      insights: ['Insights', 'Analytics and smart recommendations'],
+    };
+    const [t, s] = titles[btn.dataset.view];
+    $('#pageTitle').textContent = t;
+    $('#pageSubtitle').textContent = s;
+  });
+});
+
+// ====================================================================
+// ONBOARDING
+// ====================================================================
+let onbStep = 1;
+let onbData = { city: null, country: null, pto: 15, party: 'couple', vibes: [] };
+
+function openOnboarding() {
+  onbStep = 1;
+  showOnbStep();
+  $('#onboardingModal').classList.add('active');
+}
+function closeOnboarding() {
+  $('#onboardingModal').classList.remove('active');
+}
+
+function showOnbStep() {
+  $$('.onboarding-step').forEach(s => s.classList.remove('active'));
+  $('.onboarding-step[data-step="' + onbStep + '"]').classList.add('active');
+  $$('.onboarding-progress .dot').forEach((d, i) => d.classList.toggle('active', i < onbStep));
+
+  // Render country grid on step 2
+  if (onbStep === 2) {
+    const countries = ['US', 'CA', 'GB', 'DE', 'FR', 'IN', 'AU', 'JP', 'MX', 'IT', 'ES', 'BR', 'CN', 'NL', 'CH', 'SE'];
+    $('#onbCountryGrid').innerHTML = countries.map(c => {
+      const flag = c === 'US' ? '🇺🇸' : c === 'CA' ? '🇨🇦' : c === 'GB' ? '🇬🇧' : c === 'DE' ? '🇩🇪' : c === 'FR' ? '🇫🇷' : c === 'IN' ? '🇮🇳' : c === 'AU' ? '🇦🇺' : c === 'JP' ? '🇯🇵' : c === 'MX' ? '🇲🇽' : c === 'IT' ? '🇮🇹' : c === 'ES' ? '🇪🇸' : c === 'BR' ? '🇧🇷' : c === 'CN' ? '🇨🇳' : c === 'NL' ? '🇳🇱' : c === 'CH' ? '🇨🇭' : c === 'SE' ? '🇸🇪' : '🌍';
+      const name = c === 'US' ? 'United States' : c === 'CA' ? 'Canada' : c === 'GB' ? 'United Kingdom' : c === 'DE' ? 'Germany' : c === 'FR' ? 'France' : c === 'IN' ? 'India' : c === 'AU' ? 'Australia' : c === 'JP' ? 'Japan' : c === 'MX' ? 'Mexico' : c === 'IT' ? 'Italy' : c === 'ES' ? 'Spain' : c === 'BR' ? 'Brazil' : c === 'CN' ? 'China' : c === 'NL' ? 'Netherlands' : c === 'CH' ? 'Switzerland' : c === 'SE' ? 'Sweden' : c;
+      return `<button class="option-card ${onbData.country === c ? 'selected' : ''}" data-val="${c}">
+        <div class="opt-icon">${flag}</div>
+        <div class="opt-title">${name}</div>
+        <div class="opt-desc">${c}</div>
+      </button>`;
+    }).join('');
+  }
+  // Step 4: party selection
+  if (onbStep === 4) {
+    $$('#onbPartyGrid .option-card').forEach(c => c.classList.toggle('selected', c.dataset.val === onbData.party));
+  }
+  // Step 5: vibes
+  if (onbStep === 5) {
+    $$('#onbVibesGrid .option-card').forEach(c => c.classList.toggle('selected', onbData.vibes.includes(c.dataset.val)));
+  }
+}
+
+$('#onbCitySearch').addEventListener('input', async (e) => {
+  const q = e.target.value.trim();
+  if (q.length < 2) { $('#onbCityResults').innerHTML = ''; return; }
+  try {
+    const r = await fetch(`${API}/api/v1/cities/search?q=${encodeURIComponent(q)}&limit=10`).then(r => r.json());
+    if (!r.success) return;
+    $('#onbCityResults').innerHTML = r.data.results.map(c => `
+      <div class="result-item" data-id="${c.id}" data-name="${escapeHtml(c.displayName || c.name)}" data-country="${c.country?.cca2 || ''}" data-lat="${c.latitude}" data-lon="${c.longitude}">
+        <div><strong>${escapeHtml(c.displayName || c.name)}</strong> <span class="r-meta">${c.country?.name || ''}</span></div>
+        <span class="r-meta">${c.population ? (c.population/1000|0) + 'k people' : ''}</span>
+      </div>
+    `).join('') || '<div style="padding:10px; color: var(--text-muted)">No results</div>';
+    $$('#onbCityResults .result-item').forEach(it => {
+      it.addEventListener('click', () => {
+        onbData.city = {
+          id: parseInt(it.dataset.id),
+          name: it.dataset.name,
+          country: it.dataset.country,
+          lat: parseFloat(it.dataset.lat),
+          lon: parseFloat(it.dataset.lon),
+        };
+        $$('#onbCityResults .result-item').forEach(x => x.style.background = '');
+        it.style.background = 'var(--primary-soft)';
+        toast('Selected: ' + it.dataset.name);
+      });
+    });
+  } catch (err) { console.error(err); }
+});
+
+// Country selection
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#onbCountryGrid .option-card')) {
+    const c = e.target.closest('.option-card');
+    onbData.country = c.dataset.val;
+    showOnbStep();
+  }
+  if (e.target.closest('#onbPartyGrid .option-card')) {
+    const c = e.target.closest('.option-card');
+    onbData.party = c.dataset.val;
+    showOnbStep();
+  }
+  if (e.target.closest('#onbVibesGrid .option-card')) {
+    const c = e.target.closest('.option-card');
+    const v = c.dataset.val;
+    if (onbData.vibes.includes(v)) onbData.vibes = onbData.vibes.filter(x => x !== v);
+    else if (onbData.vibes.length < 3) onbData.vibes.push(v);
+    else onbData.vibes = [v];
+    showOnbStep();
+  }
+});
+
+$('#onbNext').addEventListener('click', () => {
+  if (onbStep === 1 && !onbData.city) { toast('Please select a home city', 'error'); return; }
+  if (onbStep === 2 && !onbData.country) { toast('Please select a country', 'error'); return; }
+  if (onbStep === 3) onbData.pto = parseInt($('#onbPto').value) || 15;
+  if (onbStep < 5) onbStep++;
+  showOnbStep();
+});
+
+$('#onbBack, #onbBack2').addEventListener('click', () => {
+  if (onbStep > 1) onbStep--;
+  showOnbStep();
+});
+
+$('#onbFinish').addEventListener('click', () => {
+  prefs.homeCityId = onbData.city?.id;
+  prefs.homeCityName = onbData.city?.name;
+  prefs.homeCountry = onbData.country;
+  prefs.homeLat = onbData.city?.lat;
+  prefs.homeLon = onbData.city?.lon;
+  prefs.pto = onbData.pto;
+  prefs.party = onbData.party;
+  prefs.vibes = onbData.vibes;
+  prefs.onboarded = true;
+  savePrefs();
+  $('#countrySel').value = onbData.country;
+  closeOnboarding();
+  toast('Setup complete! Welcome aboard 🎉');
+  loadData();
+});
+
+// ====================================================================
+// MODALS
+// ====================================================================
+function openDayModal(dateKey) {
+  const date = new Date(dateKey + 'T12:00:00');
+  const h = data.holidays.filter(x => x.startDate === dateKey);
+  const lw = data.longWeekends.find(l => l.start <= dateKey && l.end >= dateKey);
+
+  let body = `<div style="margin-bottom:12px"><div class="kpi-label">Date</div><div style="font-size:18px; font-weight:600">${fmtFull(dateKey)}</div></div>`;
+
+  if (h.length) {
+    body += `<div style="margin-bottom:12px"><div class="kpi-label">Holiday${h.length > 1 ? 's' : ''}</div>`;
+    h.forEach(hd => {
+      body += `<div style="padding:6px 0; display:flex; align-items:center; gap:8px">
+        <span style="font-size:18px">🎉</span>
+        <div>
+          <div style="font-weight:600">${escapeHtml(hd.conceptName)}</div>
+          <div class="kpi-sub">${hd.filters.map(f => f.replace(/_/g, ' ').toLowerCase()).join(' • ')}</div>
+        </div>
+      </div>`;
+    });
+    body += '</div>';
+  }
+
+  if (lw) {
+    body += `<div style="margin-bottom:12px"><div class="kpi-label">Part of long weekend</div>
+      <div style="font-size:14px; font-weight:500">🎉 ${fmtFull(lw.start)} → ${fmtFull(lw.end)} (${lw.days} days, ${lw.type})</div></div>`;
+    if (lw.ptoStrategies && lw.ptoStrategies.length) {
+      body += `<div><div class="kpi-label">PTO extension options</div>`;
+      lw.ptoStrategies.slice(0, 4).forEach(s => {
+        body += `<div style="background:var(--green-soft); border:1px solid var(--green); border-radius:6px; padding:8px 12px; margin:6px 0; display:flex; justify-content:space-between; align-items:center; font-size:13px">
+          <div>${s.direction === 'before' ? '← Extend before' : 'Extend after →'}: Take <strong>${s.ptoDays.map(escapeHtml).join(', ')}</strong> off → <strong>${s.totalOff} days</strong></div>
+          <span style="background:var(--green); color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:700">${s.efficiency.toFixed(1)}x</span>
+        </div>`;
+      });
+      body += '</div>';
+      body += `<div style="margin-top:16px"><button class="btn btn-primary" onclick="closeDayModal(); openTripPlanner('${lw.start}')">Plan trip on this LW</button></div>`;
+    }
+  } else if (h.length) {
+    body += `<div style="margin-top:16px"><button class="btn btn-primary" onclick="closeDayModal(); openTripPlanner('${h[0].startDate}')">Plan trip on this holiday</button></div>`;
+  } else {
+    body += `<div class="kpi-sub" style="margin-top:8px">No holiday or long weekend on this day.</div>`;
+  }
+
+  $('#dayModalTitle').textContent = fmtFull(dateKey);
+  $('#dayModalBody').innerHTML = body;
+  $('#dayModal').classList.add('active');
+}
+
+function closeDayModal() { $('#dayModal').classList.remove('active'); }
+
+function openLwDetail(start) {
+  openDayModal(start);
+}
+
+function openDestDetail(cityId) {
+  const city = data.nearby.find(c => c.id === cityId);
+  if (!city) return;
+  $('#tripModalTitle').textContent = city.name;
+  $('#tripModalBody').innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px">
+      <div>
+        <div class="kpi-label">Population</div>
+        <div style="font-size:20px; font-weight:700">${(city.population/1000000).toFixed(1)}M</div>
+      </div>
+      <div>
+        <div class="kpi-label">Distance from home</div>
+        <div style="font-size:20px; font-weight:700">${Math.round(city.distanceKm)} km</div>
+      </div>
+      <div>
+        <div class="kpi-label">Country</div>
+        <div style="font-size:16px; font-weight:600">${escapeHtml(city.country?.name || '')}</div>
+      </div>
+      <div>
+        <div class="kpi-label">Flight time (est.)</div>
+        <div style="font-size:20px; font-weight:700">~${Math.round(city.distanceKm / 800)}h</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px">
+      <a class="btn btn-primary" href="https://www.google.com/search?q=${encodeURIComponent(city.name + ' ' + (city.country?.name || '') + ' travel')}" target="_blank">🔍 Search travel</a>
+      <a class="btn" href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city.name)}" target="_blank">🏨 Hotels</a>
+      <a class="btn" href="https://www.skyscanner.com/routes/${encodeURIComponent(prefs.homeCityName || '')}/${encodeURIComponent(city.name)}" target="_blank">✈️ Flights</a>
+      <a class="btn" href="https://en.wikipedia.org/wiki/${encodeURIComponent(city.name)}" target="_blank">📖 Info</a>
+    </div>
+    <div class="kpi-sub">Tip: Pick a long weekend in the Year Overview and click "Plan trip" to start building an itinerary here.</div>
+  `;
+  $('#tripModal').classList.add('active');
+}
+
+function closeTripModal() { $('#tripModal').classList.remove('active'); }
+
+function openTripPlanner(startDate) {
+  const lw = data.longWeekends.find(l => l.start === startDate);
+  if (!lw) return;
+  $('#tripModalTitle').textContent = 'Plan a trip for ' + fmt(lw.start);
+  $('#tripModalBody').innerHTML = `
+    <div style="background:var(--primary-soft); border-radius:8px; padding:16px; margin-bottom:16px">
+      <div style="font-size:18px; font-weight:700; margin-bottom:4px">${escapeHtml(lw.trigger)}</div>
+      <div style="font-size:14px; color:var(--text-muted)">${fmtFull(lw.start)} → ${fmtFull(lw.end)} • ${lw.days} days, ${lw.type}</div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="kpi-label">Where do you want to go?</div>
+      <select class="control-select" id="tripDest" style="width:100%">
+        <option value="">— Pick a destination —</option>
+        ${data.nearby.filter(c => c.population > 100000).slice(0, 30).map(c => `<option value="${c.id}">${escapeHtml(c.name)}, ${escapeHtml(c.country?.name || '')} (${Math.round(c.distanceKm)}km)</option>`).join('')}
+      </select>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="kpi-label">Notes</div>
+      <input class="search-input" id="tripNotes" placeholder="e.g. Book beachfront hotel, visit X…" style="max-width:100%" />
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end">
+      <button class="btn" onclick="closeTripModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTrip('${lw.start}')">Save trip</button>
+    </div>
+  `;
+  $('#tripModal').classList.add('active');
+}
+
+function saveTrip(lwStart) {
+  const lw = data.longWeekends.find(l => l.start === lwStart);
+  const destId = parseInt($('#tripDest').value);
+  const dest = data.nearby.find(c => c.id === destId);
+  const notes = $('#tripNotes').value;
+  if (!dest) { toast('Please pick a destination', 'error'); return; }
+  const trip = {
+    lwStart: lw.start,
+    lwEnd: lw.end,
+    lwName: lw.trigger,
+    start: lw.start,
+    end: lw.end,
+    days: lw.days + data.pto,
+    destination: dest.name,
+    destinationId: dest.id,
+    country: dest.country?.name,
+    distanceKm: dest.distanceKm,
+    pto: data.pto,
+    notes,
+    createdAt: Date.now(),
+  };
+  trips.push(trip);
+  saveTrips();
+  closeTripModal();
+  toast('Trip saved: ' + dest.name);
+  render();
+}
+
+function openTripDetail(idx) {
+  const t = trips[idx];
+  if (!t) return;
+  $('#tripModalTitle').textContent = t.destination;
+  $('#tripModalBody').innerHTML = `
+    <div style="background:var(--primary-soft); border-radius:8px; padding:16px; margin-bottom:16px">
+      <div style="font-size:14px; color:var(--text-muted)">${escapeHtml(t.lwName || '')}</div>
+      <div style="font-size:20px; font-weight:700">${fmtFull(t.start)} → ${fmtFull(t.end)}</div>
+      <div style="font-size:14px; color:var(--text-muted)">${t.days} days, ${t.pto} PTO used</div>
+    </div>
+    ${t.notes ? `<div style="margin-bottom:16px"><div class="kpi-label">Notes</div><div>${escapeHtml(t.notes)}</div></div>` : ''}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px">
+      <a class="btn btn-primary" href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(t.destination)}" target="_blank">🏨 Hotels</a>
+      <a class="btn" href="https://www.skyscanner.com/routes/${encodeURIComponent(prefs.homeCityName || '')}/${encodeURIComponent(t.destination)}" target="_blank">✈️ Flights</a>
+      <a class="btn" href="https://en.wikipedia.org/wiki/${encodeURIComponent(t.destination)}" target="_blank">📖 Info</a>
+      <button class="btn" onclick="exportIcs(${idx})">📅 .ics</button>
+    </div>
+    <div style="text-align:right"><button class="btn" onclick="deleteTrip(${idx})" style="color:var(--red)">🗑️ Delete trip</button></div>
+  `;
+  $('#tripModal').classList.add('active');
+}
+
+function deleteTrip(idx) {
+  if (confirm('Delete this trip?')) {
+    trips.splice(idx, 1);
+    saveTrips();
+    closeTripModal();
+    render();
+    toast('Trip deleted');
+  }
+}
+
+function exportIcs(idx) {
+  const t = trips[idx];
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LongWeekendPlanner//EN',
+    'BEGIN:VEVENT',
+    `UID:${t.createdAt}@lwplanner`,
+    `DTSTAMP:${new Date(t.createdAt).toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    `DTSTART;VALUE=DATE:${t.start.replace(/-/g, '')}`,
+    `DTEND;VALUE=DATE:${t.end.replace(/-/g, '')}`,
+    `SUMMARY:${t.destination} (${t.lwName || 'Long Weekend'})`,
+    `DESCRIPTION:${t.notes || ''}`,
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${t.destination.replace(/\s+/g, '_')}_${t.start}.ics`;
+  a.click();
+  toast('Exported to calendar');
+}
+
+// ====================================================================
+// INIT
+// ====================================================================
+loadPrefs();
+  // Allow URL-based prefs override (for testing)
+  const urlPrefs = new URLSearchParams(location.search).get('prefs');
+  if (urlPrefs) { try { prefs = { ...prefs, ...JSON.parse(atob(urlPrefs)) }; savePrefs(); } catch(e){} }
+loadTrips();
+
+if (prefs.homeCountry) $('#countrySel').value = prefs.homeCountry;
+if (prefs.pto) $('#ptoSel').value = Math.min(5, prefs.pto);
+
+// (deferred - see below)
+
+$('#openOnboarding, #openOnboarding2, #changeHome').addEventListener('click', openOnboarding);
+$('#newTrip').addEventListener('click', () => {
+  const nextLw = data.longWeekends.find(l => new Date(l.end + 'T12:00:00') >= new Date() && l.days >= 3);
+  if (nextLw) openTripPlanner(nextLw.start);
+  else toast('No upcoming LWs to plan', 'error');
+});
+$('#exportTrips').addEventListener('click', () => {
+  const data = JSON.stringify(trips, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `trips_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  toast('Trips exported');
+});
+$('#clearAll').addEventListener('click', () => {
+  if (confirm('Clear all your preferences and trips? This cannot be undone.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TRIPS_KEY);
+    location.reload();
+  }
+});
+
+// Auto-open onboarding if first visit
+if (!prefs.onboarded && !new URLSearchParams(location.search).get('skipOnboarding')) {
+  setTimeout(() => openOnboarding(), 500);
+}
+
+loadData();
+</script>
+</body>
+</html>

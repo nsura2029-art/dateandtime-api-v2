@@ -1,0 +1,3 @@
+# Generated city seed files are 21MB+ total
+# Regenerate with: python3 scripts/seed/107_generate_cities.py
+# (Re-add specific country files if you need to override)

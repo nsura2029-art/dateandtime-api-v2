@@ -3,6 +3,13 @@
 # Prod:  wrangler deploy                      → dt-api-v2
 # Dev:   wrangler deploy --env dev            → dt-api-v2-dev
 # Local: wrangler dev --persist               → http://localhost:8787
+#
+# D1 databases:
+#   timeandtimepro-full     (c401ffb6-…) — legacy, OLD schema, deprecated
+#   timeandtimepro-full-v2  (new UUID)   — CLEAN 10-table schema (dr5hn + IANA)
+#
+# As of 2026-08-01, this Worker points at the NEW v2 D1.
+# To roll back to legacy, see "ROLLBACK TO LEGACY D1" at the bottom.
 
 name = "dt-api-v2"
 main = "src/index.ts"
@@ -10,16 +17,20 @@ compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 # ============================================================================
-# Production D1 (existing timeandtimepro-full — 33,945 cities / 242 countries)
+# D1 database — NEW v2 (clean 10-table schema)
 # ============================================================================
+# Created via: wrangler d1 create timeandtimepro-full-v2
+# Replaces the legacy timeandtimepro-full with the new schema
+# (regions, subregions, countries, administrative_regions, cities,
+#  place_names, time_zones, city_time_zones, country_time_zones, data_sources, …)
 [[d1_databases]]
 binding = "DB"
-database_name = "timeandtimepro-full"
-database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+database_name = "timeandtimepro-full-v2"
+database_id = "ab54b1d7-6791-4d29-a94c-c95e6a560b7e"   # ← UPDATE AFTER `wrangler d1 create`
 migrations_dir = "migrations"
 
 # ============================================================================
-# KV for caching hot endpoints (popular, health)
+# KV for caching hot endpoints (popular, health) — optional
 # ============================================================================
 # Create with: wrangler kv:namespace create CACHE
 # Then paste the id below
@@ -34,8 +45,9 @@ migrations_dir = "migrations"
 API_VERSION = "2.0.0"
 API_NAME = "dt-api-v2"
 LOG_LEVEL = "info"
-# Comma-separated list of allowed origins for CORS
-ALLOWED_ORIGINS = "https://dateandtime.live,https://tdp-landing-dev.nsura2029.workers.dev,http://localhost:5173"
+# Comma-separated list of allowed origins for CORS.
+# Supports exact match + "http://localhost:*" port wildcard (for local Swagger UI testing).
+ALLOWED_ORIGINS = "https://dateandtime.live,https://tdp-landing-dev.nsura2029.workers.dev,http://localhost:5173,http://localhost:*"
 
 # ============================================================================
 # Dev environment — same D1, lower log level, looser CORS
@@ -45,8 +57,8 @@ name = "dt-api-v2-dev"
 
 [[env.dev.d1_databases]]
 binding = "DB"
-database_name = "timeandtimepro-full"
-database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+database_name = "timeandtimepro-full-v2"
+database_id = "ab54b1d7-6791-4d29-a94c-c95e6a560b7e"   # ← UPDATE AFTER `wrangler d1 create`
 migrations_dir = "migrations"
 
 [env.dev.vars]
@@ -60,3 +72,17 @@ ALLOWED_ORIGINS = "*"
 # ============================================================================
 # ADMIN_API_KEY    — required for /api/v1/admin/* endpoints
 # RATE_LIMIT_TOKEN — (optional) for distributed rate limiting
+
+# ============================================================================
+# ROLLBACK TO LEGACY D1 (if v2 fails for any reason)
+# ============================================================================
+# 1. Comment out the [[d1_databases]] block above (the timeandtimepro-full-v2 one)
+# 2. Uncomment the block below (timeandtimepro-full, the legacy one)
+# 3. Add [[env.dev.d1_databases]] for legacy too (not shown — see git history)
+# 4. Run: npm run deploy:dev
+#
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "timeandtimepro-full"
+# database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+# migrations_dir = "migrations"

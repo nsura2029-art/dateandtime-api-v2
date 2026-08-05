@@ -79,6 +79,56 @@ describe("openapi + docs (integration)", () => {
     expect(Object.keys(spec.paths).length).toBeGreaterThan(0);
   });
 
+  it("openapi.json servers[0] is the current deployment origin (for Swagger UI 'Try it out')", async () => {
+    // The FIRST server in the list is what Swagger UI uses by default for
+    // "Try it out" requests. It MUST be the URL the spec was served from,
+    // not a hard-coded prod URL. Otherwise 'Try it out' would 404 on
+    // dev/local deployments.
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as { servers: Array<{ url: string }> };
+    const currentOrigin = new URL(BASE_URL).origin;
+    expect(spec.servers[0]?.url).toBe(currentOrigin);
+  });
+
+  it("openapi.json includes prod and dev Worker URLs as options", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as { servers: Array<{ url: string; description: string }> };
+    const urls = spec.servers.map((s) => s.url);
+    // The Workers are named in wrangler.toml — these are the real Cloudflare URLs
+    expect(urls).toContain("https://dt-api-v2.nsura2029.workers.dev");
+    expect(urls).toContain("https://dt-api-v2-dev.nsura2029.workers.dev");
+    expect(urls).toContain("http://localhost:8787");
+  });
+
+  it("openapi.json includes / and /api/v1/health in the Meta tag", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as {
+      paths: Record<string, Record<string, { tags?: string[]; summary?: string }>>;
+    };
+    // Both endpoints should be in the OpenAPI spec and tagged as Meta
+    expect(spec.paths["/"]).toBeDefined();
+    expect(spec.paths["/"]?.get?.tags).toContain("Meta");
+    expect(spec.paths["/"]?.get?.summary).toBeTruthy();
+    expect(spec.paths["/api/v1/health"]).toBeDefined();
+    expect(spec.paths["/api/v1/health"]?.get?.tags).toContain("Meta");
+    expect(spec.paths["/api/v1/health"]?.get?.summary).toBeTruthy();
+  });
+
+  it("openapi.json has response schemas on health (200 + 503)", async () => {
+    if (!serverUp) return;
+    const r = await fetch(`${BASE_URL}/openapi.json`);
+    const spec = (await r.json()) as {
+      paths: Record<string, Record<string, { responses: Record<string, { description: string }> }>>;
+    };
+    const healthResponses = spec.paths["/api/v1/health"]?.get?.responses;
+    expect(healthResponses).toBeDefined();
+    expect(healthResponses?.["200"]).toBeDefined();
+    expect(healthResponses?.["503"]).toBeDefined();
+  });
+
   it("GET /docs returns the Swagger UI HTML", async () => {
     if (!serverUp) return;
     const r = await fetch(`${BASE_URL}/docs`);

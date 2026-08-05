@@ -9,7 +9,7 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { z } from "zod";
 import { StatusResponse, ErrorResponse, DatabaseStats } from "@/lib/schemas";
-import { Cities, Countries, Timezones, Otd, CityAliases } from "@/lib/db";
+import { Cities, Countries, Timezones, Regions, Subregions, AdminRegions } from "@/lib/db";
 import type { Env, Variables } from "@/types/env";
 
 const status = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
@@ -38,17 +38,25 @@ const statusRoute = createRoute({
 
 status.openapi(statusRoute, async (c) => {
   // Query DB — if it fails, return 503
-  let tables: z.infer<typeof DatabaseStats> = { cities: 0, countries: 0, timezones: 0, onthisday: 0, cityAliases: 0 };
+  let tables: z.infer<typeof DatabaseStats> = {
+    regions: 0,
+    subregions: 0,
+    countries: 0,
+    administrativeRegions: 0,
+    cities: 0,
+    timezones: 0,
+  };
   let dbConnected = false;
   try {
-    const [cities, countries, tzs, otd, aliases] = await Promise.all([
-      Cities.count(c.env.DB),
+    const [regions, subregions, countries, adminRegions, cities, timezones] = await Promise.all([
+      Regions.count(c.env.DB),
+      Subregions.count(c.env.DB),
       Countries.count(c.env.DB),
+      AdminRegions.count(c.env.DB),
+      Cities.count(c.env.DB),
       Timezones.count(c.env.DB),
-      Otd.count(c.env.DB),
-      CityAliases.count(c.env.DB),
     ]);
-    tables = { cities, countries, timezones: tzs, onthisday: otd, cityAliases: aliases };
+    tables = { regions, subregions, countries, administrativeRegions: adminRegions, cities, timezones };
     dbConnected = true;
   } catch (err) {
     console.error(JSON.stringify({ type: "status.db_error", message: String(err) }));
@@ -101,7 +109,7 @@ status.openapi(statusRoute, async (c) => {
           deployedAt,
         },
         database: {
-          binding: "timeandtimepro-full" as const,
+          binding: "timeandtimepro-full-v2" as const,
           connected: true,
           version: c.env.API_VERSION,
           tables,

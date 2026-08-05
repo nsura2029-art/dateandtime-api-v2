@@ -2,8 +2,8 @@
 node_modules/
 pnpm-lock.yaml
 yarn.lock
-# NOTE: package-lock.json IS tracked — do NOT add it here. The lock file
-# ensures reproducible installs (use `npm ci` instead of `npm install`).
+# NOTE: package-lock.json IS tracked — do NOT add it here.
+# The lock file ensures reproducible installs (use `npm ci` not `npm install`).
 
 # Build output
 dist/
@@ -34,3 +34,20 @@ coverage/
 
 # OS
 Thumbs.db
+migrations/cities/*.sql
+!migrations/cities/.gitignore
+
+# Migration 111 alt names — regenerate from scripts/seed/alt_names.py
+tmp/
+scripts/seed/__pycache__/
+.worktrees/
+scripts/seed/holiday_enrichment/__pycache__/
+lib/__pycache__/
+
+# Calendarific raw API responses (re-fetch with calendarific_pull.py)
+holiday_data/calendarific/
+!holiday_data/README.md
+scripts/ingest/calendarific.sql
+preview_deploy/
+preview_deploy_tp/
+preview_deploy_lw/

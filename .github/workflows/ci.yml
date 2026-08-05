@@ -1,26 +1,44 @@
+# .github/workflows/ci.yml
+#
+# Run all 5 automated checks on every PR and push to develop/main.
+# Blocks merges if any check fails.
+#
+# No secrets required — this just runs typecheck, lint, test,
+# and readme sync against the in-process app + mocked D1.
+
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - develop
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - develop
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint-test:
+  checks:
+    name: All 5 automated checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
 
-      - name: Install deps
-        run: npm ci || npm install
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
 
       - name: Type check
         run: npm run typecheck
@@ -29,7 +47,26 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm test
+        run: npm test -- --run
 
-      - name: README sync check
-        run: npm run sync:readme:check
+      - name: Sync README (verify no drift)
+        run: |
+          # Snapshot the current README state
+          cp README.md /tmp/README.before.md
+          npm run sync:readme
+          # If anything changed, the sync script has a bug
+          if ! diff -q README.md /tmp/README.before.md > /dev/null; then
+            echo "::error::README.md has drift. Run 'npm run sync:readme' locally and commit."
+            exit 1
+          fi
+          echo "README is in sync."
+
+      - name: Doc framework check (PRs to develop only)
+        if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+        run: |
+          # On PRs targeting develop, ensure doc framework is up to date.
+          # This enforces the contract: every merge to develop must update
+          # STATUS.md, CHANGELOG.md, TODO.md, and reports/.
+          chmod +x scripts/pre-merge-to-develop.sh
+          bash scripts/pre-merge-to-develop.sh
+

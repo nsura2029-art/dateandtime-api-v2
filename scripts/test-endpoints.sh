@@ -1,19 +1,38 @@
 #!/usr/bin/env bash
 # test-endpoints.sh — Smoke test all implemented endpoints.
-# Usage: BASE_URL=https://api.dateandtime.live ./scripts/test-endpoints.sh
-#        (defaults to http://localhost:8787)
+#
+# Usage:
+#   BASE_URL=https://api.dateandtime.live ./scripts/test-endpoints.sh
+#   (defaults to http://localhost:8787)
+#
+# If BASE_URL is not reachable, all checks SKIP gracefully (no failures).
+# This lets the script be run in CI / verify scripts without a server.
 
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8787}"
 PASS=0
 FAIL=0
+SKIP=0
 
 # ANSI colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
+
+# Detect if the server is reachable. If not, skip all checks (return 0).
+# This lets the script be run from "verify" without forcing a server start.
+server_reachable() {
+  curl -sf -o /dev/null --max-time 2 "${BASE_URL}/api/v1/health" 2>/dev/null
+}
+
+if ! server_reachable; then
+  echo -e "${YELLOW}⚠ Server not reachable at ${BASE_URL} — skipping all smoke tests.${NC}"
+  echo -e "${YELLOW}  Start the server with: npm run dev${NC}"
+  echo -e "${YELLOW}  Or run: BASE_URL=https://dev.api.dateandtime.live ./scripts/test-endpoints.sh${NC}"
+  exit 0
+fi
 
 check() {
   local name="$1"

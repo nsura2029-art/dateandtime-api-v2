@@ -43,10 +43,31 @@ export function loadEnv(raw: RawEnv): ValidatedEnv {
 
 /**
  * Check whether an origin is allowed for CORS.
- * "*" in the env list allows all origins (dev only).
+ *
+ * Supports three patterns per entry in `allowedOrigins`:
+ *   1. "*"             — allow ALL origins (dev only — never use in prod!)
+ *   2. "https://x.com" — exact origin match
+ *   3. "http://localhost:*" or "http://127.0.0.1:*" — port wildcard for local dev
+ *
+ * Examples:
+ *   ALLOWED_ORIGINS = "https://dateandtime.live,http://localhost:*"
+ *     → allows the prod site + any localhost port (for Swagger UI testing)
  */
 export function isOriginAllowed(origin: string | null, allowedOrigins: string[]): boolean {
   if (!origin) return false;
   if (allowedOrigins.includes("*")) return true;
-  return allowedOrigins.includes(origin);
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Port-wildcard pattern: "http://localhost:*" matches "http://localhost:8787"
+  for (const allowed of allowedOrigins) {
+    if (allowed.endsWith(":*")) {
+      const prefix = allowed.slice(0, -2); // "http://localhost"
+      if (origin === prefix || origin.startsWith(prefix + ":")) {
+        return true;
+      }
+    }
+    // Also support 127.0.0.1 in addition to localhost if you want
+  }
+
+  return false;
 }
