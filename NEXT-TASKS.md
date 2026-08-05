@@ -331,3 +331,69 @@ After completing a task, update:
 5. `reports/` — per-milestone report
 
 And append the next-tier task to this doc.
+
+---
+
+## Tier 5: M14.5/M14.6 Frontend (parked 2026-08-04)
+
+### 🎨 PROMPT-E: Long Weekend Trip Planner UI (parked)
+
+**Status**: Built, parked on `feature/m14-holidays-verify` (14 commits ahead of develop).
+User said: "lgtm, will do as part of UI later."
+
+**Files on disk** (committed in `903d8a9` + `cbf84d8`):
+- `preview/trip-planner.html` (71KB, self-contained, ~1,900 lines)
+- `preview/screenshot_tp_01.png` (onboarding wizard)
+- `preview/screenshot_tp_main.png` (year overview with data)
+- `preview/screenshot_tp_modal.png` (day detail modal)
+- `docs/m14.6-trip-planner/USE_CASES.md` (35+ use cases spec)
+- `src/lib/longWeekend.ts` (server-side algo + 23 tests)
+- 2 new endpoints in `src/routes/holidays.ts`:
+  - `GET /api/v1/countries/{cca2}/long-weekends/{year}` (enhanced, multi-day + PTO)
+  - `GET /api/v1/countries/{cca2}/pto-strategy/{year}` (greedy year plan)
+
+**Tech stack**:
+- No npm deps, pure HTML/CSS/JS, drops into any framework
+- localStorage keys: `lw_planner_prefs_v1`, `lw_planner_trips_v1`
+- URL params: `?skipOnboarding=1`, `?prefs=<base64>` (for testing)
+- API base: `https://dt-api-v2-dev.nsura2029.workers.dev`
+
+**What it does**:
+- Absentify-style year calendar (12 mini months) + vacation allowance card
+- 21st.dev-style bento grid dashboard + score circles + hover lift
+- 4 tabs: Plan (year overview), Discover (browse destinations), My Trips (saved), Insights (analytics)
+- 5-step onboarding: city search → country → PTO → party → vibes
+- Trip value scoring (0-100), travel buffer, cluster detection
+
+**Known small bugs (parked)**:
+- Status badge sometimes shows "Error" briefly even when data loads
+- "Created by MiniMax Agent" overlay added by deployer
+- The iframe caches aggressively (use cache-bust query params for testing)
+
+**Next steps when resuming**:
+1. Move to a real framework (Next.js/Remix), replace localStorage hacks with proper state
+2. Wire up 21st.dev components properly: DatePicker, Combobox, BentoGrid (instead of custom HTML)
+3. Add climate data when M15 lands (Open-Meteo + WeatherAPI — see `docs/ROADMAP-weather-data.md`)
+4. Real booking deep-links with affiliate IDs (Skyscanner, Booking) instead of generic search
+5. Visual destinations, use Wikipedia images / Unsplash via API
+6. Multi-user / family sharing, currently local-only
+
+### 🌤️ PROMPT-F: M15 Weather Data (deferred)
+
+**Status**: Roadmap written (`docs/ROADMAP-weather-data.md`), implementation deferred.
+
+**Three options evaluated**:
+1. **Open-Meteo self-hosted** — free, OSS, no API key, devops cost (~$10/mo)
+2. **WeatherAPI.com** — https://www.weatherapi.com/pricing.aspx, free 1M calls/mo, $0-4/mo
+3. **NOAA NCEI GSOM** — already loaded 87,808 records in M11.8!
+
+**Recommended**: hybrid (NOAA NCEI for historical normals + Open-Meteo for forecast)
+
+**Schema** (`city_climate_normals` + `city_forecast`) + 3 target endpoints:
+- `GET /api/v1/cities/{id}/climate?month=6`
+- `GET /api/v1/cities/{id}/forecast?days=14`
+- `GET /api/v1/cities?warm_in=January&max_distance_km=2000`
+
+**6 use cases unlocked** (warm weather filter, best time to visit, monsoon warnings, pack-list, climate score, LW season warnings).
+
+**Decision needed**: Self-host Open-Meteo or pay for WeatherAPI?

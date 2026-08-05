@@ -8,7 +8,7 @@
 1. **Setup / onboarding** (`docs/setup.md`) — how to set up the project from scratch
 2. **Troubleshooting** (`docs/troubleshooting.md`) — common errors + fixes
 3. **Known issues** (`docs/KNOWN_ISSUES.md`) — tracked bugs (BUG-N, TODO-N)
-4. **API reference** (`docs/api/`) — OpenAPI spec, Postman collection, examples
+4. **API reference** (`docs/api/README.md`) — 45 endpoints, M14 spec, postman collection
 5. **Architecture** (`docs/architecture/`) — design decisions, data model diagrams
 6. **Plans** (`docs/PLAN-*.md`) — future work, design docs
 
@@ -159,10 +159,19 @@ Before committing any doc:
 |---|---|
 | `docs/setup.md` | Onboarding: clone, install, set env vars, run |
 | `docs/troubleshooting.md` | Common errors and how to fix |
+
 | `KNOWN_ISSUES.md` (root) | BUG-1 (Swagger CORS), BUG-2 (503 on local), TODO-1 — detailed with repro + root cause |
 | `docs/KNOWN_ISSUES.md` | Summary of BUG-1, BUG-2 + deferred items from TODO.md |
 | `docs/api/openapi.json` | OpenAPI 3.1 spec (source of truth for API) |
 | `docs/api/timeanddatepro-api.postman_collection.json` | Postman collection (auto-gen) |
+
+| `docs/KNOWN_ISSUES.md` | BUG-1 (Swagger CORS), BUG-2 (503 on local), TODO-1 |
+| `docs/api/README.md` | **API reference** — 45 endpoints, 9 sections, M14 spec |
+| `docs/postman/dt-api-v2.postman_collection.json` | Postman collection (M14 + earlier) |
+| `docs/ROADMAP-weather-data.md` | **M15+ roadmap** — Open-Meteo, WeatherAPI, NOAA NCEI |
+| `docs/m14.6-trip-planner/USE_CASES.md` | 35+ use cases for long weekend planner |
+| `docs/enrichment-roadmap.md` | Tier A sources to add to M14 (gov_in, gov_uk, etc.) |
+
 | `docs/architecture/DB-EDGE-CASE-AUDIT.md` | 20 edge cases for the data model |
 | `docs/SPEC-master-data-architecture.md` | Full 10-table spec |
 | `docs/PLAN-phased-implementation.md` | 5-phase rollout plan |

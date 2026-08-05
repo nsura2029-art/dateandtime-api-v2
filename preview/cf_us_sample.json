@@ -1,0 +1,90 @@
+{
+  "meta": null,
+  "holidays": [
+    {
+      "name": "New Year's Day",
+      "description": "New Year's Day is the first day of the Gregorian calendar, which is widely used in many countries such as the USA.",
+      "country": {
+        "id": "us",
+        "name": "United States"
+      },
+      "date": {
+        "iso": "2026-01-01",
+        "datetime": {
+          "year": 2026,
+          "month": 1,
+          "day": 1
+        }
+      },
+      "type": [
+        "Local holiday"
+      ],
+      "primary_type": "State Holiday",
+      "canonical_url": "https://calendarific.com/holiday/us/new-year-day",
+      "urlid": "us/new-year-day",
+      "locations": "TX",
+      "states": [
+        {
+          "id": 48,
+          "abbrev": "TX",
+          "name": "Texas",
+          "exception": null,
+          "iso": "us-tx"
+        }
+      ]
+    },
+    {
+      "name": "New Year's Day",
+      "description": "New Year's Day is the first day of the Gregorian calendar, which is widely used in many countries such as the USA.",
+      "country": {
+        "id": "us",
+        "name": "United States"
+      },
+      "date": {
+        "iso": "2026-01-01",
+        "datetime": {
+          "year": 2026,
+          "month": 1,
+          "day": 1
+        }
+      },
+      "type": [
+        "Local holiday"
+      ],
+      "primary_type": "State Holiday",
+      "canonical_url": "https://calendarific.com/holiday/us/new-year-day",
+      "urlid": "us/new-year-day",
+      "locations": "MA, MS, NY, WI",
+      "states": [
+        {
+          "id": 25,
+          "abbrev": "MA",
+          "name": "Massachusetts",
+          "exception": null,
+          "iso": "us-ma"
+        },
+        {
+          "id": 28,
+          "abbrev": "MS",
+          "name": "Mississippi",
+          "exception": null,
+          "iso": "us-ms"
+        },
+        {
+          "id": 36,
+          "abbrev": "NY",
+          "name": "New York",
+          "exception": null,
+          "iso": "us-ny"
+        },
+        {
+          "id": 55,
+          "abbrev": "WI",
+          "name": "Wisconsin",
+          "exception": null,
+          "iso": "us-wi"
+        }
+      ]
+    }
+  ]
+}

@@ -35,6 +35,17 @@ const app = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>();
 // ============================================================================
 // Middleware (order matters)
 // ============================================================================
+// CORS headers on every response — MUST be first so headers are set even when
+// downstream handlers short-circuit (e.g. preflight, 404, error).
+app.use("*", async (c, next) => {
+  await next();
+  const env = loadEnv(c.env);
+  const corsHeaders = getCorsHeaders(c.req.raw, env);
+  corsHeaders.forEach((value, key) => {
+    c.res.headers.set(key, value);
+  });
+});
+
 app.use("*", errorHandler());
 app.use("*", logger());
 
@@ -72,18 +83,6 @@ app.route("/", time); // GET /api/v1/time/now + /api/v1/time/convert
 
 // OpenAPI + Swagger UI
 registerDocs(app);
-
-// ============================================================================
-// CORS headers on every response
-// ============================================================================
-app.use("*", async (c, next) => {
-  await next();
-  const env = loadEnv(c.env);
-  const corsHeaders = getCorsHeaders(c.req.raw, env);
-  corsHeaders.forEach((value, key) => {
-    c.res.headers.set(key, value);
-  });
-});
 
 // ============================================================================
 // 404 fallback

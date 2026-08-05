@@ -38,9 +38,16 @@ migrations/cities/*.sql
 !migrations/cities/.gitignore
 
 # Migration 111 alt names — regenerate from scripts/seed/alt_names.py
-# (43MB file, too large for git)
-migrations/111_seed_alt_names.sql
 tmp/
 scripts/seed/__pycache__/
 .worktrees/
 scripts/seed/holiday_enrichment/__pycache__/
+lib/__pycache__/
+
+# Calendarific raw API responses (re-fetch with calendarific_pull.py)
+holiday_data/calendarific/
+!holiday_data/README.md
+scripts/ingest/calendarific.sql
+preview_deploy/
+preview_deploy_tp/
+preview_deploy_lw/

@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Long Weekend Calendar 2026 — Plan your PTO</title>
+<style>
+  /* === Reset & base === */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #f8f9fb;
+    color: #1a202c;
+    line-height: 1.5;
+    padding: 0 0 80px;
+  }
+
+  /* === Header === */
+  .topbar {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .topbar h1 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .topbar .subtitle {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+  .topbar-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .topbar select, .topbar button {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .topbar select:hover, .topbar button:hover {
+    background: rgba(255,255,255,0.25);
+  }
+  .topbar .status {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.15);
+  }
+  .topbar .status.live { background: #10b981; }
+  .topbar .status.offline { background: #f59e0b; }
+
+  /* === Container === */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* === Summary cards === */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+  }
+  .summary-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4f46e5;
+  }
+  .summary-card .label {
+    font-size: 13px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  /* === Legend === */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e0;
+  }
+
+  /* === Calendar grid === */
+  .month {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+  }
+  .month h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .month-stats {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  .month-stats .lw-count {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .month-dow {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    padding: 6px 0;
+  }
+  .day {
+    aspect-ratio: 1;
+    min-height: 60px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    flex-direction: column;
+  }
+  .day:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 10;
+  }
+  .day.other-month {
+    opacity: 0.3;
+  }
+  .day.today {
+    outline: 2px solid #4f46e5;
+    outline-offset: -2px;
+  }
+  .day .num {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .day .holiday {
+    font-size: 10px;
+    line-height: 1.2;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-weight: 500;
+  }
+  /* Day types */
+  .day.weekend { background: #f3f4f6; }
+  .day.holiday-public { background: #fee2e2; border-color: #fca5a5; }
+  .day.holiday-public .num { color: #991b1b; }
+  .day.holiday-public .holiday { color: #991b1b; }
+  .day.holiday-optional { background: #fef3c7; border-color: #fcd34d; }
+  .day.holiday-optional .num { color: #92400e; }
+  .day.holiday-optional .holiday { color: #92400e; }
+  .day.holiday-local { background: #dbeafe; border-color: #93c5fd; }
+  .day.holiday-local .num { color: #1e40af; }
+  .day.holiday-local .holiday { color: #1e40af; }
+  .day.long-weekend:not(.holiday-public):not(.holiday-optional):not(.holiday-local) {
+    background: #d1fae5 !important;
+    border: 2px solid #10b981;
+  }
+  .day.long-weekend .num { color: #065f46; font-weight: 700; }
+  .day.long-weekend .holiday { color: #065f46; }
+  .day.long-weekend.holiday-public .num { color: #991b1b !important; }
+  .day.long-weekend.holiday-public .holiday { color: #991b1b !important; }
+  .day.long-weekend.holiday-optional .num { color: #92400e !important; }
+  .day.long-weekend.holiday-optional .holiday { color: #92400e !important; }
+  .day.long-weekend.holiday-local .num { color: #1e40af !important; }
+  .day.long-weekend.holiday-local .holiday { color: #1e40af !important; }
+
+  /* === PTO strategies === */
+  .pto-section {
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .pto-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a202c;
+  }
+  .pto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .pto-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pto-card:hover {
+    background: #f3f4f6;
+    border-color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .pto-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .pto-card-date {
+    font-weight: 700;
+    color: #1a202c;
+    font-size: 15px;
+  }
+  .pto-card-eff {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pto-card-trigger {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+  .pto-card-action {
+    font-size: 12px;
+    color: #4f46e5;
+    font-weight: 500;
+  }
+  .pto-card-pto {
+    font-family: monospace;
+    background: #fef3c7;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+
+  /* === Modal === */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  }
+  .modal-close:hover {
+    background: #f3f4f6;
+  }
+  .modal-body {
+    padding: 20px 24px;
+  }
+  .modal-row {
+    margin-bottom: 12px;
+  }
+  .modal-label {
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .modal-value {
+    font-size: 14px;
+    color: #1a202c;
+  }
+  .modal-pto-list {
+    list-style: none;
+  }
+  .modal-pto-list li {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .modal-pto-list .eff {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* === Print === */
+  @media print {
+    .topbar, .legend, .pto-section, .modal-overlay { display: none !important; }
+    body { background: white; padding: 0; }
+    .container { padding: 0; max-width: 100%; }
+    .month { page-break-inside: avoid; box-shadow: none; }
+  }
+
+  /* === Loading === */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h1>🗓️ Long Weekend Calendar</h1>
+      <div class="subtitle">Plan your PTO around public holidays + school breaks</div>
+    </div>
+    <div class="topbar-controls">
+      <select id="country">
+        <option value="US">🇺🇸 United States</option>
+        <option value="CA">🇨🇦 Canada</option>
+        <option value="IN">🇮🇳 India</option>
+        <option value="GB">🇬🇧 United Kingdom</option>
+        <option value="AU">🇦🇺 Australia</option>
+        <option value="DE">🇩🇪 Germany</option>
+        <option value="FR">🇫🇷 France</option>
+      </select>
+      <select id="year">
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+      <select id="pto">
+        <option value="0">No PTO planning</option>
+        <option value="1">+1 day PTO</option>
+        <option value="2" selected>+2 days PTO</option>
+        <option value="3">+3 days PTO</option>
+      </select>
+      <button id="printBtn">🖨️ Print</button>
+      <span id="status" class="status">Loading…</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#fee2e2; border-color:#fca5a5"></div>Public Holiday</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fef3c7; border-color:#fcd34d"></div>Optional / Restricted</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#dbeafe; border-color:#93c5fd"></div>State/Provincial</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#d1fae5; border-color:#10b981"></div>Long Weekend (3+ days)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#f3f4f6"></div>Weekend</div>
+  </div>
+
+  <div id="summary" class="summary"></div>
+  <div id="calendar"></div>
+  <div id="ptoSection" class="pto-section"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Date Details</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'https://dt-api-v2-dev.nsura2029.workers.dev';
+
+// ============== State ==============
+let currentData = null;
+let isLive = false;
+
+// ============== Country config ==============
+const COUNTRY_NAMES = {
+  US: 'United States', CA: 'Canada', IN: 'India', GB: 'United Kingdom',
+  AU: 'Australia', DE: 'Germany', FR: 'France', MX: 'Mexico', BR: 'Brazil',
+  JP: 'Japan', CN: 'China', IT: 'Italy', ES: 'Spain', NZ: 'New Zealand',
+};
+
+// ============== Init ==============
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  if (params.get('country')) document.getElementById('country').value = params.get('country');
+  if (params.get('year')) document.getElementById('year').value = params.get('year');
+  if (params.get('pto')) document.getElementById('pto').value = params.get('pto');
+
+  document.getElementById('country').addEventListener('change', load);
+  document.getElementById('year').addEventListener('change', load);
+  document.getElementById('pto').addEventListener('change', load);
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal') closeModal();
+  });
+
+  load();
+});
+
+function updateUrl() {
+  const c = document.getElementById('country').value;
+  const y = document.getElementById('year').value;
+  const p = document.getElementById('pto').value;
+  // Preserve modal param if present
+  const currentParams = new URLSearchParams(location.search);
+  const modal = currentParams.get('modal');
+  const params = new URLSearchParams({ country: c, year: y, pto: p });
+  if (modal) params.set('modal', modal);
+  history.replaceState(null, '', '?' + params.toString());
+}
+
+async function load() {
+  updateUrl();
+  const country = document.getElementById('country').value;
+  const year = parseInt(document.getElementById('year').value);
+  const pto = parseInt(document.getElementById('pto').value);
+  setStatus('Loading…', '');
+
+  document.getElementById('calendar').innerHTML = '<div class="loading"><div class="spinner"></div>Loading holidays for ' + COUNTRY_NAMES[country] + ' ' + year + '…</div>';
+
+  try {
+    // Fetch long weekends + holidays in parallel
+    // For calendar color coding, fetch important categories (PUBLIC_*, OPTIONAL_*, OBS_*, major religions)
+    const importantFilters = 'PUBLIC_NATIONAL,PUBLIC_LOCAL,OPTIONAL_HOLIDAY';
+    const [lwResp, hResp] = await Promise.all([
+      fetch(`${API_BASE}/api/v1/countries/${country}/long-weekends/${year}?pto=${pto}&min_days=2`).then(r => r.json()),
+      fetch(`${API_BASE}/api/v1/holidays?year=${year}&country=${country}&filters=${importantFilters}&limit=500`).then(r => r.json()),
+    ]);
+
+    if (!lwResp.success || !hResp.success) {
+      const lwErr = lwResp.error ? JSON.stringify(lwResp.error) : 'ok';
+      const hErr = hResp.error ? JSON.stringify(hResp.error) : 'ok';
+      throw new Error('LW: ' + lwErr + ' | H: ' + hErr);
+    }
+
+    isLive = true;
+    setStatus('🔴 LIVE', 'live');
+
+    // For long weekends API: only holidays in longWeekends[].holidays[] + trigger
+    // We need ALL holidays for color coding, so use the holidays endpoint
+    const allHolidays = hResp.data.holidays;
+    const longWeekends = lwResp.data.longWeekends;
+    currentData = { country, year, pto, holidays: allHolidays, longWeekends };
+
+    render();
+
+    // Auto-open modal if ?modal=YYYY-MM-DD or first long weekend if ?modal=lw
+    const modalParam = new URLSearchParams(location.search).get('modal');
+    if (modalParam) {
+      setTimeout(() => { console.log('Modal trigger:', modalParam, 'LW count:', longWeekends.length);
+        if (modalParam === 'lw') {
+          const lw = longWeekends.find(l => l.days >= 3);
+          if (lw) showLWModal(lw.start);
+        } else {
+          const dayH = allHolidays.filter(h => h.startDate === modalParam);
+          const lw = longWeekends.find(l => l.start <= modalParam && l.end >= modalParam);
+          showModal(modalParam, dayH, lw);
+        }
+      }, 300);
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus('❌ Error: ' + err.message, 'offline');
+    document.getElementById('calendar').innerHTML = '<div class="loading"><h2>Failed to load</h2><p>' + err.message + '</p><p>Try a different country/year or check your connection.</p></div>';
+  }
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status ' + cls;
+}
+
+// ============== Rendering ==============
+function render() {
+  if (!currentData) return;
+  const { country, year, holidays, longWeekends, pto } = currentData;
+
+  // Build lookup: date -> holiday
+  const dateToHolidays = {};
+  for (const h of holidays) {
+    const sd = h.startDate;
+    if (!dateToHolidays[sd]) dateToHolidays[sd] = [];
+    dateToHolidays[sd].push(h);
+  }
+
+  // Build lookup: date -> longWeekend (only 3+ day blocks count as "long weekend" visually)
+  const dateToLw = {};
+  for (const lw of longWeekends) {
+    if (lw.days < 3) continue; // skip regular 2-day weekends
+    const startD = new Date(lw.start);
+    const endD = new Date(lw.end);
+    for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      dateToLw[key] = lw;
+    }
+  }
+
+  // Render summary
+  const totalHolidays = holidays.length;
+  const totalLw = longWeekends.filter(lw => lw.days >= 3).length;
+  const totalDaysOff = longWeekends.filter(lw => lw.days >= 3).reduce((s, lw) => s + lw.days, 0);
+  const summary = longWeekends.filter(lw => lw.days >= 3).reduce((acc, lw) => {
+    acc[lw.type] = (acc[lw.type] || 0) + 1;
+    return acc;
+  }, {});
+
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-card">
+      <div class="value">${totalHolidays}</div>
+      <div class="label">Holidays in ${year}</div>
+    </div>
+    <div class="summary-card">
+      <div class="value">${totalLw}</div>
+      <div class="label">Long Weekends (3+ days)</div>
+    </div>
+    <div class="summary-card">
+      <div class="value">${totalDaysOff}</div>
+      <div class="label">Total Days Off</div>
+    </div>
+    <div class="summary-card">
+      <div class="value">${Object.entries(summary).map(([k, v]) => `${v} ${k}`).join(', ') || '—'}</div>
+      <div class="label">Breakdown</div>
+    </div>
+  `;
+
+  // Render months
+  const calendarEl = document.getElementById('calendar');
+  calendarEl.innerHTML = '';
+  for (let m = 0; m < 12; m++) {
+    calendarEl.appendChild(renderMonth(year, m, dateToHolidays, dateToLw));
+  }
+
+  // Render PTO strategies
+  renderPTOStrategies(pto);
+}
+
+function renderMonth(year, monthIdx, dateToHolidays, dateToLw) {
+  const monthDiv = document.createElement('div');
+  monthDiv.className = 'month';
+
+  const monthName = new Date(year, monthIdx, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const lwInMonth = Object.values(dateToLw).filter(lw => {
+    const d = new Date(lw.start);
+    return d.getFullYear() === year && d.getMonth() === monthIdx;
+  });
+  // Dedupe by lw.start (multiple days in same LW would otherwise be in the values() set)
+  const uniqueLwInMonth = Array.from(new Set(lwInMonth.map(l => l.start)))
+    .map(start => lwInMonth.find(l => l.start === start));
+
+  const h2 = document.createElement('h2');
+  h2.innerHTML = monthName + (uniqueLwInMonth.length > 0
+    ? `<span class="month-stats">${uniqueLwInMonth.length} long weekend${uniqueLwInMonth.length > 1 ? 's' : ''}<span class="lw-count">${uniqueLwInMonth.map(l => l.days + 'd').join(', ')}</span></span>`
+    : '');
+  monthDiv.appendChild(h2);
+
+  // Day-of-week headers
+  const grid = document.createElement('div');
+  grid.className = 'month-grid';
+  const dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  for (const dow of dows) {
+    const el = document.createElement('div');
+    el.className = 'month-dow';
+    el.textContent = dow;
+    grid.appendChild(el);
+  }
+
+  // First day of month + days in month
+  const firstDay = new Date(year, monthIdx, 1);
+  const startDow = firstDay.getDay(); // 0 = Sun
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  const today = new Date();
+  const todayKey = today.toISOString().slice(0, 10);
+
+  // Padding days from previous month
+  const prevMonthDays = new Date(year, monthIdx, 0).getDate();
+  for (let i = startDow - 1; i >= 0; i--) {
+    const day = prevMonthDays - i;
+    const el = document.createElement('div');
+    el.className = 'day other-month';
+    el.innerHTML = `<div class="num">${day}</div>`;
+    grid.appendChild(el);
+  }
+
+  // Days of this month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, monthIdx, day);
+    const key = date.toISOString().slice(0, 10);
+    const dow = date.getDay();
+    const dayHolidays = dateToHolidays[key] || [];
+    const lw = dateToLw[key];
+
+    const el = document.createElement('div');
+    el.className = 'day';
+    if (lw) el.classList.add('long-weekend');
+    if (dow === 0 || dow === 6) el.classList.add('weekend');
+
+    // Holiday class
+    let primaryHoliday = null;
+    if (dayHolidays.length > 0) {
+      // Prefer public > optional > local
+      primaryHoliday = dayHolidays.find(h => h.filters.includes('PUBLIC_NATIONAL'))
+                     || dayHolidays.find(h => h.filters.includes('PUBLIC_LOCAL'))
+                     || dayHolidays.find(h => h.filters.includes('OPTIONAL_HOLIDAY'))
+                     || dayHolidays[0];
+      if (primaryHoliday.filters.includes('PUBLIC_NATIONAL')) el.classList.add('holiday-public');
+      else if (primaryHoliday.filters.includes('OPTIONAL_HOLIDAY')) el.classList.add('holiday-optional');
+      else if (primaryHoliday.filters.includes('PUBLIC_LOCAL')) el.classList.add('holiday-local');
+    }
+
+    if (key === todayKey) el.classList.add('today');
+
+    el.innerHTML = `<div class="num">${day}</div>` +
+      (primaryHoliday ? `<div class="holiday">${escapeHtml(primaryHoliday.conceptName)}</div>` : '');
+
+    el.addEventListener('click', () => showModal(key, dayHolidays, lw));
+    grid.appendChild(el);
+  }
+
+  // Padding days for next month
+  const totalCells = startDow + daysInMonth;
+  const trailing = (7 - (totalCells % 7)) % 7;
+  for (let day = 1; day <= trailing; day++) {
+    const el = document.createElement('div');
+    el.className = 'day other-month';
+    el.innerHTML = `<div class="num">${day}</div>`;
+    grid.appendChild(el);
+  }
+
+  monthDiv.appendChild(grid);
+  return monthDiv;
+}
+
+function renderPTOStrategies(pto) {
+  const section = document.getElementById('ptoSection');
+  if (pto === 0) {
+    section.innerHTML = '';
+    return;
+  }
+  const strategies = [];
+  for (const lw of currentData.longWeekends) {
+    if (lw.ptoStrategies && lw.ptoStrategies.length > 0) {
+      // Pick best strategy for this PTO budget
+      const matching = lw.ptoStrategies.filter(s => s.ptoDays.length <= pto);
+      if (matching.length > 0) {
+        strategies.push({ lw, pto: matching[0] });
+      }
+    }
+  }
+  // Sort by efficiency desc
+  strategies.sort((a, b) => b.pto.efficiency - a.pto.efficiency);
+
+  if (strategies.length === 0) {
+    section.innerHTML = `<h2>💡 PTO Strategies (${pto} day${pto > 1 ? 's' : ''} available)</h2><p style="color: #6b7280">No natural long weekends in this country — you're already off a lot!</p>`;
+    return;
+  }
+
+  // Top 8
+  const top = strategies.slice(0, 8);
+  section.innerHTML = `
+    <h2>💡 Top PTO Strategies (use up to ${pto} day${pto > 1 ? 's' : ''} each)</h2>
+    <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">
+      Click any to see all options. Best ROI first.
+    </p>
+    <div class="pto-grid">
+      ${top.map(({ lw, pto: p }) => `
+        <div class="pto-card" onclick="showLWModal('${lw.start}')">
+          <div class="pto-card-header">
+            <div class="pto-card-date">${formatDate(lw.start)}</div>
+            <div class="pto-card-eff">${p.efficiency.toFixed(1)}x</div>
+          </div>
+          <div class="pto-card-trigger">${escapeHtml(lw.trigger)}</div>
+          <div class="pto-card-action">
+            Take <span class="pto-card-pto">${p.ptoDays.map(d => formatDateShort(d)).join(', ')}</span> off
+            → ${p.totalOff} days total
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============== Modal ==============
+function showModal(dateKey, holidays, lw) {
+  const date = new Date(dateKey + 'T12:00:00');
+  const dow = date.toLocaleDateString('en-US', { weekday: 'long' });
+  const fullDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  let body = `
+    <div class="modal-row">
+      <div class="modal-label">Date</div>
+      <div class="modal-value">${fullDate}</div>
+    </div>
+  `;
+
+  if (holidays.length > 0) {
+    body += `<div class="modal-row"><div class="modal-label">Holiday${holidays.length > 1 ? 's' : ''}</div>`;
+    for (const h of holidays) {
+      const filterLabel = h.filters.map(f => f.replace(/_/g, ' ').toLowerCase()).join(', ');
+      body += `<div class="modal-value">🎉 ${escapeHtml(h.conceptName)} <span style="color: #6b7280; font-size: 12px">(${filterLabel})</span></div>`;
+    }
+    body += '</div>';
+  } else {
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    body += `<div class="modal-row">
+      <div class="modal-value">${isWeekend ? '🏖️ Weekend' : '💼 Workday'}</div>
+    </div>`;
+  }
+
+  if (lw) {
+    body += `<div class="modal-row">
+      <div class="modal-label">Part of Long Weekend</div>
+      <div class="modal-value">🎉 ${formatDate(lw.start)} → ${formatDate(lw.end)} (${lw.days} days, ${lw.type})</div>
+    </div>`;
+    if (lw.holidays && lw.holidays.length > 0) {
+      body += `<div class="modal-row">
+        <div class="modal-label">Trigger Holidays</div>
+        <div class="modal-value">${lw.holidays.map(escapeHtml).join('<br>')}</div>
+      </div>`;
+    }
+    if (lw.ptoStrategies && lw.ptoStrategies.length > 0) {
+      body += `<div class="modal-row">
+        <div class="modal-label">PTO Extension Options</div>
+        <ul class="modal-pto-list">
+          ${lw.ptoStrategies.map(s => `
+            <li>
+              <strong>${s.direction === 'before' ? '← Extend before' : 'Extend after →'}:</strong>
+              Take <span class="pto-card-pto">${s.ptoDays.map(formatDateShort).join(', ')}</span> off
+              → <strong>${s.totalOff} days off</strong>
+              <span class="eff" style="float: right">${s.efficiency.toFixed(1)}x</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>`;
+    }
+  } else if (holidays.length === 0) {
+    const date = new Date(dateKey + 'T12:00:00');
+    const dayBefore = new Date(date); dayBefore.setDate(dayBefore.getDate() - 1);
+    const dayAfter = new Date(date); dayAfter.setDate(dayAfter.getDate() + 1);
+    body += `<div class="modal-row">
+      <div class="modal-value" style="color: #6b7280; font-size: 13px;">
+        No PTO strategies for this day.<br>
+        Try clicking a long weekend (green day) to see strategies.
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('modalTitle').textContent = fullDate;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modal').classList.add('active');
+}
+
+function showLWModal(startDate) {
+  const lw = currentData.longWeekends.find(l => l.start === startDate);
+  if (!lw) return;
+  // Find a date within the long weekend to use as the modal trigger
+  showModal(lw.start, [], lw);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+// ESC to close
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ============== Utilities ==============
+function formatDate(s) {
+  return new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function formatDateShort(s) {
+  return new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+</script>
+
+</body>
+</html>

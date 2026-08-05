@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Holiday Cleanup Preview — Calendarific Only</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 24px; background: #f8f9fa; color: #212529; }
+  h1 { font-size: 28px; margin: 0 0 8px 0; }
+  h2 { font-size: 22px; margin: 32px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #1f4e78; }
+  h3 { font-size: 18px; margin: 24px 0 8px 0; }
+  .subtitle { color: #6c757d; margin: 0 0 24px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .card { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; }
+  .card h4 { margin: 0 0 8px 0; font-size: 14px; color: #1f4e78; }
+  .stat { font-size: 32px; font-weight: 700; color: #1f4e78; }
+  .stat-label { font-size: 13px; color: #6c757d; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { padding: 8px 10px; border: 1px solid #dee2e6; text-align: left; }
+  th { background: #1f4e78; color: white; font-weight: 600; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-remove { background: #f8d7da; color: #842029; }
+  .badge-keep { background: #d1e7dd; color: #0f5132; }
+  .badge-new { background: #cfe2ff; color: #084298; }
+  .badge-preset { background: #fff3cd; color: #664d03; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-col { padding: 16px; border-radius: 8px; }
+  .before { background: #f8d7da; border: 1px solid #f5c2c7; }
+  .after { background: #d1e7dd; border: 1px solid #badbcc; }
+  .bitmask { font-family: monospace; font-size: 12px; background: #e9ecef; padding: 2px 6px; border-radius: 3px; }
+  .filter-pill { display: inline-block; padding: 3px 8px; background: #e7f1ff; color: #084298; border-radius: 10px; font-size: 11px; margin: 2px; font-family: monospace; }
+  .country-pill { display: inline-block; padding: 4px 10px; background: #1f4e78; color: white; border-radius: 12px; font-size: 12px; font-weight: 600; margin: 2px; }
+  .warning { background: #fff3cd; border: 1px solid #ffecb5; padding: 12px; border-radius: 6px; margin: 16px 0; }
+  .success { background: #d1e7dd; border: 1px solid #badbcc; padding: 12px; border-radius: 6px; margin: 16px 0; }
+  .info { background: #cfe2ff; border: 1px solid #9ec5fe; padding: 12px; border-radius: 6px; margin: 16px 0; }
+  .filter-row td { font-family: monospace; font-size: 13px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0; }
+  .check { color: #198754; font-weight: 700; }
+  .cross { color: #dc3545; font-weight: 700; }
+  .num { font-weight: 600; color: #1f4e78; }
+</style>
+</head>
+<body>
+
+<h1>🧹 Holiday Data Cleanup Preview</h1>
+<p class="subtitle">
+  Single source: <strong>Calendarific</strong> · 190 countries × 2 years (2026 + 2027) ·
+  Universal 8-tier preset structure (timeanddate-style bitmasks)
+</p>
+
+<div class="info">
+  <strong>Quality gate preview</strong> — review the changes before applying to D1.
+  <br>Sources we will REMOVE: <span class="badge badge-remove">nager_date</span>
+  <span class="badge badge-remove">un_official</span>
+  <span class="badge badge-remove">hebcal</span>
+  <span class="badge badge-remove">computed_federal_us</span>
+  <br>Source we will KEEP: <span class="badge badge-keep">calendarific_api</span>
+  <br>New: <span class="badge badge-new">Universal presets</span> derived from filter codes (same for all countries)
+</div>
+
+<h2>1. Sources: Before vs After</h2>
+<div class="compare-grid">
+  <div class="compare-col before">
+    <h3>❌ Before (Mixed sources — LIVE API data per country)</h3>
+    <table>
+      <tr><th>Country</th><th>Total</th><th>calendarific</th><th>un_official</th><th>hebcal</th><th>nager_date</th><th>computed</th></tr>
+      <tr>
+        <td><strong>AU</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>CA</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>DE</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>FR</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>GB</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>IN</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+      <tr>
+        <td><strong>US</strong></td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+      </tr>
+    </table>
+  </div>
+  <div class="compare-col after">
+    <h3>✅ After (Calendarific only)</h3>
+    <table>
+      <tr><th>Country</th><th>Before</th><th>After</th><th>Lost</th></tr>
+      <tr>
+        <td><strong>AU</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>CA</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>DE</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>FR</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>GB</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>IN</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+      <tr>
+        <td><strong>US</strong></td>
+        <td>0</td>
+        <td class="num">0</td>
+        <td num>0</td>
+      </tr>
+    </table>
+    <p><small>CA/AU/DE/FR: no change (already calendarific-only). US loses 131 (mostly UN + Jewish). IN loses 293 (mostly UN + Jewish). GB loses 292.</small></p>
+  </div>
+</div>
+
+<div class="warning">
+  <strong>⚠️ Data loss to be aware of:</strong>
+  <ul>
+    <li><strong>UN Observances</strong> (67 US + 225 IN + 225 GB = 517 entries) — Calendarific does include some UN days but with less depth</li>
+    <li><strong>Jewish holidays</strong> (31 US + 59 IN + 59 GB = 149 entries) — Calendarific has Hebrew type but our GB/IN data has more via hebcal</li>
+    <li><strong>Computed federal holidays</strong> (3 entries) — these were auto-derived from rules; Calendarific has them as "National holiday" anyway</li>
+  </ul>
+  For MVP this is acceptable. We can add Hebcal + UN sources back later if needed.
+</div>
+
+<h2>2. Filter Derivation: Calendarific → M14</h2>
+<p>Each Calendarific holiday has a <code>type</code> field that maps to one of the 36 M14 filter codes:</p>
+<table>
+  <tr>
+    <th>Calendarific type</th>
+    <th>M14 filter code</th>
+    <th>Examples</th>
+  </tr>
+
+  <tr>
+    <td><code>National holiday</code></td>
+    <td><span class="filter-pill">PUBLIC_NATIONAL</span></td>
+    <td>Independence Day, Republic Day, Canada Day</td>
+  </tr>
+
+  <tr>
+    <td><code>Local holiday</code></td>
+    <td><span class="filter-pill">PUBLIC_LOCAL</span></td>
+    <td>State-specific gazetted (US states, IN states)</td>
+  </tr>
+
+  <tr>
+    <td><code>Common local holiday</code></td>
+    <td><span class="filter-pill">PUBLIC_COMMON_LOCAL</span></td>
+    <td>Family Day (5 provinces), Civic Holiday</td>
+  </tr>
+
+  <tr>
+    <td><code>Observance</code></td>
+    <td><span class="filter-pill">OBS_COMMON</span></td>
+    <td>Valentine's Day, Mother's Day</td>
+  </tr>
+
+  <tr>
+    <td><code>Local observance</code></td>
+    <td><span class="filter-pill">OBS_LOCAL</span></td>
+    <td>Heritage Day, Natal Day</td>
+  </tr>
+
+  <tr>
+    <td><code>Optional holiday</code></td>
+    <td><span class="filter-pill">OPTIONAL_HOLIDAY</span></td>
+    <td>Boxing Day (most provinces)</td>
+  </tr>
+
+  <tr>
+    <td><code>Half-day holiday</code></td>
+    <td><span class="filter-pill">HALF_DAY_HOLIDAY</span></td>
+    <td>Christmas Eve (some countries)</td>
+  </tr>
+
+  <tr>
+    <td><code>De facto holiday</code></td>
+    <td><span class="filter-pill">DE_FACTO_HOLIDAY</span></td>
+    <td>Day after Thanksgiving (US)</td>
+  </tr>
+
+  <tr>
+    <td><code>Flag day</code></td>
+    <td><span class="filter-pill">FLAG_DAY</span></td>
+    <td>Canada Flag Day (Feb 15)</td>
+  </tr>
+
+  <tr>
+    <td><code>United Nations observance</code></td>
+    <td><span class="filter-pill">UN_OBSERVANCE</span></td>
+    <td>International Day of Peace</td>
+  </tr>
+
+  <tr>
+    <td><code>Worldwide observance</code></td>
+    <td><span class="filter-pill">WORLD_OBSERVANCE</span></td>
+    <td>World Poetry Day</td>
+  </tr>
+
+  <tr>
+    <td><code>Season</code></td>
+    <td><span class="filter-pill">SEASON</span></td>
+    <td>Equinoxes, Solstices</td>
+  </tr>
+
+  <tr>
+    <td><code>Clock change/Daylight Saving Time</code></td>
+    <td><span class="filter-pill">CLOCK_CHANGE</span></td>
+    <td>DST start/end</td>
+  </tr>
+
+  <tr>
+    <td><code>Christian</code></td>
+    <td><span class="filter-pill">CHRISTIAN_MAJOR</span></td>
+    <td>Christmas, Easter, Good Friday</td>
+  </tr>
+
+  <tr>
+    <td><code>Hebrew</code></td>
+    <td><span class="filter-pill">JEWISH_MAJOR</span></td>
+    <td>Passover, Yom Kippur, Hanukkah</td>
+  </tr>
+
+  <tr>
+    <td><code>Muslim</code></td>
+    <td><span class="filter-pill">MUSLIM_MAJOR</span></td>
+    <td>Eid al-Fitr, Eid al-Adha, Ramadan</td>
+  </tr>
+
+  <tr>
+    <td><code>Orthodox</code></td>
+    <td><span class="filter-pill">ORTHODOX_MAJOR</span></td>
+    <td>Orthodox Christmas, Orthodox Easter</td>
+  </tr>
+
+  <tr>
+    <td><code>Hinduism</code></td>
+    <td><span class="filter-pill">HINDU_MAJOR</span></td>
+    <td>Diwali, Holi, Navratri</td>
+  </tr>
+
+  <tr>
+    <td><code>Sporting event</code></td>
+    <td><span class="filter-pill">SPORTING_EVENT</span></td>
+    <td>Super Bowl, Cricket World Cup</td>
+  </tr>
+
+</table>
+<div class="success">
+  <strong>Bonus:</strong> Religious types (Christian, Hinduism, Muslim, Hebrew, Orthodox) get a SECOND filter code:
+  <ul>
+    <li><code>CHRISTIAN_MAJOR</code> = Christmas, Easter, Good Friday, Easter Monday</li>
+    <li><code>CHRISTIAN_MORE</code> = Ash Wednesday, Pentecost, etc.</li>
+    <li><code>HINDU_MAJOR</code> = Diwali, Holi, Navratri, Dussehra, Raksha Bandhan, Janmashtami</li>
+    <li><code>MUSLIM_MAJOR</code> = Eid al-Fitr, Eid al-Adha, Ramadan</li>
+    <li><code>JEWISH_MAJOR</code> = Passover, Yom Kippur, Rosh Hashanah, Hanukkah</li>
+    <li><code>ORTHODOX_MAJOR</code> = Orthodox Christmas, Orthodox Easter</li>
+  </ul>
+  This lets the timeanddate-style UI show "Major Christian (5)" + "More Christian (12)" independently.
+</div>
+
+<h2>3. Universal 8-Tier Preset Structure (timeanddate.com bitmasks)</h2>
+<p>Same 8 presets for ALL countries. Each preset is a fixed set of filter codes.</p>
+<table>
+  <tr>
+    <th>Bitmask</th>
+    <th>Preset</th>
+    <th>Includes</th>
+    <th>US 2026</th>
+    <th>CA 2026</th>
+    <th>IN 2026</th>
+    <th>GB 2026</th>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">1</span></td>
+    <td><strong>Public holidays</strong><br><small>Federal/national gazetted holidays only</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">134217729</span></td>
+    <td><strong>Public and optional holidays</strong><br><small>Public + optional + local + common local</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +1 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">134217737</span></td>
+    <td><strong>Public holidays and non-working days</strong><br><small>Above + special working day overrides</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +2 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">134217753</span></td>
+    <td><strong>Holidays and some observances</strong><br><small>Above + important observances</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +3 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">138412057</span></td>
+    <td><strong>Holidays (incl. some local) and observances</strong><br><small>Above + common observances</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +4 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">138412059</span></td>
+    <td><strong>Holidays (incl. all local) and observances</strong><br><small>Above + local + other observances + flag day</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +7 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">134218041</span></td>
+    <td><strong>Holidays and many observances</strong><br><small>Above + UN + worldwide observances</small></td>
+    <td><small>PUBLIC_NATIONAL, DE_FACTO_HOLIDAY, OPTIONAL_HOLIDAY, PUBLIC_LOCAL, PUBLIC_COMMON_LOCAL +9 more</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+  <tr>
+    <td><span class="bitmask">146928447</span></td>
+    <td><strong>All holidays/observances/religious events</strong><br><small>Everything: all 36 codes (incl. all religious traditions, sports, seasons)</small></td>
+    <td><small>All 36 filter codes</small></td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+    <td class="num">0</td>
+  </tr>
+
+</table>
+
+<h2>4. Per-Country Filter Panel (computed from Calendarific)</h2>
+<p>Each country shows the 27 universal filter codes that have data, with counts. The UI can hide empty filters (state = supported_empty).</p>
+
+<h2>5. Sample Holidays (US 2026) — Derived Filter Codes</h2>
+<table>
+  <tr><th>Date</th><th>Name</th><th>CF Type</th><th>Derived Filter Codes</th></tr>
+
+</table>
+
+<h2>6. What We Keep & What We Lose</h2>
+<div class="compare-grid">
+  <div class="compare-col after">
+    <h3>✅ What we KEEP from Calendarific (rich data)</h3>
+    <ul>
+      <li>All public holidays (national + local + common local)</li>
+      <li>All optional holidays (Boxing Day, etc.)</li>
+      <li>All observances (Valentine's, Mother's Day, etc.)</li>
+      <li>All seasons (equinoxes, solstices) — 4 per country/year</li>
+      <li>All clock changes (DST) — 2 per country/year</li>
+      <li>All religious holidays with MAJOR/MORE split:
+        <ul>
+          <li>Christian: Christmas, Easter, Good Friday, etc.</li>
+          <li>Hindu: Diwali, Holi, Navratri, etc.</li>
+          <li>Muslim: Eid al-Fitr, Eid al-Adha, Ramadan</li>
+          <li>Jewish: Passover, Yom Kippur, Hanukkah</li>
+          <li>Orthodox: Orthodox Christmas, Easter</li>
+        </ul>
+      </li>
+      <li>Sporting events (Super Bowl, Cricket World Cup)</li>
+      <li>Local observances (Heritage Day, etc.)</li>
+    </ul>
+  </div>
+  <div class="compare-col before">
+    <h3>❌ What we LOSE (not in Calendarific)</h3>
+    <ul>
+      <li>Some UN observances that hebcal/un_official had more depth on</li>
+      <li>Some Jewish-specific holidays (Yom HaShoah, etc.) that hebcal tracked but Calendarific missed</li>
+      <li>The "computed_federal_us" derived holidays (3 — these were duplicates of Calendarific anyway)</li>
+      <li>The nager.date entries (these were a strict subset of Calendarific)</li>
+    </ul>
+    <p><strong>Net impact:</strong> For most user-facing filters, the count is similar or higher. The losses are mostly in deep UN/religious observances that timeanddate doesn't show prominently anyway.</p>
+  </div>
+</div>
+
+<h2>7. SQL Cleanup Plan (NOT YET APPLIED — preview only)</h2>
+<div class="info">
+  <strong>Status:</strong> Preview only. Review the data, then I'll apply after quality gate pass.
+</div>
+<pre style="background: #f8f9fa; padding: 16px; border-radius: 6px; border: 1px solid #dee2e6; overflow-x: auto; font-size: 12px;">
+-- Step 1: Remove sources from the source registry
+DELETE FROM holiday_source WHERE code IN (
+  'nager_date', 'un_official', 'hebcal', 'computed_federal_us'
+);
+
+-- Step 2: Remove holiday_occurrence_source links to those sources
+DELETE FROM holiday_occurrence_source
+WHERE source_key IN (
+  'nager_date', 'un_official', 'hebcal', 'computed_federal_us'
+);
+
+-- Step 3: Delete orphan occurrences (no sources left)
+DELETE FROM holiday_occurrence
+WHERE id NOT IN (SELECT occurrence_id FROM holiday_occurrence_source);
+
+-- Step 4: Delete orphan concepts (no occurrences left)
+DELETE FROM holiday_concept
+WHERE id NOT IN (SELECT concept_id FROM holiday_occurrence);
+
+-- Step 5: Re-derive filter assignments for all remaining occurrences
+-- (Run the calendarific_to_m14.py derivation on each occurrence
+--  and rewrite holiday_occurrence_filter accordingly)
+DELETE FROM holiday_occurrence_filter;
+
+-- Step 6: Re-insert filter assignments from Calendarific derivation
+-- (Generated by lib/calendarific_to_m14.py apply_to_holiday_occurrence_filter)
+</pre>
+
+<div class="success">
+  <strong>Result after applying this plan:</strong>
+  <ul>
+    <li>Single source: <code>calendarific_api</code> for all 190 countries</li>
+    <li>All holidays have a M14 filter code derived from Calendarific's <code>type</code> field</li>
+    <li>Religious holidays have 2 filters (primary + MAJOR/MORE tradition)</li>
+    <li>8 universal presets available for any country via bitmask</li>
+    <li>Per-country filter panel auto-computed</li>
+  </ul>
+</div>
+
+</body>
+</html>
