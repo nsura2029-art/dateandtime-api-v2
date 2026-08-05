@@ -2,7 +2,7 @@
   "info": {
     "name": "dateandtime-api-v2 (2.0.0)",
     "_postman_id": "dt-api-v2-2026-08-02",
-    "description": "dateandtime.live API v2 \u2014 Hono + Cloudflare D1 + Zod.\n\n**Coverage:** 152,970 cities, 250 countries, 462 IANA timezones, 844K postcodes, 2.97M translations (19 langs).\n\nSee https://github.com/nsura2029-art/dateandtime-api-v2 for source. Read `/docs/timezone-core-logic.md` for how timezones are assigned.",
+    "description": "dateandtime.live API v2 \u2014 Hono + Cloudflare D1 + Zod.\n\n**Coverage:** 170,253 cities, 250 countries, 408 IANA timezones, 15,638 holiday occurrences (M14 Calendarific), 47,549 admin-2 regions.\n\n**Holidays (M14):** 10 endpoints covering filter catalog, country variants, list/detail/today/upcoming, long weekends (legacy + enhanced with PTO strategies), pto-strategy greedy planner, ICS export, feedback.\n\nSee https://github.com/nsura2029-art/dateandtime-api-v2 for source. Read `/docs/api/README.md` for the API reference and `/docs/m14.6-trip-planner/USE_CASES.md` for the long weekend planner use cases.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -826,6 +826,306 @@
               ]
             },
             "description": "Should always return 0 \u2014 migration 125 banned all Etc/GMT*."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "M14 Holidays",
+      "description": "10 holiday endpoints. Data: Calendarific (Tier D, single source for MVP). Coverage: 15,638 occurrences \u00d7 2,364 concepts \u00d7 190 countries \u00d7 2 years (2026+2027).",
+      "item": [
+        {
+          "name": "Filter catalog (global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/filters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "filters"
+              ]
+            },
+            "description": "Returns the complete holiday filter catalog (36 codes). Does not vary by country \u2014 use /countries/{cca2}/filters for per-country applicability."
+          },
+          "response": []
+        },
+        {
+          "name": "Per-country filters (variance)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/US/filters?mode=country&year=2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "US",
+                "filters"
+              ]
+            },
+            "description": "Per-country filter list with rangeCount and annualCount. The variance endpoint \u2014 US=22 filters, NL=4, IN=8, GB=7."
+          },
+          "response": []
+        },
+        {
+          "name": "List holidays",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/holidays?year=2026&country=US&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "holidays"
+              ]
+            },
+            "description": "Main list with date range, country, subdivision, filter codes, tradition, mode (country/international/combined), source. Returns up to 500 per request."
+          },
+          "response": []
+        },
+        {
+          "name": "Country holidays (shortcut)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/US/holidays?year=2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "US",
+                "holidays"
+              ]
+            },
+            "description": "Shortcut for /api/v1/holidays?country=X. Returns country-scoped holiday list."
+          },
+          "response": []
+        },
+        {
+          "name": "Today's holidays",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/holidays/today?country=US&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "holidays",
+                "today"
+              ]
+            },
+            "description": "Widget-friendly: holidays happening today. Optional ?days=N (default 0=today, max 7) for 'today + next N days'."
+          },
+          "response": []
+        },
+        {
+          "name": "Upcoming holidays",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/holidays/upcoming?country=US&days=30&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "holidays",
+                "upcoming"
+              ]
+            },
+            "description": "Widget-friendly: holidays in next N days (default 30). Returns by start date, capped at limit (max 500)."
+          },
+          "response": []
+        },
+        {
+          "name": "Holiday detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/holidays/123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "holidays",
+                "123"
+              ]
+            },
+            "description": "Single holiday occurrence detail: full metadata, source provenance, related long weekend if any."
+          },
+          "response": []
+        },
+        {
+          "name": "Long weekends (SEO)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/long-weekends?country=US&year=2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "long-weekends"
+              ]
+            },
+            "description": "Legacy/SEO-friendly. Returns 3+ day off-blocks. Simpler algo (no multi-day, no PTO strategies) \u2014 kept for backward compat."
+          },
+          "response": []
+        },
+        {
+          "name": "Long weekends (enhanced)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/US/long-weekends/2026?pto=2&work_days=mon-fri&min_days=3&include_optional=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "US",
+                "long-weekends",
+                "2026"
+              ]
+            },
+            "description": "Enhanced long weekend finder. Supports: work_days (mon-fri/sun-thu/fri-sat/sat-wed), min_days (2-14), include_optional (bool), subdivisions (ISO 3166-2 comma-sep), pto (0-5 to include PTO extension strategies). Each LW has days, type (3-day/4-day/5-day/extended), holidays[], and optional ptoStrategies[]."
+          },
+          "response": []
+        },
+        {
+          "name": "PTO strategy (greedy optimal)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/CA/pto-strategy/2026?available_pto=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "CA",
+                "pto-strategy",
+                "2026"
+              ]
+            },
+            "description": "Greedy year-PTO planner. Given available_pto (1-20), returns the optimal set of non-overlapping strategies that maximizes total days off. Strategies sorted by efficiency (total_off / pto_days)."
+          },
+          "response": []
+        },
+        {
+          "name": "ICS calendar export",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/calendars/holidays.ics?country=US&year=2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "calendars",
+                "holidays.ics"
+              ]
+            },
+            "description": "RFC 5545 ICS file. Returns Content-Type: text/calendar. Importable to Google/Apple/Outlook. Multi-day events use exclusive DTEND (+1 day per spec)."
+          },
+          "response": []
+        },
+        {
+          "name": "Feedback (correction)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"occurrenceId\": 123,\n  \"type\": \"wrong_date\",\n  \"comment\": \"Diwali 2026 is Nov 8 not Nov 7\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback"
+              ]
+            },
+            "description": "Submit a correction. Types: wrong_date, missing_holiday, wrong_name, other. Stored to D1, response includes feedback id and vote token."
+          },
+          "response": []
+        },
+        {
+          "name": "Feedback vote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"abc123\",\n  \"vote\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedback/123/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "feedback",
+                "123",
+                "vote"
+              ]
+            },
+            "description": "Upvote/downvote a feedback submission. Returns updated vote count."
           },
           "response": []
         }
