@@ -242,6 +242,7 @@ This repo uses the [Dox framework](https://github.com/agent0ai/dox) — a hierar
 
 | Doc | What it covers |
 |---|---|
+| `PRD.md` | **Product Requirements Document** — features, milestones, roadmap (START HERE for new agents) |
 | `AGENTS.md` | Root: stack, deploy workflow, API rules, Dox child index |
 | `src/AGENTS.md` | Source code organization, path aliases, file naming |
 | `src/routes/AGENTS.md` | How to add a new route file, JSDoc conventions |

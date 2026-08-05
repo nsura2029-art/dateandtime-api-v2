@@ -8,6 +8,7 @@
 1. **Setup / onboarding** (`docs/setup.md`) — how to set up the project from scratch
 2. **Troubleshooting** (`docs/troubleshooting.md`) — common errors + fixes
 3. **Known issues** (`docs/KNOWN_ISSUES.md`) — tracked bugs (BUG-N, TODO-N)
+0. **PRD** (`PRD.md`) — start here for product overview, features, milestones, roadmap
 4. **API reference** (`docs/api/README.md`) — 45 endpoints, M14 spec, postman collection
 5. **Architecture** (`docs/architecture/`) — design decisions, data model diagrams
 6. **Plans** (`docs/PLAN-*.md`) — future work, design docs
